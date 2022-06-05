@@ -6,9 +6,13 @@ authors = ["Mihier-Roy <31336766+Mihier-Roy@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+pandas = "^1.4.2"
+numpy = "^1.22.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+black = "^22.3.0"
+flake8 = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

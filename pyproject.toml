@@ -5,7 +5,7 @@ description = "A python desktop application to aid in the forensic investigation
 authors = ["Mihier-Roy <31336766+Mihier-Roy@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.11"
 pandas = "^1.4.2"
 numpy = "^1.22.4"
 

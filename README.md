@@ -20,6 +20,7 @@ $ poetry run python ./dashcam_investigator/__main__.py
 
 The application was built using the following open source projects
 
+- PySide2 (Qt for Python, to build a GUI using Qt 5.15.2.1)
 - Pandas
 - Numpy
 - Black (code formatting)

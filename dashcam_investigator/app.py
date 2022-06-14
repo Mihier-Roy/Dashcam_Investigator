@@ -1,16 +1,19 @@
 from PySide2 import QtWidgets, QtGui
-from QtMainWindow import Ui_DashcamInvestigator
+from QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
 import pathlib
 
 
-class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
+        dir_path = pathlib.Path("H:/DissertationDataset", "Trancend")
         video_path = pathlib.Path(
             "H:/DissertationDataset",
-            "Trancend/DP220",
-            "N_VIDEO/2019_1118_085235_008.MOV",
+            "Trancend",
+            "DP220",
+            "N_VIDEO",
+            "2019_1118_085235_008.MOV",
         )
         super(MainWindow, self).__init__()
         self.setupUi(self)
@@ -24,6 +27,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
         x_coordinates = (screen_size.width() - self.width()) / 2
         y_coordinates = (screen_size.height() - self.height()) / 2 - 20
         self.move(x_coordinates, y_coordinates)
+
+        # Load current directory into tree view
+        model = QtWidgets.QFileSystemModel()
+        model.setRootPath(str(dir_path.resolve()))
+        self.dir_tree_view.setModel(model)
+        self.dir_tree_view.setRootIndex(model.index(str(dir_path.resolve())))
+        self.dir_tree_view.hideColumn(1)
+        self.dir_tree_view.hideColumn(2)
+        self.dir_tree_view.hideColumn(3)
+        self.dir_tree_view.show()
+
         # Define media player
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlaylist = QMediaPlaylist()
@@ -35,18 +49,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
         # Set the QMediaPlaylist for the QMediaPlayer.
         self.mediaPlayer.setPlaylist(self.mediaPlaylist)
         # Set the video output from the QMediaPlayer to the QVideoWidget.
-        self.mediaPlayer.setVideoOutput(self.QVideoWidget)
+        self.mediaPlayer.setVideoOutput(self.video_player)
 
         # Set the QPushButtons to play, pause and stop the video in the QVideoWidget.
-        self.playButton.clicked.connect(self.play_video)
-        self.pauseButton.clicked.connect(self.pause_video)
-        self.stopButton.clicked.connect(self.stop_video)
+        self.play_button.clicked.connect(self.play_video)
+        self.pause_button.clicked.connect(self.pause_video)
+        self.stop_button.clicked.connect(self.stop_video)
         # Set the total range for the QSlider.
         self.mediaPlayer.durationChanged.connect(self.change_duration)
         # Set the current value for the QSlider.
         self.mediaPlayer.positionChanged.connect(self.change_position)
         # Set the video position in QMediaPlayer based on the QSlider position.
-        self.horizontalSlider.sliderMoved.connect(self.video_position)
+        self.horizontal_slider.sliderMoved.connect(self.video_position)
 
     def play_video(self):
         """
@@ -55,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
         self.mediaPlayer.play()
         duration = self.mediaPlayer.duration()
         sec, min = self.convert_to_seconds(int(duration))
-        self.totalDuration.setText(f"{min}:{sec}")
+        self.total_duration.setText(f"{min}:{sec}")
 
     def pause_video(self):
         """
@@ -75,9 +89,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
         Sets the current value of the QSlider to the current position of the video in the QMediaPlayer.
         :param position: current position of the video in the QMediaPlayer.
         """
-        self.horizontalSlider.setValue(position)
+        self.horizontal_slider.setValue(position)
         sec, min = self.convert_to_seconds(int(position))
-        self.currentDuration.setText(f"{min}:{sec}")
+        self.current_duration.setText(f"{min}:{sec}")
 
     def change_duration(self, duration):
         """
@@ -85,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_DashcamInvestigator):
         Sets the range of the QSlider.
         :param duration: Total duration of the video in the QMediaPlayer.
         """
-        self.horizontalSlider.setRange(0, duration)
+        self.horizontal_slider.setRange(0, duration)
 
     def video_position(self, position):
         """

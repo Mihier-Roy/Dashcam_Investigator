@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainwindow.ui'
+## Form generated from reading UI file 'mainwindow1.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -15,156 +15,142 @@ from PySide2.QtWidgets import *
 from PySide2.QtMultimediaWidgets import QVideoWidget
 
 
-class Ui_DashcamInvestigator(object):
-    def setupUi(self, DashcamInvestigator):
-        if not DashcamInvestigator.objectName():
-            DashcamInvestigator.setObjectName(u"DashcamInvestigator")
-        DashcamInvestigator.resize(1600, 1000)
-        self.actionNew_Project = QAction(DashcamInvestigator)
-        self.actionNew_Project.setObjectName(u"actionNew_Project")
-        self.actionOpen_Project = QAction(DashcamInvestigator)
-        self.actionOpen_Project.setObjectName(u"actionOpen_Project")
-        self.centralwidget = QWidget(DashcamInvestigator)
-        self.centralwidget.setObjectName(u"centralwidget")
-        self.gridLayoutWidget = QWidget(self.centralwidget)
-        self.gridLayoutWidget.setObjectName(u"gridLayoutWidget")
-        self.gridLayoutWidget.setGeometry(QRect(10, 0, 2306, 941))
-        self.left_grid = QGridLayout(self.gridLayoutWidget)
-        self.left_grid.setObjectName(u"left_grid")
-        self.left_grid.setSizeConstraint(QLayout.SetMaximumSize)
-        self.left_grid.setContentsMargins(0, 0, 0, 0)
-        self.projectLabel = QLabel(self.gridLayoutWidget)
-        self.projectLabel.setObjectName(u"projectLabel")
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        if not MainWindow.objectName():
+            MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1600, 1000)
+        self.centralwidget = QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.widget = QWidget(self.centralwidget)
+        self.widget.setObjectName("widget")
+        self.widget.setGeometry(QRect(10, 0, 1581, 941))
+        self.app_layout = QHBoxLayout(self.widget)
+        self.app_layout.setObjectName("app_layout")
+        self.app_layout.setContentsMargins(0, 0, 0, 0)
+        self.project_view_layout = QVBoxLayout()
+        self.project_view_layout.setObjectName("project_view_layout")
+        self.logo_label = QLabel(self.widget)
+        self.logo_label.setObjectName("logo_label")
+        font = QFont()
+        font.setPointSize(15)
+        font.setBold(True)
+        font.setUnderline(False)
+        self.logo_label.setFont(font)
+        self.logo_label.setAlignment(Qt.AlignCenter)
 
-        self.left_grid.addWidget(self.projectLabel, 1, 3, 1, 1, Qt.AlignLeft)
+        self.project_view_layout.addWidget(self.logo_label)
 
-        self.dashcamInvestigatorLabel = QLabel(self.gridLayoutWidget)
-        self.dashcamInvestigatorLabel.setObjectName(u"dashcamInvestigatorLabel")
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.dir_label = QLabel(self.widget)
+        self.dir_label.setObjectName("dir_label")
+
+        self.project_view_layout.addWidget(self.dir_label)
+
+        self.dir_tree_view = QTreeView(self.widget)
+        self.dir_tree_view.setObjectName("dir_tree_view")
+        self.dir_tree_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
+        self.project_view_layout.addWidget(self.dir_tree_view)
+
+        self.app_layout.addLayout(self.project_view_layout)
+
+        self.main_view_layout = QVBoxLayout()
+        self.main_view_layout.setObjectName("main_view_layout")
+        self.video_player_layout = QVBoxLayout()
+        self.video_player_layout.setObjectName("video_player_layout")
+        self.video_player = QVideoWidget(self.widget)
+        self.video_player.setObjectName("video_player")
+        self.video_player.setMinimumSize(QSize(0, 450))
+
+        self.video_player_layout.addWidget(self.video_player)
+
+        self.player_controls = QWidget(self.widget)
+        self.player_controls.setObjectName("player_controls")
+        self.player_controls.setMinimumSize(QSize(1250, 50))
+        self.player_controls.setMaximumSize(QSize(1250, 50))
+        self.play_button = QPushButton(self.player_controls)
+        self.play_button.setObjectName("play_button")
+        self.play_button.setGeometry(QRect(480, 20, 71, 29))
+        self.pause_button = QPushButton(self.player_controls)
+        self.pause_button.setObjectName("pause_button")
+        self.pause_button.setGeometry(QRect(560, 20, 93, 29))
+        self.stop_button = QPushButton(self.player_controls)
+        self.stop_button.setObjectName("stop_button")
+        self.stop_button.setGeometry(QRect(660, 20, 93, 29))
+        self.horizontal_slider = QSlider(self.player_controls)
+        self.horizontal_slider.setObjectName("horizontal_slider")
+        self.horizontal_slider.setGeometry(QRect(110, 0, 1050, 22))
+        self.horizontal_slider.setMinimumSize(QSize(1050, 0))
+        self.horizontal_slider.setMaximumSize(QSize(1050, 16777215))
+        self.horizontal_slider.setOrientation(Qt.Horizontal)
+        self.total_duration = QLineEdit(self.player_controls)
+        self.total_duration.setObjectName("total_duration")
+        self.total_duration.setGeometry(QRect(1180, 0, 61, 21))
+        self.current_duration = QLineEdit(self.player_controls)
+        self.current_duration.setObjectName("current_duration")
+        self.current_duration.setGeometry(QRect(30, 0, 61, 21))
+
+        self.video_player_layout.addWidget(self.player_controls)
+
+        self.main_view_layout.addLayout(self.video_player_layout)
+
+        self.data_tabs = QTabWidget(self.widget)
+        self.data_tabs.setObjectName("data_tabs")
+        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.dashcamInvestigatorLabel.sizePolicy().hasHeightForWidth())
-        self.dashcamInvestigatorLabel.setSizePolicy(sizePolicy)
-        font = QFont()
-        font.setPointSize(14)
-        self.dashcamInvestigatorLabel.setFont(font)
-
-        self.left_grid.addWidget(self.dashcamInvestigatorLabel, 0, 3, 1, 1, Qt.AlignTop)
-
-        self.directory_tree_view = QTreeView(self.gridLayoutWidget)
-        self.directory_tree_view.setObjectName(u"directory_tree_view")
-
-        self.left_grid.addWidget(self.directory_tree_view, 3, 3, 1, 1)
-
-        self.gridLayoutWidget_2 = QWidget(self.centralwidget)
-        self.gridLayoutWidget_2.setObjectName(u"gridLayoutWidget_2")
-        self.gridLayoutWidget_2.setGeometry(QRect(250, 0, 1341, 941))
-        self.right_grid = QGridLayout(self.gridLayoutWidget_2)
-        self.right_grid.setObjectName(u"right_grid")
-        self.right_grid.setSizeConstraint(QLayout.SetMaximumSize)
-        self.right_grid.setContentsMargins(0, 0, 0, 0)
-        self.video_grid = QGridLayout()
-        self.video_grid.setObjectName(u"video_grid")
-        self.video_grid.setSizeConstraint(QLayout.SetDefaultConstraint)
-        self.QVideoWidget = QVideoWidget(self.gridLayoutWidget_2)
-        self.QVideoWidget.setObjectName(u"QVideoWidget")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.QVideoWidget.sizePolicy().hasHeightForWidth())
-        self.QVideoWidget.setSizePolicy(sizePolicy1)
-        self.QVideoWidget.setMinimumSize(QSize(800, 450))
-        self.QVideoWidget.setMaximumSize(QSize(16777215, 900))
-
-        self.video_grid.addWidget(self.QVideoWidget, 0, 0, 1, 1)
-
-        self.playerControls = QWidget(self.gridLayoutWidget_2)
-        self.playerControls.setObjectName(u"playerControls")
-        self.playerControls.setMinimumSize(QSize(1250, 50))
-        self.playerControls.setMaximumSize(QSize(1250, 50))
-        self.playButton = QPushButton(self.playerControls)
-        self.playButton.setObjectName(u"playButton")
-        self.playButton.setGeometry(QRect(480, 20, 71, 29))
-        self.pauseButton = QPushButton(self.playerControls)
-        self.pauseButton.setObjectName(u"pauseButton")
-        self.pauseButton.setGeometry(QRect(560, 20, 93, 29))
-        self.stopButton = QPushButton(self.playerControls)
-        self.stopButton.setObjectName(u"stopButton")
-        self.stopButton.setGeometry(QRect(660, 20, 93, 29))
-        self.horizontalSlider = QSlider(self.playerControls)
-        self.horizontalSlider.setObjectName(u"horizontalSlider")
-        self.horizontalSlider.setGeometry(QRect(110, 0, 1050, 22))
-        self.horizontalSlider.setMinimumSize(QSize(1050, 0))
-        self.horizontalSlider.setMaximumSize(QSize(1050, 16777215))
-        self.horizontalSlider.setOrientation(Qt.Horizontal)
-        self.totalDuration = QLineEdit(self.playerControls)
-        self.totalDuration.setObjectName(u"totalDuration")
-        self.totalDuration.setGeometry(QRect(1180, 0, 61, 21))
-        self.currentDuration = QLineEdit(self.playerControls)
-        self.currentDuration.setObjectName(u"currentDuration")
-        self.currentDuration.setGeometry(QRect(30, 0, 61, 21))
-
-        self.video_grid.addWidget(self.playerControls, 1, 0, 1, 1, Qt.AlignHCenter|Qt.AlignBottom)
-
-
-        self.right_grid.addLayout(self.video_grid, 0, 0, 1, 1)
-
-        self.data_grid = QGridLayout()
-        self.data_grid.setObjectName(u"data_grid")
-        self.dataView = QTabWidget(self.gridLayoutWidget_2)
-        self.dataView.setObjectName(u"dataView")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.dataView.sizePolicy().hasHeightForWidth())
-        self.dataView.setSizePolicy(sizePolicy2)
-        self.dataView.setMinimumSize(QSize(0, 100))
+        sizePolicy.setHeightForWidth(self.data_tabs.sizePolicy().hasHeightForWidth())
+        self.data_tabs.setSizePolicy(sizePolicy)
         self.map_tab = QWidget()
-        self.map_tab.setObjectName(u"map_tab")
-        self.dataView.addTab(self.map_tab, "")
-        self.data_tab = QWidget()
-        self.data_tab.setObjectName(u"data_tab")
-        self.dataView.addTab(self.data_tab, "")
+        self.map_tab.setObjectName("map_tab")
+        self.data_tabs.addTab(self.map_tab, "")
+        self.metadata_tab = QWidget()
+        self.metadata_tab.setObjectName("metadata_tab")
+        self.data_tabs.addTab(self.metadata_tab, "")
 
-        self.data_grid.addWidget(self.dataView, 0, 0, 1, 1)
+        self.main_view_layout.addWidget(self.data_tabs)
 
+        self.app_layout.addLayout(self.main_view_layout)
 
-        self.right_grid.addLayout(self.data_grid, 1, 0, 1, 1)
-
-        DashcamInvestigator.setCentralWidget(self.centralwidget)
-        self.menubar = QMenuBar(DashcamInvestigator)
-        self.menubar.setObjectName(u"menubar")
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QMenuBar(MainWindow)
+        self.menubar.setObjectName("menubar")
         self.menubar.setGeometry(QRect(0, 0, 1600, 26))
-        self.menuFile = QMenu(self.menubar)
-        self.menuFile.setObjectName(u"menuFile")
-        DashcamInvestigator.setMenuBar(self.menubar)
-        self.statusbar = QStatusBar(DashcamInvestigator)
-        self.statusbar.setObjectName(u"statusbar")
-        DashcamInvestigator.setStatusBar(self.statusbar)
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
 
-        self.menubar.addAction(self.menuFile.menuAction())
-        self.menuFile.addAction(self.actionNew_Project)
-        self.menuFile.addAction(self.actionOpen_Project)
+        self.retranslateUi(MainWindow)
 
-        self.retranslateUi(DashcamInvestigator)
+        self.data_tabs.setCurrentIndex(0)
 
-        self.dataView.setCurrentIndex(0)
+        QMetaObject.connectSlotsByName(MainWindow)
 
-
-        QMetaObject.connectSlotsByName(DashcamInvestigator)
     # setupUi
 
-    def retranslateUi(self, DashcamInvestigator):
-        DashcamInvestigator.setWindowTitle(QCoreApplication.translate("DashcamInvestigator", u"MainWindow", None))
-        self.actionNew_Project.setText(QCoreApplication.translate("DashcamInvestigator", u"New Project", None))
-        self.actionOpen_Project.setText(QCoreApplication.translate("DashcamInvestigator", u"Open Project", None))
-        self.projectLabel.setText(QCoreApplication.translate("DashcamInvestigator", u"Project files", None))
-        self.dashcamInvestigatorLabel.setText(QCoreApplication.translate("DashcamInvestigator", u"Dashcam Investigator", None))
-        self.playButton.setText(QCoreApplication.translate("DashcamInvestigator", u"Play", None))
-        self.pauseButton.setText(QCoreApplication.translate("DashcamInvestigator", u"Pause", None))
-        self.stopButton.setText(QCoreApplication.translate("DashcamInvestigator", u"Stop", None))
-        self.dataView.setTabText(self.dataView.indexOf(self.map_tab), QCoreApplication.translate("DashcamInvestigator", u"Map", None))
-        self.dataView.setTabText(self.dataView.indexOf(self.data_tab), QCoreApplication.translate("DashcamInvestigator", u"Metadata", None))
-        self.menuFile.setTitle(QCoreApplication.translate("DashcamInvestigator", u"File", None))
-    # retranslateUi
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(
+            QCoreApplication.translate("MainWindow", "Dashcam Investigator", None)
+        )
+        self.logo_label.setText(
+            QCoreApplication.translate("MainWindow", "Dashcam Investigator", None)
+        )
+        self.dir_label.setText(
+            QCoreApplication.translate("MainWindow", "Project files", None)
+        )
+        self.play_button.setText(QCoreApplication.translate("MainWindow", "Play", None))
+        self.pause_button.setText(
+            QCoreApplication.translate("MainWindow", "Pause", None)
+        )
+        self.stop_button.setText(QCoreApplication.translate("MainWindow", "Stop", None))
+        self.data_tabs.setTabText(
+            self.data_tabs.indexOf(self.map_tab),
+            QCoreApplication.translate("MainWindow", "Map", None),
+        )
+        self.data_tabs.setTabText(
+            self.data_tabs.indexOf(self.metadata_tab),
+            QCoreApplication.translate("MainWindow", "Metadata", None),
+        )
 
+    # retranslateUi

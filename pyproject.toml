@@ -8,6 +8,7 @@ authors = ["Mihier-Roy <31336766+Mihier-Roy@users.noreply.github.com>"]
 python = ">=3.9,<3.11"
 pandas = "^1.4.2"
 numpy = "^1.22.4"
+PySide2 = "^5.15.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

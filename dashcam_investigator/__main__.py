@@ -9,6 +9,8 @@ from extract_metadata import (
     make_handlers,
 )
 
+from gui import app
+
 
 def main():
     logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     # Create a logs directory in AppData\Local\DashcamInvestigator if it doesn't already exist
     appdata_local = os.getenv("LOCALAPPDATA")
     log_path = Path(appdata_local, "DashcamInvestigator", "Logs")
-    log_path = log_path.replace("\\", "/")
+    log_path = str(log_path).replace("\\", "/")
 
     if not Path(log_path).exists():
         Path(log_path).mkdir(parents=True, exist_ok=True)
@@ -47,4 +49,5 @@ if __name__ == "__main__":
     logging.config.fileConfig("log.conf", defaults={"logPath": log_path})
 
     # Call main function
-    main()
+    # main()
+    app.run()

@@ -1,21 +1,14 @@
+import pathlib
+import sys
 from PySide2 import QtWidgets, QtGui
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
-import pathlib
-import sys
+from utils.convert_milli import convert_to_seconds
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self):
-        dir_path = pathlib.Path("H:/DissertationDataset", "Trancend")
-        video_path = pathlib.Path(
-            "H:/DissertationDataset",
-            "Trancend",
-            "DP220",
-            "N_VIDEO",
-            "2019_1118_085235_008.MOV",
-        )
+    def __init__(self, dir_path, video_path):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
@@ -69,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.mediaPlayer.play()
         duration = self.mediaPlayer.duration()
-        sec, min = self.convert_to_seconds(int(duration))
+        sec, min = convert_to_seconds(int(duration))
         self.total_duration.setText(f"{min}:{sec}")
 
     def pause_video(self):
@@ -91,7 +84,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         :param position: current position of the video in the QMediaPlayer.
         """
         self.horizontal_slider.setValue(position)
-        sec, min = self.convert_to_seconds(int(position))
+        sec, min = convert_to_seconds(int(position))
         self.current_duration.setText(f"{min}:{sec}")
 
     def change_duration(self, duration):
@@ -111,18 +104,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.mediaPlayer.setPosition(position)
 
-    def convert_to_seconds(self, milliseconds):
-        seconds = int((milliseconds / 1000) % 60)
-        minutes = int((milliseconds / (1000 * 60)) % 60)
-        if seconds < 10:
-            seconds = "0" + str(seconds)
-        if minutes < 10:
-            minutes = "0" + str(minutes)
-        return seconds, minutes
-
 
 def run():
+    dir_path = pathlib.Path("H:/DissertationDataset", "Trancend")
+    video_path = pathlib.Path(
+        "H:/DissertationDataset",
+        "Trancend",
+        "DP220",
+        "N_VIDEO",
+        "2019_1118_085235_008.MOV",
+    )
     app = QtWidgets.QApplication([])
-    window = MainWindow()
+    window = MainWindow(dir_path, video_path)
     window.show()
     sys.exit(app.exec_())

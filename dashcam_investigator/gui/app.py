@@ -1,8 +1,9 @@
 from PySide2 import QtWidgets, QtGui
-from QtMainWindow import Ui_MainWindow
+from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
 import pathlib
+import sys
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -120,8 +121,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         return seconds, minutes
 
 
-app = QtWidgets.QApplication([])
-
-window = MainWindow()
-window.show()
-app.exec_()
+def run():
+    app = QtWidgets.QApplication([])
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())

@@ -18,6 +18,8 @@ $ poetry run python ./dashcam_investigator/__main__.py
 
 ### Dependencies
 
+> **NOTE**: The application requires video codecs to be installed separately on the computer to support video playback. Please download and install the [K-Lite Codec Pack](https://www.codecguide.com/download_k-lite_codec_pack_basic.htm) to enable video playback.
+
 The application was built using the following open source projects
 
 - PySide2 (Qt for Python, to build a GUI using Qt 5.15.2.1)

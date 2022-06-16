@@ -2,6 +2,8 @@ import logging
 import pathlib
 import sys
 from PySide2 import QtWidgets, QtGui
+import pandas as pd
+from gui.table_models import PandasTableModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self, dir_path, video_path):
+    def __init__(self, dir_path, video_path, metadata_df, gps_df):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
@@ -62,6 +64,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaPlayer.positionChanged.connect(self.change_position)
         # Set the video position in QMediaPlayer based on the QSlider position.
         self.horizontal_slider.sliderMoved.connect(self.video_position)
+
+        ######################################
+        # Metadata tab view
+        ######################################
+        self.metadata_model = PandasTableModel(metadata_df)
+        self.metadata_table.setModel(self.metadata_model)
+        self.gps_model = PandasTableModel(gps_df)
+        self.gps_table.setModel(self.gps_model)
 
     def play_video(self):
         """
@@ -122,8 +132,17 @@ def run():
         "N_VIDEO",
         "2019_1118_085235_008.MOV",
     )
+    metadata_df = pd.read_csv(
+        "C:/Users/mihie/AppData/Local/Temp/2019_1120_052408_001_fileinfo.csv"
+    )
+    metadata_df = metadata_df.T
+    metadata_df.rename(columns={0: "Value"}, inplace=True)
+    gps_df = pd.read_csv(
+        "C:/Users/mihie/AppData/Local/Temp/2019_1119_165917_001_gpsdata_converted.csv",
+        names=["GPS Speed", "GPS Latitude", "GPS Logitude"],
+    )
     app = QtWidgets.QApplication([])
     logger.debug("Initialising and displaying main window")
-    window = MainWindow(dir_path, video_path)
+    window = MainWindow(dir_path, video_path, metadata_df, gps_df)
     window.show()
     sys.exit(app.exec_())

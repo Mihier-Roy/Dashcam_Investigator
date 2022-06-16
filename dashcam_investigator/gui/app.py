@@ -1,3 +1,4 @@
+import logging
 import pathlib
 import sys
 from PySide2 import QtWidgets, QtGui
@@ -6,6 +7,8 @@ from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
 from utils.convert_milli import convert_to_seconds
 
+logger = logging.getLogger(__name__)
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, dir_path, video_path):
@@ -13,6 +16,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         # Move the application window to the center of the screen
+        logger.debug("Moving window to the center of the screen")
         # Get current screen size
         screen_size = QtGui.QScreen.availableGeometry(
             QtWidgets.QApplication.primaryScreen()
@@ -23,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(x_coordinates, y_coordinates)
 
         # Load current directory into tree view
+        logger.debug(f"Loading selected input directory to the TreeView -> {dir_path} ")
         model = QtWidgets.QFileSystemModel()
         model.setRootPath(str(dir_path.resolve()))
         self.dir_tree_view.setModel(model)
@@ -33,10 +38,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dir_tree_view.show()
 
         # Define media player
+        logger.debug("Loading media player")
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlaylist = QMediaPlaylist()
 
         # Add the video file path
+        logger.debug(f"Adding to playlist -> {video_path}")
         self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
         # Set the video to played in a loop once it ends.
         self.mediaPlaylist.setPlaybackMode(QMediaPlaylist.CurrentItemInLoop)
@@ -106,6 +113,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 def run():
+    logger.info("---Running Dashcam Investigator---")
     dir_path = pathlib.Path("H:/DissertationDataset", "Trancend")
     video_path = pathlib.Path(
         "H:/DissertationDataset",
@@ -115,6 +123,7 @@ def run():
         "2019_1118_085235_008.MOV",
     )
     app = QtWidgets.QApplication([])
+    logger.debug("Initialising and displaying main window")
     window = MainWindow(dir_path, video_path)
     window.show()
     sys.exit(app.exec_())

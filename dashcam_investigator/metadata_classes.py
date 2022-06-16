@@ -25,7 +25,7 @@ class GPSMetadataExtractor(MetadataExtractor):
             f'exiftool  -ee -csv -p "$GPSSpeed, $GPSLatitude, $GPSLongitude" -r -n {input_directory}\\{self.video} >> {self.temp_directory}\\{self.video[0:-4]}_gpsdata.csv'
         )
         print(f"gps data done for {self.video}")
-        # self.trim_data()
+        self.trim_data()
 
     def trim_data(self):
         # removes rows in the exiftool csv output for gpsdata which can cause errors later in the code

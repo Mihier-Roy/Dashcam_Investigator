@@ -1,11 +1,11 @@
 import logging
 import pathlib
 import sys
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets, QtGui, QtCore
 import pandas as pd
 from gui.table_models import PandasTableModel
 from gui.QtMainWindow import Ui_MainWindow
-from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
+from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist, QMediaContent
 from PySide2.QtCore import QUrl
 from utils.convert_milli import convert_to_seconds
 
@@ -38,6 +38,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dir_tree_view.hideColumn(2)
         self.dir_tree_view.hideColumn(3)
         self.dir_tree_view.show()
+        # Collect the currently selected item
+        self.dir_tree_view.clicked.connect(self.on_selected)
 
         # Define media player
         logger.debug("Loading media player")
@@ -47,8 +49,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Add the video file path
         logger.debug(f"Adding to playlist -> {video_path}")
         self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
-        # Set the video to played in a loop once it ends.
-        self.mediaPlaylist.setPlaybackMode(QMediaPlaylist.CurrentItemInLoop)
         # Set the QMediaPlaylist for the QMediaPlayer.
         self.mediaPlayer.setPlaylist(self.mediaPlaylist)
         # Set the video output from the QMediaPlayer to the QVideoWidget.
@@ -120,6 +120,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         :return:
         """
         self.mediaPlayer.setPosition(position)
+
+    def on_selected(self, selected_index):
+        # Get the path of the selected file
+        fs = QtWidgets.QFileSystemModel()
+        file_path = pathlib.Path(fs.filePath(selected_index))
+
+        # Stop current video and clear playlist
+        self.mediaPlayer.stop()
+        self.mediaPlaylist.clear()
+        # Add selected video to playlist and initalise the media player
+        logger.debug(
+            f"New item selected. Adding to playlist -> {str(file_path.resolve())}"
+        )
+        self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(file_path.resolve())))
+        self.mediaPlayer.setPlaylist(self.mediaPlaylist)
 
 
 def run():

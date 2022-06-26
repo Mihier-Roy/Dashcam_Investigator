@@ -23,6 +23,10 @@ class ProjectManager:
         )
 
     def new_project(self) -> None:
+        """
+        This function performs the setup for a new project.
+        It creates the required directories and the project file.
+        """
         logger.debug(f"Creating a new project in -> {self.project_directory}")
         # Create the output directory if it does not exist
         if not self.project_directory.exists():
@@ -43,13 +47,18 @@ class ProjectManager:
         self.initialise_project_file()
 
     def initialise_project_file(self) -> None:
+        """
+        This function initialises the base project file with minimal information declared in ProjectStructure
+        """
         # Create the json project file
         if not self.project_file.exists():
             logger.debug(f"Creating project file in -> {self.project_directory}")
             self.project_directory.touch(DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
 
         # Initialise the ProjectStructure object that is to be written to the JSON file
-        project_structure = ProjectStructure(self.project_info)
+        project_structure = ProjectStructure(
+            projectInfo=self.project_info, files_identified=[]
+        )
         logger.debug(f"Intialising project file")
         # Write the JSON object into the file
         with self.project_file.open("w") as file:
@@ -61,7 +70,12 @@ class ProjectManager:
             )
         logger.debug(f"Succsfully intialised project file at -> {self.project_file}")
 
-    def update_files_identified(self, data: FileAttributes):
+    def update_files_identified(self, data: FileAttributes) -> None:
+        """
+        This function updates the files_identified section of the project file.
+        It loads the current project information and updates the files_identified section.
+        The file is then overwritten with the new data.
+        """
         # Load existing project structure
         logger.debug(f"Reading project file -> {self.project_file}")
         with self.project_file.open("r") as file:

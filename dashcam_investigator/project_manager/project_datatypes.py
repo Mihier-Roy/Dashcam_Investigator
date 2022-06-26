@@ -9,14 +9,14 @@ class ProjectInfo:
     """
 
     def __init__(self, input_dir, output_dir) -> None:
-        self.input_directory = str(Path(input_dir).resolve())
-        self.project_directory = str(Path(output_dir).resolve())
+        self.input_directory = Path(input_dir).resolve()
+        self.project_directory = Path(output_dir).resolve()
         self.date_created = datetime.now().isoformat()
 
     def JSON_object(self) -> dict:
         return dict(
-            input_directory=self.input_directory,
-            project_directory=self.project_directory,
+            input_directory=str(self.input_directory),
+            project_directory=str(self.project_directory),
             date_created=self.date_created,
         )
 
@@ -28,7 +28,7 @@ class FileAttributes:
     """
 
     def __init__(self, file_path) -> None:
-        self.file_path = str(Path(file_path).resolve())
+        self.file_path = Path(file_path).resolve()
         self.name = self.file_path.name
         self.type = self.file_path.suffix
         self.sha256_hash = generate_file_hash(self.file_path)
@@ -38,7 +38,7 @@ class FileAttributes:
 
     def JSON_object(self) -> dict:
         return dict(
-            file_path=self.file_path,
+            file_path=str(self.file_path),
             name=self.name,
             type=self.type,
             sha256_hash=self.sha256_hash,

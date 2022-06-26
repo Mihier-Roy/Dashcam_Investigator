@@ -1,8 +1,12 @@
 import json
 from pathlib import Path
 import logging
-from utils.json_encoder import ComplexEncoder
-from project_manager.project_datatypes import ProjectStructure, ProjectInfo
+from utils.custom_json_functions import ProjectEncoder, project_decoder
+from project_manager.project_datatypes import (
+    ProjectStructure,
+    ProjectInfo,
+    FileAttributes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +56,7 @@ class ProjectManager:
             json.dump(
                 obj=project_structure.JSON_object(),
                 fp=file,
-                cls=ComplexEncoder,
+                cls=ProjectEncoder,
                 indent=4,
             )
         logger.debug(f"Succsfully intialised project file at -> {self.project_file}")
-
-    # def update_project_file():
-    # def update_files_identified():

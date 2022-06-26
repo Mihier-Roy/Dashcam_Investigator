@@ -60,3 +60,24 @@ class ProjectManager:
                 indent=4,
             )
         logger.debug(f"Succsfully intialised project file at -> {self.project_file}")
+
+    def update_files_identified(self, data: FileAttributes):
+        # Load existing project structure
+        logger.debug(f"Reading project file -> {self.project_file}")
+        with self.project_file.open("r") as file:
+            project_json: ProjectStructure = json.load(
+                fp=file, object_hook=project_decoder
+            )
+
+        # Update the files_identified section
+        logger.debug(f"Updating files_identified -> {self.project_file}")
+        project_json.files_identified.append(data)
+
+        # Save updated project data
+        with self.project_file.open("w") as file:
+            json.dump(
+                obj=project_json.JSON_object(),
+                fp=file,
+                cls=ProjectEncoder,
+                indent=4,
+            )

@@ -54,10 +54,15 @@ class ProjectStructure:
     This class describes the overall structure of 'dashcam_investigator.json'
     """
 
-    def __init__(self, projectInfo: ProjectInfo) -> None:
-        self.tool_name: str = "Dashcam Investigator"
+    def __init__(
+        self,
+        projectInfo: ProjectInfo,
+        files_identified: list[FileAttributes],
+        tool_name: str = "Dascam Investigator",
+    ) -> None:
+        self.tool_name: str = tool_name
         self.project_info: ProjectInfo = projectInfo
-        self.files_identified: list[FileAttributes] = []
+        self.files_identified: list[FileAttributes] = files_identified
 
     def JSON_object(self) -> dict:
         return dict(

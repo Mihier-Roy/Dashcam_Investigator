@@ -28,17 +28,18 @@ class FileAttributes:
     """
 
     def __init__(self, file_path) -> None:
-        self.file_path = Path(file_path).resolve()
+        self.file_path = Path(file_path)
         self.name = self.file_path.name
         self.type = self.file_path.suffix
         self.sha256_hash = generate_file_hash(self.file_path)
-        self.meta_files, self.output_files = []
+        self.meta_files = []
+        self.output_files = []
         self.flagged = False
         self.notes = ""
 
     def JSON_object(self) -> dict:
         return dict(
-            file_path=str(self.file_path),
+            file_path=str(self.file_path.resolve()),
             name=self.name,
             type=self.type,
             sha256_hash=self.sha256_hash,

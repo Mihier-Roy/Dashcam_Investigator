@@ -74,11 +74,10 @@ class ProjectManager:
             )
         logger.debug(f"Wrote to project file at -> {self.project_file}")
 
-    def update_files_identified(self, data: FileAttributes) -> None:
+    def read_project_file(self) -> ProjectStructure:
         """
-        This function updates the files_identified section of the project file.
-        It loads the current project information and updates the files_identified section.
-        The file is then overwritten with the new data.
+        This function reads an existing dashcam_investigator.json project file.
+        It loads the read data into a ProjectStrucutre object which can be used later on.
         """
         # Load existing project structure
         logger.debug(f"Reading project file -> {self.project_file}")
@@ -86,16 +85,4 @@ class ProjectManager:
             project_json: ProjectStructure = json.load(
                 fp=file, object_hook=project_decoder
             )
-
-        # Update the files_identified section
-        logger.debug(f"Updating files_identified -> {self.project_file}")
-        project_json.files_identified.append(data)
-
-        # Save updated project data
-        with self.project_file.open("w") as file:
-            json.dump(
-                obj=project_json.JSON_object(),
-                fp=file,
-                cls=ProjectEncoder,
-                indent=4,
-            )
+        return project_json

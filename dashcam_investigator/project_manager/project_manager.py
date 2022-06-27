@@ -63,9 +63,13 @@ class ProjectManager:
         return project_structure
 
     def load_existing_project(self, project_path: Path) -> ProjectStructure:
+        """
+        Reads an existing 'dashcam_investigator.json' file and loads the read data into variables.
+        """
         self.project_file = project_path
         project_structure = self.read_project_file()
 
+        logger.debug(f"Read project file. Assigning read data to variables.")
         # Assign read data to object variables
         self.project_info = project_structure.project_info
         self.project_directory = self.project_info["project_directory"]

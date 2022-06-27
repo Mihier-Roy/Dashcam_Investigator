@@ -43,35 +43,36 @@ class ProjectManager:
             Path(self.project_directory, dir).mkdir(exist_ok=True)
             logger.debug(f"Created {dir}")
 
-        # Initialise the project file
-        project_structure = self.initialise_project_file()
-        # return the project structure object so it can be updated later on
-        return project_structure
-
-    def initialise_project_file(self) -> ProjectStructure:
-        """
-        This function initialises the base project file with minimal information declared in ProjectStructure
-        """
         # Create the json project file
         if not self.project_file.exists():
             logger.debug(f"Creating project file in -> {self.project_directory}")
             self.project_directory.touch(DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
 
         # Initialise the ProjectStructure object that is to be written to the JSON file
+        logger.debug(f"Intialising project file")
         project_structure = ProjectStructure(
             projectInfo=self.project_info, files_identified=[]
         )
-        logger.debug(f"Intialising project file")
+        # Write to file
+        self.write_project_file(project_structure)
+        logger.debug(f"Intialised project file -> {self.project_file}")
+
+        # return the project structure object so it can be updated later on
+        return project_structure
+
+    def write_project_file(self, data: ProjectStructure) -> None:
+        """
+        This function initialises the base project file with minimal information declared in ProjectStructure
+        """
         # Write the JSON object into the file
         with self.project_file.open("w") as file:
             json.dump(
-                obj=project_structure.JSON_object(),
+                obj=data.JSON_object(),
                 fp=file,
                 cls=ProjectEncoder,
                 indent=4,
             )
-        logger.debug(f"Succsfully intialised project file at -> {self.project_file}")
-        return project_structure
+        logger.debug(f"Wrote to project file at -> {self.project_file}")
 
     def update_files_identified(self, data: FileAttributes) -> None:
         """

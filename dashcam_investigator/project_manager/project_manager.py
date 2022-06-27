@@ -60,6 +60,16 @@ class ProjectManager:
         # return the project structure object so it can be updated later on
         return project_structure
 
+    def load_existing_project(self, project_path: Path) -> ProjectStructure:
+        self.project_file = project_path
+        project_structure = self.read_project_file()
+
+        # Assign read data to object variables
+        self.project_directory = project_structure.project_info.project_directory
+        self.project_info = project_structure.project_info
+
+        return project_structure
+
     def write_project_file(self, data: ProjectStructure) -> None:
         """
         This function initialises the base project file with minimal information declared in ProjectStructure

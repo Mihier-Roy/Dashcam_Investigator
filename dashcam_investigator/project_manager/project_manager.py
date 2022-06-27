@@ -22,7 +22,7 @@ class ProjectManager:
             self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME
         )
 
-    def new_project(self) -> None:
+    def new_project(self) -> ProjectStructure:
         """
         This function performs the setup for a new project.
         It creates the required directories and the project file.
@@ -44,9 +44,11 @@ class ProjectManager:
             logger.debug(f"Created {dir}")
 
         # Initialise the project file
-        self.initialise_project_file()
+        project_structure = self.initialise_project_file()
+        # return the project structure object so it can be updated later on
+        return project_structure
 
-    def initialise_project_file(self) -> None:
+    def initialise_project_file(self) -> ProjectStructure:
         """
         This function initialises the base project file with minimal information declared in ProjectStructure
         """
@@ -69,6 +71,7 @@ class ProjectManager:
                 indent=4,
             )
         logger.debug(f"Succsfully intialised project file at -> {self.project_file}")
+        return project_structure
 
     def update_files_identified(self, data: FileAttributes) -> None:
         """

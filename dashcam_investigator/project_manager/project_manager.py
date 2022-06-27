@@ -15,11 +15,13 @@ DASHCAM_INVESTIGATOR_DIRECTORIES = ["Maps", "Metadata", "Reports", "Timelines"]
 
 
 class ProjectManager:
-    def __init__(self, input_dir, output_dir) -> None:
+    def __init__(self, input_dir: Path = None, output_dir: Path = None) -> None:
         self.project_info = ProjectInfo(input_dir, output_dir)
-        self.project_directory = Path(output_dir)
-        self.project_file = Path(
-            self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        self.project_directory = output_dir
+        self.project_file = (
+            Path(self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
+            if self.project_directory != None
+            else None
         )
 
     def new_project(self) -> ProjectStructure:
@@ -65,8 +67,8 @@ class ProjectManager:
         project_structure = self.read_project_file()
 
         # Assign read data to object variables
-        self.project_directory = project_structure.project_info.project_directory
         self.project_info = project_structure.project_info
+        self.project_directory = self.project_info["project_directory"]
 
         return project_structure
 

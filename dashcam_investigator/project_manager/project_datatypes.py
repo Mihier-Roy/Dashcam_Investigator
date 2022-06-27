@@ -8,15 +8,15 @@ class ProjectInfo:
     Objects of this class record the high level information of the project.
     """
 
-    def __init__(self, input_dir, output_dir) -> None:
-        self.input_directory = Path(input_dir).resolve()
-        self.project_directory = Path(output_dir).resolve()
+    def __init__(self, input_dir: Path, output_dir: Path) -> None:
+        self.input_directory = input_dir
+        self.project_directory = output_dir
         self.date_created = datetime.now().isoformat()
 
     def JSON_object(self) -> dict:
         return dict(
-            input_directory=str(self.input_directory),
-            project_directory=str(self.project_directory),
+            input_directory=str(self.input_directory.resolve()),
+            project_directory=str(self.project_directory.resolve()),
             date_created=self.date_created,
         )
 
@@ -27,8 +27,8 @@ class FileAttributes:
     These files are saved to the project's JSON file for use throughout the application.
     """
 
-    def __init__(self, file_path) -> None:
-        self.file_path = Path(file_path)
+    def __init__(self, file_path: Path) -> None:
+        self.file_path = file_path
         self.name = self.file_path.name
         self.type = self.file_path.suffix
         self.sha256_hash = generate_file_hash(self.file_path)

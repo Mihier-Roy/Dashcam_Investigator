@@ -32,6 +32,7 @@ The application was built using the following open source projects
 - Numpy
 - Black (code formatting)
 - PyTest (unit testing)
+- Filetype
 
 ### Log configuration
 

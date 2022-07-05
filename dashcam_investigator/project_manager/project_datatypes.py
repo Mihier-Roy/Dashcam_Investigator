@@ -8,16 +8,22 @@ class ProjectInfo:
     Objects of this class record the high level information of the project.
     """
 
-    def __init__(self, input_dir: Path, output_dir: Path) -> None:
+    def __init__(
+        self, input_dir: Path, output_dir: Path, case_name: str, investigator_name: str
+    ) -> None:
         self.input_directory = input_dir
         self.project_directory = output_dir
         self.date_created = datetime.now().isoformat()
+        self.case_name = ""
+        self.investigator_name = ""
 
     def JSON_object(self) -> dict:
         return dict(
             input_directory=str(self.input_directory.resolve()),
             project_directory=str(self.project_directory.resolve()),
             date_created=self.date_created,
+            case_name=self.case_name,
+            investigator_name=self.investigator_name,
         )
 
 

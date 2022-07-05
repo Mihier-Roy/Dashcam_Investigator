@@ -14,8 +14,8 @@ class ProjectInfo:
         self.input_directory = input_dir
         self.project_directory = output_dir
         self.date_created = datetime.now().isoformat()
-        self.case_name = ""
-        self.investigator_name = ""
+        self.case_name = case_name
+        self.investigator_name = investigator_name
 
     def JSON_object(self) -> dict:
         return dict(

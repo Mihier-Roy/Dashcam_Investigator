@@ -18,7 +18,6 @@ def walk_directory(
     other_files: list[FileAttributes] = []
     # Iterate recursively through all the files in a directory
     for item in input_dir.rglob("*"):
-        logger.debug(f"{item}")
         if item.is_file():
             file_type = filetype.guess_mime(item.resolve())
             if file_type is not None:

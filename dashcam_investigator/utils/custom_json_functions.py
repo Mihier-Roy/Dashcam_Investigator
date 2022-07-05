@@ -1,6 +1,10 @@
 import json
-from collections import namedtuple
-from project_manager.project_datatypes import ProjectStructure
+from pathlib import Path
+from project_manager.project_datatypes import (
+    ProjectStructure,
+    ProjectInfo,
+    FileAttributes,
+)
 
 
 class ProjectEncoder(json.JSONEncoder):
@@ -28,7 +32,7 @@ def project_decoder(dictionary):
         other_files = convert_to_file_attr(dictionary["other_files"])
 
         return ProjectStructure(
-            projectInfo=dictionary["project_info"],
+            projectInfo=convert_to_project_info(dictionary["project_info"]),
             video_files=video_files,
             image_files=image_files,
             other_files=other_files,
@@ -38,19 +42,25 @@ def project_decoder(dictionary):
     return dictionary
 
 
+def convert_to_project_info(projInfo):
+    return ProjectInfo(
+        input_dir=Path(projInfo["input_directory"]),
+        output_dir=Path(projInfo["project_directory"]),
+        date_created=projInfo["date_created"],
+        case_name=projInfo["case_name"],
+        investigator_name=projInfo["investigator_name"],
+    )
+
+
 def convert_to_file_attr(input_list):
     output_list = []
-    file_attr = namedtuple(
-        "FileAttributes",
-        "file_path name type sha256_hash meta_files output_files flagged notes",
-    )
 
     for item in input_list:
         output_list.append(
-            file_attr(
-                file_path=item["file_path"],
+            FileAttributes(
+                file_path=Path(item["file_path"]),
                 name=item["name"],
-                type=item["type"],
+                ftype=item["type"],
                 sha256_hash=item["sha256_hash"],
                 meta_files=item["meta_files"],
                 output_files=item["output_files"],

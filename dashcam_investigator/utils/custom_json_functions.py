@@ -20,7 +20,9 @@ def project_decoder(dictionary):
     if "tool_name" in dictionary:
         return ProjectStructure(
             projectInfo=dictionary["project_info"],
-            files_identified=dictionary["files_identified"],
+            video_files=dictionary["video_files"],
+            image_files=dictionary["image_files"],
+            other_files=dictionary["other_files"],
             tool_name=dictionary["tool_name"],
         )
     # Else return the dictionary unchanged

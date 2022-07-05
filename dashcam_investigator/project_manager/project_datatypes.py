@@ -64,16 +64,22 @@ class ProjectStructure:
     def __init__(
         self,
         projectInfo: ProjectInfo,
-        files_identified: list[FileAttributes],
+        video_files: list[FileAttributes],
+        image_files: list[FileAttributes],
+        other_files: list[FileAttributes],
         tool_name: str = "Dascam Investigator",
     ) -> None:
         self.tool_name: str = tool_name
         self.project_info: ProjectInfo = projectInfo
-        self.files_identified: list[FileAttributes] = files_identified
+        self.video_files: list[FileAttributes] = video_files
+        self.image_files: list[FileAttributes] = image_files
+        self.other_files: list[FileAttributes] = other_files
 
     def JSON_object(self) -> dict:
         return dict(
             tool_name=self.tool_name,
             project_info=self.project_info,
-            files_identified=self.files_identified,
+            video_files=self.video_files,
+            image_files=self.image_files,
+            other_files=self.other_files,
         )

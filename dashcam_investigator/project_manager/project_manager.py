@@ -53,7 +53,10 @@ class ProjectManager:
         # Initialise the ProjectStructure object that is to be written to the JSON file
         logger.debug(f"Intialising project file")
         project_structure = ProjectStructure(
-            projectInfo=self.project_info, files_identified=[]
+            projectInfo=self.project_info,
+            video_files=[],
+            image_files=[],
+            other_files=[],
         )
         # Write to file
         self.write_project_file(project_structure)

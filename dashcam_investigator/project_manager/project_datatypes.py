@@ -9,11 +9,32 @@ class ProjectInfo:
     """
 
     def __init__(
-        self, input_dir: Path, output_dir: Path, case_name: str, investigator_name: str
+        self,
+        input_dir: Path,
+        output_dir: Path,
+        case_name: str,
+        investigator_name: str,
+        date_created=None,
     ) -> None:
         self.input_directory = input_dir
         self.project_directory = output_dir
-        self.date_created = datetime.now().isoformat()
+        self.date_created = (
+            datetime.now().isoformat() if date_created is None else date_created
+        )
+        self.case_name = case_name
+        self.investigator_name = investigator_name
+
+    def new_obj(
+        self,
+        input_directory,
+        project_directory,
+        date_created,
+        case_name,
+        investigator_name,
+    ):
+        self.input_directory = Path(input_directory)
+        self.project_directory = Path(project_directory)
+        self.date_created = date_created
         self.case_name = case_name
         self.investigator_name = investigator_name
 
@@ -33,15 +54,27 @@ class FileAttributes:
     These files are saved to the project's JSON file for use throughout the application.
     """
 
-    def __init__(self, file_path: Path) -> None:
+    def __init__(
+        self,
+        file_path: Path,
+        name=None,
+        ftype=None,
+        sha256_hash=None,
+        meta_files=None,
+        output_files=None,
+        flagged=None,
+        notes=None,
+    ) -> None:
         self.file_path = file_path
-        self.name = self.file_path.name
-        self.type = self.file_path.suffix
-        self.sha256_hash = generate_file_hash(self.file_path)
-        self.meta_files = []
-        self.output_files = []
-        self.flagged = False
-        self.notes = ""
+        self.name = self.file_path.name if name is None else name
+        self.type = self.file_path.suffix if ftype is None else ftype
+        self.sha256_hash = (
+            generate_file_hash(self.file_path) if sha256_hash is None else sha256_hash
+        )
+        self.meta_files = [] if meta_files is None else meta_files
+        self.output_files = [] if output_files is None else output_files
+        self.flagged = False if flagged is None else flagged
+        self.notes = "" if notes is None else notes
 
     def JSON_object(self) -> dict:
         return dict(

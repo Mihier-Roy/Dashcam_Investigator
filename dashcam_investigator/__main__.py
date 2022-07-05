@@ -2,37 +2,11 @@ import logging
 import logging.config
 from pathlib import Path
 import os
-import tempfile
-from extract_metadata import (
-    extract_metadata_loop,
-    get_file_list,
-    make_handlers,
-)
-
+from core.walk_directory import walk_directory
+from core.extract_metadata import process_gps_data
+from project_manager.project_datatypes import FileAttributes
+from project_manager.project_manager import ProjectManager
 from gui import app
-
-
-# def main():
-#     logger.debug(f"Temp dir set : {tempfile.gettempdir()}")
-
-#     input_path = input("Enter a file path : ")
-#     input_path = Path(input_path)
-#     logger.debug(f"Obtained input path: {input_path}.")
-
-#     logger.debug(f"Beginning analysis of input directory.")
-#     video_list = get_file_list(input_directory=input_path)
-
-#     logger.debug("Video files identified: ")
-#     for video in video_list:
-#         print(f"Name: {video}")
-
-#     logger.debug(f"Beginning metadata extraction on {len(video_list)} files.")
-#     meta_list = make_handlers(
-#         video_name_list=video_list, temp_directory=tempfile.gettempdir()
-#     )
-#     extract_metadata_loop(meta_list, input_path)
-#     logger.debug("Metadata extraction completed!")
-
 
 if __name__ == "__main__":
     # Create a logs directory in AppData\Local\DashcamInvestigator if it doesn't already exist
@@ -48,4 +22,40 @@ if __name__ == "__main__":
     )
 
     # Launch GUI
-    app.run()
+    # app.run()
+    # main()
+    input_path = Path("H:\\DissertationDataset\\Trancend\\DP220")
+    output_path = Path("E:\\Output_Trancend")
+
+    # If project exists, load project
+    if Path(output_path, "dashcam_investigator.json").exists():
+        project_manager = ProjectManager()
+        project_object = project_manager.load_existing_project(
+            Path(output_path, "dashcam_investigator.json")
+        )
+    else:
+        # Create and intialise a new project
+        project_manager = ProjectManager(input_dir=input_path, output_dir=output_path)
+        project_object = project_manager.new_project()
+
+        # Walk through the directory and categorise files based on MIME type
+        (
+            project_object.video_files,
+            project_object.image_files,
+            project_object.other_files,
+        ) = walk_directory(input_dir=input_path)
+
+        # Write updated object to file
+        project_manager.write_project_file(data=project_object)
+
+    # Extract GPS data for all video files
+    for i in range(0, 1):
+        print(f"{project_object.video_files[0].name}")
+        gps_data = process_gps_data(
+            video_path=Path(project_object.video_files[0].file_path),
+            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
+        )
+        project_object.video_files[0].meta_files.append(gps_data)
+
+    project_manager.write_project_file(data=project_object)
+    print("test")

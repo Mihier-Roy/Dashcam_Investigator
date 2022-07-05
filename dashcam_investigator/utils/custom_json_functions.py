@@ -48,14 +48,14 @@ def convert_to_file_attr(input_list):
     for item in input_list:
         output_list.append(
             file_attr(
-                item["file_path"],
-                item["name"],
-                item["type"],
-                item["sha256_hash"],
-                item["meta_files"],
-                item["output_files"],
-                item["flagged"],
-                item["notes"],
+                file_path=item["file_path"],
+                name=item["name"],
+                type=item["type"],
+                sha256_hash=item["sha256_hash"],
+                meta_files=item["meta_files"],
+                output_files=item["output_files"],
+                flagged=item["flagged"],
+                notes=item["notes"],
             )
         )
     return output_list

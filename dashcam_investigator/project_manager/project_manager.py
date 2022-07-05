@@ -75,7 +75,7 @@ class ProjectManager:
         logger.debug(f"Read project file. Assigning read data to variables.")
         # Assign read data to object variables
         self.project_info = project_structure.project_info
-        self.project_directory = self.project_info["project_directory"]
+        self.project_directory = self.project_info.project_directory
 
         return project_structure
 

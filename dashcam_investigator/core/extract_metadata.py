@@ -12,7 +12,6 @@ def process_gps_data(video_path: Path, output_dir: Path) -> Path:
     logger.debug(f"Extracting GPS data for -> {video_path.resolve()}")
     output_gpx = Path(output_dir, f"{video_path.name[0:-4]}.gpx")
     system(f"exiftool -p gpx.fmt -ee3 {video_path.resolve()} > {output_gpx.resolve()}")
-    logger.debug(f"GPS data available at -> {output_gpx}")
     return str(output_gpx.resolve())
 
 
@@ -25,6 +24,5 @@ def process_file_meta(video_path: Path, output_dir: Path) -> Path:
     system(
         f'exiftool -ee -FileType -filesize -MIMEType -d %d-%m-%Y" "%H:%M:%S -createDate -Duration -Format -Information -csv  {video_path.resolve()} >> {output_csv.resolve()}'
     )
-    logger.debug(f"File metadata available at -> {output_csv}")
 
     return str(output_csv.resolve())

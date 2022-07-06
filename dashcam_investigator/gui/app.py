@@ -1,3 +1,4 @@
+import html
 import logging
 import pathlib
 import sys
@@ -70,8 +71,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ######################################
         self.metadata_model = PandasTableModel(metadata_df)
         self.metadata_table.setModel(self.metadata_model)
-        self.gps_model = PandasTableModel(gps_df)
-        self.gps_table.setModel(self.gps_model)
+        # self.gps_model = PandasTableModel(gps_df)
+        # self.gps_table.setModel(self.gps_model)
 
     def play_video(self):
         """
@@ -136,28 +137,33 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(file_path.resolve())))
         self.mediaPlayer.setPlaylist(self.mediaPlaylist)
 
+        ######################################
+        # Map tab view
+        ######################################
+        with open(
+            "E:\\Output_Nextbase_312\\Maps\\2019_1120_112611_037.MOV_map.html", "r"
+        ) as f:
+            html_str = f.read()
+        self.web_engine_view.setHtml(html_str)
+
 
 def run():
     logger.info("---Running Dashcam Investigator---")
-    dir_path = pathlib.Path("H:/DissertationDataset", "Trancend")
+    dir_path = pathlib.Path("H:/DissertationDataset", "Nextbase312")
     video_path = pathlib.Path(
-        "H:/DissertationDataset",
-        "Trancend",
-        "DP220",
-        "N_VIDEO",
-        "2019_1118_085235_008.MOV",
+        "H:\\DissertationDataset\\Nextbase312\\DCIM\\MOVIE\\2019_1120_112611_037.MOV"
     )
     metadata_df = pd.read_csv(
-        "C:/Users/mihie/AppData/Local/Temp/2019_1120_052408_001_fileinfo.csv"
+        "E:\\Output_Nextbase_312\\Metadata\\2019_1120_082846_006_fileinfo.csv"
     )
     metadata_df = metadata_df.T
     metadata_df.rename(columns={0: "Value"}, inplace=True)
-    gps_df = pd.read_csv(
-        "C:/Users/mihie/AppData/Local/Temp/2019_1119_165917_001_gpsdata_converted.csv",
-        names=["GPS Speed", "GPS Latitude", "GPS Logitude"],
-    )
+    # gps_df = pd.read_csv(
+    #     "C:/Users/mihie/AppData/Local/Temp/2019_1119_165917_001_gpsdata_converted.csv",
+    #     names=["GPS Speed", "GPS Latitude", "GPS Logitude"],
+    # )
     app = QtWidgets.QApplication([])
     logger.debug("Initialising and displaying main window")
-    window = MainWindow(dir_path, video_path, metadata_df, gps_df)
+    window = MainWindow(dir_path, video_path, metadata_df, gps_df=pd.DataFrame())
     window.show()
     sys.exit(app.exec_())

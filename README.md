@@ -33,7 +33,7 @@ The application was built using the following open source projects
 - Black (code formatting)
 - PyTest (unit testing)
 - Filetype
-- geopy (To process GPS data)
+- gpxpy (To process GPX data)
 - folium (To create maps)
 
 ### Log configuration

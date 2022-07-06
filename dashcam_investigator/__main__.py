@@ -3,8 +3,7 @@ import logging.config
 from pathlib import Path
 import os
 from core.walk_directory import walk_directory
-from core.extract_metadata import process_gps_data
-from project_manager.project_datatypes import FileAttributes
+from core.extract_metadata import process_gps_data, process_file_meta, process_time_meta
 from project_manager.project_manager import ProjectManager
 from gui import app
 
@@ -20,6 +19,8 @@ if __name__ == "__main__":
     logging.config.fileConfig(
         "log.conf", defaults={"logPath": log_path}, disable_existing_loggers=False
     )
+
+    logger = logging.getLogger(__name__)
 
     # Launch GUI
     # app.run()
@@ -49,13 +50,22 @@ if __name__ == "__main__":
         project_manager.write_project_file(data=project_object)
 
     # Extract GPS data for all video files
-    for i in range(0, 1):
-        print(f"{project_object.video_files[0].name}")
+    for index, video in enumerate(project_object.video_files):
+        logger.debug(f"Processing video {index+1}/{len(project_object.video_files)}")
         gps_data = process_gps_data(
-            video_path=Path(project_object.video_files[0].file_path),
+            video_path=Path(video.file_path),
             output_dir=Path(project_object.project_info.project_directory, "Metadata"),
         )
-        project_object.video_files[0].meta_files.append(gps_data)
+        video.meta_files.append(gps_data)
+        file_meta = process_file_meta(
+            video_path=Path(video.file_path),
+            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
+        )
+        video.meta_files.append(file_meta)
+        time_meta = process_time_meta(
+            video_path=Path(video.file_path),
+            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
+        )
+        video.meta_files.append(time_meta)
 
     project_manager.write_project_file(data=project_object)
-    print("test")

@@ -3,12 +3,6 @@ import logging
 from pathlib import Path
 from os import system
 
-# from metadata_classes import (
-#     GPSMetadataExtractor,
-#     TimeMetadataExtractor,
-#     FileInfoMetadataExtractor,
-# )
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,13 +12,9 @@ def process_gps_data(video_path: Path, output_dir: Path) -> Path:
     """
     logger.debug(f"Extracting GPS data for -> {video_path.resolve()}")
     output_csv = Path(output_dir, f"{video_path.name[0:-4]}_gpsdata.csv")
-    logger.debug(
-        f'Executing -> exiftool  -ee -csv -p "$GPSSpeed, $GPSLatitude, $GPSLongitude" -r -n {video_path.resolve()} >> {output_csv.resolve()}'
-    )
     system(
         f'exiftool  -ee -csv -p "$GPSSpeed, $GPSLatitude, $GPSLongitude" -r -n {video_path.resolve()} >> {output_csv.resolve()}'
     )
-    logger.debug(f"Extracted GPS data for -> {video_path}")
     trim_data(output_csv, output_dir)
     logger.debug(f"GPS data available at -> {output_csv}")
 
@@ -52,30 +42,29 @@ def trim_data(output_csv: Path, output_dir: Path):
     temp_csv.rename(output_csv)
 
 
-# def make_handlers(video_name_list: list, temp_directory: str) -> list:
-#     # Takes in a list of video names and temp directory, and makes a list of 3 metadata handlers for each video name.
-#     # Returns the list of metadata handlers
-#     metadata_handler_list = []
-#     for video in video_name_list:
-#         metadata_handler_list.append(
-#             GPSMetadataExtractor(video=video, temp_directory=temp_directory)
-#         )
-#         metadata_handler_list.append(
-#             TimeMetadataExtractor(video=video, temp_directory=temp_directory)
-#         )
-#         metadata_handler_list.append(
-#             FileInfoMetadataExtractor(video=video, temp_directory=temp_directory)
-#         )
-#     return metadata_handler_list
+def process_file_meta(video_path: Path, output_dir: Path) -> Path:
+    """
+    Extracts File metadata from a video file and return the Path to the resulting CSV
+    """
+    output_csv = Path(output_dir, f"{video_path.name[0:-4]}_fileinfo.csv")
+    logger.debug(f"Extracting File metadata data for -> {video_path.resolve()}")
+    system(
+        f'exiftool -ee -FileType -filesize -MIMEType -d %d-%m-%Y" "%H:%M:%S -createDate -Duration -Format -Information -csv  {video_path.resolve()} >> {output_csv.resolve()}'
+    )
+    logger.debug(f"File metadata available at -> {output_csv}")
+
+    return str(output_csv.resolve())
 
 
-# """
-# TODO: Add a function to perform a check for each of the tags to extract.
-# This way, runtime errors can be avoided and the tool can produce a verifiable result each time.
-# """
+def process_time_meta(video_path: Path, output_dir: Path) -> Path:
+    """
+    Extracts Time metadata from a video file and return the Path to the resulting CSV
+    """
+    output_csv = Path(output_dir, f"{video_path.name[0:-4]}_timedata.csv")
+    logger.debug(f"Extracting time metadata for -> {video_path.resolve()}")
+    system(
+        f'exiftool -ee -d %d-%m-%Y" "%H:%M:%S -gpsdatetime -s -s -s {video_path.resolve()} >> {output_csv.resolve()}'
+    )
+    logger.debug(f"Time metadata available at -> {output_csv}")
 
-
-# def extract_metadata_loop(metadata_handler_list: list, input_directory: str):
-#     # Takes in a list of metadata handlers and calls their extract_metadata() methods
-#     for metadata_handler in metadata_handler_list:
-#         metadata_handler.extract_metadata(input_directory)
+    return str(output_csv.resolve())

@@ -138,13 +138,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaPlayer.setPlaylist(self.mediaPlaylist)
 
         ######################################
-        # Map tab view
+        # Map tab
         ######################################
         with open(
-            "E:\\Output_Nextbase_312\\Maps\\2019_1120_112611_037.MOV_map.html", "r"
+            "E:\\Output_Nextbase_312\\Maps\\2019_1120_112611_037_map.html", "r"
         ) as f:
             html_str = f.read()
-        self.web_engine_view.setHtml(html_str)
+        self.maps_web_view.setHtml(html_str)
+
+        ######################################
+        # Speed Graph tab
+        ######################################
+        with open(
+            "E:\\Output_Nextbase_312\\Graphs\\2019_1120_112611_037_speed_graph.html",
+            "r",
+        ) as f:
+            graph_str = f.read()
+        self.graph_web_view.setHtml(graph_str)
 
 
 def run():
@@ -154,7 +164,7 @@ def run():
         "H:\\DissertationDataset\\Nextbase312\\DCIM\\MOVIE\\2019_1120_112611_037.MOV"
     )
     metadata_df = pd.read_csv(
-        "E:\\Output_Nextbase_312\\Metadata\\2019_1120_082846_006_fileinfo.csv"
+        "E:\\Output_Nextbase_312\\Metadata\\2019_1120_112611_037_fileinfo.csv"
     )
     metadata_df = metadata_df.T
     metadata_df.rename(columns={0: "Value"}, inplace=True)

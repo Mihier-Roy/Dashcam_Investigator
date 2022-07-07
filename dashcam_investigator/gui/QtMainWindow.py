@@ -106,9 +106,9 @@ class Ui_MainWindow(object):
         self.data_tabs.setSizePolicy(sizePolicy)
         self.map_tab = QWidget()
         self.map_tab.setObjectName(u"map_tab")
-        self.web_engine_view = QWebEngineView(self.map_tab)
-        self.web_engine_view.setObjectName(u"web_engine_view")
-        self.web_engine_view.setGeometry(QRect(-1, -1, 1251, 391))
+        self.maps_web_view = QWebEngineView(self.map_tab)
+        self.maps_web_view.setObjectName(u"maps_web_view")
+        self.maps_web_view.setGeometry(QRect(-1, -1, 1251, 391))
         self.data_tabs.addTab(self.map_tab, "")
         self.metadata_tab = QWidget()
         self.metadata_tab.setObjectName(u"metadata_tab")
@@ -126,14 +126,16 @@ class Ui_MainWindow(object):
 
         self.metadata_table_layout.addWidget(self.metadata_table)
 
-        self.gps_table = QTableView(self.layoutWidget1)
-        self.gps_table.setObjectName(u"gps_table")
-        self.gps_table.horizontalHeader().setMinimumSectionSize(100)
-        self.gps_table.horizontalHeader().setDefaultSectionSize(200)
-
-        self.metadata_table_layout.addWidget(self.gps_table)
-
         self.data_tabs.addTab(self.metadata_tab, "")
+        self.graph_tab = QWidget()
+        self.graph_tab.setObjectName(u"graph_tab")
+        self.graph_web_view = QWebEngineView(self.graph_tab)
+        self.graph_web_view.setObjectName(u"graph_web_view")
+        self.graph_web_view.setGeometry(QRect(0, 0, 1251, 391))
+        self.data_tabs.addTab(self.graph_tab, "")
+        self.notes_tab = QWidget()
+        self.notes_tab.setObjectName(u"notes_tab")
+        self.data_tabs.addTab(self.notes_tab, "")
 
         self.main_view_layout.addWidget(self.data_tabs)
 
@@ -151,7 +153,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.data_tabs.setCurrentIndex(0)
+        self.data_tabs.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -166,5 +168,7 @@ class Ui_MainWindow(object):
         self.stop_button.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.map_tab), QCoreApplication.translate("MainWindow", u"Map", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.metadata_tab), QCoreApplication.translate("MainWindow", u"Metadata", None))
+        self.data_tabs.setTabText(self.data_tabs.indexOf(self.graph_tab), QCoreApplication.translate("MainWindow", u"Speed Graph", None))
+        self.data_tabs.setTabText(self.data_tabs.indexOf(self.notes_tab), QCoreApplication.translate("MainWindow", u"Notes", None))
     # retranslateUi
 

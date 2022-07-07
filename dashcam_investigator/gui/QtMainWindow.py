@@ -42,16 +42,29 @@ class Ui_MainWindow(object):
 
         self.project_view_layout.addWidget(self.logo_label)
 
-        self.dir_label = QLabel(self.layoutWidget)
-        self.dir_label.setObjectName(u"dir_label")
-
-        self.project_view_layout.addWidget(self.dir_label)
-
-        self.dir_tree_view = QTreeView(self.layoutWidget)
+        self.file_tab = QTabWidget(self.layoutWidget)
+        self.file_tab.setObjectName(u"file_tab")
+        self.directory_tab = QWidget()
+        self.directory_tab.setObjectName(u"directory_tab")
+        self.dir_tree_view = QTreeView(self.directory_tab)
         self.dir_tree_view.setObjectName(u"dir_tree_view")
+        self.dir_tree_view.setGeometry(QRect(0, 0, 311, 841))
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.dir_tree_view.sizePolicy().hasHeightForWidth())
+        self.dir_tree_view.setSizePolicy(sizePolicy)
         self.dir_tree_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.file_tab.addTab(self.directory_tab, "")
+        self.videos_tab = QWidget()
+        self.videos_tab.setObjectName(u"videos_tab")
+        self.video_list_view = QListView(self.videos_tab)
+        self.video_list_view.setObjectName(u"video_list_view")
+        self.video_list_view.setGeometry(QRect(0, 0, 311, 861))
+        self.video_list_view.setSpacing(3)
+        self.file_tab.addTab(self.videos_tab, "")
 
-        self.project_view_layout.addWidget(self.dir_tree_view)
+        self.project_view_layout.addWidget(self.file_tab)
 
 
         self.app_layout.addLayout(self.project_view_layout)
@@ -105,11 +118,11 @@ class Ui_MainWindow(object):
 
         self.data_tabs = QTabWidget(self.layoutWidget)
         self.data_tabs.setObjectName(u"data_tabs")
-        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.data_tabs.sizePolicy().hasHeightForWidth())
-        self.data_tabs.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.data_tabs.sizePolicy().hasHeightForWidth())
+        self.data_tabs.setSizePolicy(sizePolicy1)
         self.map_tab = QWidget()
         self.map_tab.setObjectName(u"map_tab")
         self.maps_web_view = QWebEngineView(self.map_tab)
@@ -149,11 +162,11 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.save_note_button = QPushButton(self.widget)
         self.save_note_button.setObjectName(u"save_note_button")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.save_note_button.sizePolicy().hasHeightForWidth())
-        self.save_note_button.setSizePolicy(sizePolicy1)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.save_note_button.sizePolicy().hasHeightForWidth())
+        self.save_note_button.setSizePolicy(sizePolicy2)
 
         self.verticalLayout.addWidget(self.save_note_button)
 
@@ -212,6 +225,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
+        self.file_tab.setCurrentIndex(0)
         self.data_tabs.setCurrentIndex(0)
 
 
@@ -221,7 +235,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
         self.logo_label.setText(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
-        self.dir_label.setText(QCoreApplication.translate("MainWindow", u"Project files", None))
+        self.file_tab.setTabText(self.file_tab.indexOf(self.directory_tab), QCoreApplication.translate("MainWindow", u"Directory", None))
+        self.file_tab.setTabText(self.file_tab.indexOf(self.videos_tab), QCoreApplication.translate("MainWindow", u"Videos", None))
         self.video_title.setText(QCoreApplication.translate("MainWindow", u"Currently playing : ", None))
         self.play_button.setText(QCoreApplication.translate("MainWindow", u"Play", None))
         self.pause_button.setText(QCoreApplication.translate("MainWindow", u"Pause", None))

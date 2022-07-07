@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide2 import QtWidgets, QtGui
 from project_manager.project_datatypes import ProjectStructure, FileAttributes
 from project_manager.project_manager import ProjectManager
-from gui.table_models import PandasTableModel
+from gui.qt_models import PandasTableModel, VideoListModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
@@ -55,6 +55,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dir_tree_view.show()
         # Collect the currently selected item
         self.dir_tree_view.clicked.connect(self.on_selected)
+
+        # Populate the video table view
+        list_model = VideoListModel(self.project_object.video_files)
+        self.video_list_view.setModel(list_model)
+        self.video_list_view.clicked.connect(self.on_vid_selected)
 
         # Define media player
         logger.debug("Loading media player")
@@ -135,6 +140,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.note_status.setStyleSheet("QLabel { color : green; }")
         self.note_status.setText("Note saved!")
 
+    def on_vid_selected(self, selected_index):
+        # Get the video name and pass it on to the on_selected function
+        self.load_video_data(selected_index.data())
+
     def on_selected(self, selected_index):
         self.note_status.setText("")
         # Get the path of the selected file
@@ -142,62 +151,70 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if not fs.isDir(selected_index):
             file_name = fs.fileName(selected_index)
-            file_path = Path(fs.filePath(selected_index))
+            self.load_video_data(file_name)
 
-            ######################################
-            # Video player
-            ######################################
-            # Stop current video and clear playlist
-            self.mediaPlayer.stop()
-            self.mediaPlaylist.clear()
-            # Add selected video to playlist and initalise the media player
-            logger.debug(
-                f"New item selected. Adding to playlist -> {str(file_path.resolve())}"
-            )
-            self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(file_path.resolve())))
-            self.mediaPlayer.setPlaylist(self.mediaPlaylist)
+    def load_video_data(self, video_name):
+        """
+        This function retrieves the information for the selected video.
+        The information is used to load the video into the player and load maps, metadata, graphs and notes.
+        """
+        # Get the attributes of the selected video
+        self.current_video: FileAttributes = [
+            video
+            for video in self.project_object.video_files
+            if video.name == video_name
+        ][0]
 
-            # Set currently playing label
-            self.video_title.setText(f"Currently playing : {str(file_path.resolve())}")
+        logger.debug(f"Loading video information for -> {self.current_video.name}")
 
-            # Get information for the selected video
-            logger.debug(f"Loading video information for -> {file_name}")
-            self.current_video: FileAttributes = [
-                video
-                for video in self.project_object.video_files
-                if video.name == file_name
-            ][0]
+        video_path = Path(self.current_video.file_path)
+        map_file = self.current_video.output_files[0]
+        graph_file = self.current_video.output_files[1]
+        metadata_file = self.current_video.meta_files[1]
 
-            map_file = self.current_video.output_files[0]
-            graph_file = self.current_video.output_files[1]
-            metadata_file = self.current_video.meta_files[1]
+        ######################################
+        # Video player
+        ######################################
+        # Stop current video and clear playlist
+        self.mediaPlayer.stop()
+        self.mediaPlaylist.clear()
+        # Add selected video to playlist and initalise the media player
+        logger.debug(
+            f"New item selected. Adding to playlist -> {str(video_path.resolve())}"
+        )
+        self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
+        self.mediaPlayer.setPlaylist(self.mediaPlaylist)
+        self.play_video()
 
-            ######################################
-            # Map tab
-            ######################################
-            with Path(map_file).open() as f:
-                html_str = f.read()
-            self.maps_web_view.setHtml(html_str)
+        # Set currently playing label
+        self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
 
-            ######################################
-            # Metadata tab
-            ######################################
-            metadata_df = pd.read_csv(metadata_file).T
-            metadata_df.rename(columns={0: "Value"}, inplace=True)
-            self.metadata_model = PandasTableModel(metadata_df)
-            self.metadata_table.setModel(self.metadata_model)
+        ######################################
+        # Map tab
+        ######################################
+        with Path(map_file).open() as f:
+            html_str = f.read()
+        self.maps_web_view.setHtml(html_str)
 
-            ######################################
-            # Speed Graph tab
-            ######################################
-            with Path(graph_file).open() as f:
-                graph_str = f.read()
-            self.graph_web_view.setHtml(graph_str)
+        ######################################
+        # Metadata tab
+        ######################################
+        metadata_df = pd.read_csv(metadata_file).T
+        metadata_df.rename(columns={0: "Value"}, inplace=True)
+        self.metadata_model = PandasTableModel(metadata_df)
+        self.metadata_table.setModel(self.metadata_model)
 
-            ######################################
-            # Notes tab
-            ######################################
-            self.notes_textbox.setText(str(self.current_video.notes))
+        ######################################
+        # Speed Graph tab
+        ######################################
+        with Path(graph_file).open() as f:
+            graph_str = f.read()
+        self.graph_web_view.setHtml(graph_str)
+
+        ######################################
+        # Notes tab
+        ######################################
+        self.notes_textbox.setText(str(self.current_video.notes))
 
 
 def run():

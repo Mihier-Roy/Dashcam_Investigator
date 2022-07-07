@@ -21,7 +21,6 @@ def initialise_map(video_metadata: DataFrame) -> Mappy:
 
 def generate_speed_colour_map(speed: DataFrame) -> linear:
     # Takes in a dataframe containing a large list of speed, and uses this to generate a branca linear colour map.
-    logger.debug("Generating color scale based on minimum and maximum speeds")
     colour_map = linear.Set1_09.scale(speed["Speed"].min(), speed["Speed"].max())
     colour_map.caption = "Speed colour scale: "
     return colour_map
@@ -38,7 +37,6 @@ def add_routeline_to_map(
     Takes in a dataframe containing GPS and temporal data, as well as featuregroups for a routeline, start marker, and speed line.
     Uses this data to generate an instance of the RouteLineMaker class, and returns the instance
     """
-    logger.debug("Begin creating a routline")
     routeliner = RouteLineMaker(
         gps_df, points, routeline_group, start_marker_group, colour_line_group
     )
@@ -51,7 +49,6 @@ def add_start_marker_to_map(file_info_df: DataFrame, routeliner: RouteLineMaker)
     Uses the file information dataframe to make a popup for a start marker. Calls the make_start_marker() method for the RouteLineMaker instance to add
     the popup to a start marker
     """
-    logger.debug("Begin creating a start marker")
     marker_popup = StartMarkerPopup(file_info_df).start_marker_popup_html()
     routeliner.make_start_marker(marker_popup)
 
@@ -61,7 +58,6 @@ def add_speedline_to_map(routeliner: RouteLineMaker, colour_map: linear):
     Takes in an instance of the RouteLineMaker class and a linear branca colormap.
     Calls a method for the RouteLineMaker instance which uses the colour map to add a speed line to the map.
     """
-    logger.debug("Begin creating a routline with speed coloring")
     routeliner.make_routeline_with_speed_colouring(colour_map)
 
 

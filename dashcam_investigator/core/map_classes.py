@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class RouteLineMaker:
-
     """
     Takes in a dataframe containing coordinates and speeds from a single dashcam video.
     Plots a single-coloured routeline on a folium map using those coordinates.
@@ -47,7 +46,6 @@ class RouteLineMaker:
         Take in a routeline colour (either blue for extracted metadata or purple for watermark data),
         and plot the coordinates stored by the class instance on the map
         """
-        logger.debug("Generating route line using points from GPX file")
         PolyLine(locations=self.points, color=routeline_colour).add_to(
             self.routeline_group
         )
@@ -57,9 +55,6 @@ class RouteLineMaker:
         Take in a branca linear color map, and use this to plot an additional routeline which uses the speeds stored by the class instance
         as a colour scale
         """
-        logger.debug(
-            "Generating a routeline colored to indicate the speed of the vehicle"
-        )
         ColorLine(
             positions=self.points, colors=self.speed, colormap=colour_map, weight=4.5
         ).add_to(self.colour_line_group)
@@ -68,7 +63,6 @@ class RouteLineMaker:
         """
         Take in a popup for a start marker, which contains an HTML table of file details, and add it to a start marker for the routelines.
         """
-        logger.debug("Generating a start marker")
         Marker(
             location=self.points[0],
             tooltip=f"Start of route line. Click to see file details.",
@@ -94,7 +88,6 @@ class StartMarkerPopup:
         self.file_create_date = file_info_df["CreateDate"].iloc[0]
 
     def start_marker_popup_html(self) -> Popup:
-        logger.debug("Adding file info to start marker")
         # Defines the HTML file details table
         self.popup_html = (
             """<html  lang="en">
@@ -203,14 +196,12 @@ class Mappy:
 
     def add_tilelayers(self):
         # Adds different map styles which can bee freely switched between by the user
-        logger.debug("Adding layers to the folium map")
         TileLayer("OpenStreet Map").add_to(self.canvas)
         TileLayer("Stamen Terrain").add_to(self.canvas)
         TileLayer("Stamen Toner").add_to(self.canvas)
 
     def add_draw_options(self):
         # Adds draw options for the user
-        logger.debug("Adding draw controls to the map")
         Draw(
             export=True,
             filename="my_data.geojson",
@@ -224,7 +215,6 @@ class Mappy:
         Makes the required feature groups. These groups represent display layers, and will contain features displayed on the map.
         Each feature group can be toggled on and off by the user from the interactive map file, with elements toggled on displayed on the map, and those toggled off removed.
         """
-        logger.debug("Adding routelines and start markers to the map")
         self.routelines = FeatureGroup(name="Route line", show=True).add_to(self.canvas)
         self.speed_lines = FeatureGroup(
             name="Route line coloured by speed", show=False

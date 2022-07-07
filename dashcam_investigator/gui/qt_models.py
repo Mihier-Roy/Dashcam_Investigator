@@ -1,5 +1,4 @@
-import pandas as pd
-from PySide2 import QtCore
+from PySide2 import QtCore, QtGui
 
 
 class PandasTableModel(QtCore.QAbstractTableModel):
@@ -26,3 +25,21 @@ class PandasTableModel(QtCore.QAbstractTableModel):
 
             if orientation == QtCore.Qt.Vertical:
                 return str(self._data.index[section])
+
+
+class VideoListModel(QtCore.QAbstractListModel):
+    def __init__(self, data):
+        super(VideoListModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self._data[index.row()].name
+        if role == QtCore.Qt.DecorationRole:
+            if self._data[index.row()].flagged:
+                return QtGui.QColor("red")
+            else:
+                return QtGui.QColor("white")
+
+    def rowCount(self, index):
+        return len(self._data)

@@ -141,9 +141,59 @@ class Ui_MainWindow(object):
         self.data_tabs.addTab(self.graph_tab, "")
         self.notes_tab = QWidget()
         self.notes_tab.setObjectName(u"notes_tab")
-        self.notes_textbox = QTextEdit(self.notes_tab)
+        self.widget = QWidget(self.notes_tab)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(950, 10, 291, 361))
+        self.verticalLayout = QVBoxLayout(self.widget)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.save_note_button = QPushButton(self.widget)
+        self.save_note_button.setObjectName(u"save_note_button")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.save_note_button.sizePolicy().hasHeightForWidth())
+        self.save_note_button.setSizePolicy(sizePolicy1)
+
+        self.verticalLayout.addWidget(self.save_note_button)
+
+        self.note_status = QLabel(self.widget)
+        self.note_status.setObjectName(u"note_status")
+        font1 = QFont()
+        font1.setPointSize(12)
+        self.note_status.setFont(font1)
+        self.note_status.setAlignment(Qt.AlignCenter)
+
+        self.verticalLayout.addWidget(self.note_status)
+
+        self.widget1 = QWidget(self.notes_tab)
+        self.widget1.setObjectName(u"widget1")
+        self.widget1.setGeometry(QRect(10, 10, 931, 361))
+        self.verticalLayout_2 = QVBoxLayout(self.widget1)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.widget1)
+        self.label.setObjectName(u"label")
+        font2 = QFont()
+        font2.setPointSize(14)
+        self.label.setFont(font2)
+
+        self.verticalLayout_2.addWidget(self.label)
+
+        self.label_2 = QLabel(self.widget1)
+        self.label_2.setObjectName(u"label_2")
+        font3 = QFont()
+        font3.setPointSize(7)
+        self.label_2.setFont(font3)
+
+        self.verticalLayout_2.addWidget(self.label_2)
+
+        self.notes_textbox = QTextEdit(self.widget1)
         self.notes_textbox.setObjectName(u"notes_textbox")
-        self.notes_textbox.setGeometry(QRect(10, 10, 1231, 361))
+        self.notes_textbox.setFont(font1)
+
+        self.verticalLayout_2.addWidget(self.notes_textbox)
+
         self.data_tabs.addTab(self.notes_tab, "")
 
         self.main_view_layout.addWidget(self.data_tabs)
@@ -162,7 +212,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.data_tabs.setCurrentIndex(0)
+        self.data_tabs.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -179,7 +229,11 @@ class Ui_MainWindow(object):
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.map_tab), QCoreApplication.translate("MainWindow", u"Map", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.metadata_tab), QCoreApplication.translate("MainWindow", u"Metadata", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.graph_tab), QCoreApplication.translate("MainWindow", u"Speed Graph", None))
-        self.notes_textbox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Enter notes for this video here.", None))
+        self.save_note_button.setText(QCoreApplication.translate("MainWindow", u"Save Note", None))
+        self.note_status.setText("")
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Enter notes for this video", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Hit the save button to save the note.", None))
+        self.notes_textbox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Start typing here...", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.notes_tab), QCoreApplication.translate("MainWindow", u"Notes", None))
     # retranslateUi
 

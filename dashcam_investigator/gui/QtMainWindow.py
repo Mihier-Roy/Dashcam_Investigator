@@ -62,9 +62,15 @@ class Ui_MainWindow(object):
         self.video_player_layout.setObjectName(u"video_player_layout")
         self.video_player = QVideoWidget(self.layoutWidget)
         self.video_player.setObjectName(u"video_player")
-        self.video_player.setMinimumSize(QSize(0, 450))
+        self.video_player.setMinimumSize(QSize(0, 430))
 
         self.video_player_layout.addWidget(self.video_player)
+
+        self.video_title = QLabel(self.layoutWidget)
+        self.video_title.setObjectName(u"video_title")
+        self.video_title.setAlignment(Qt.AlignCenter)
+
+        self.video_player_layout.addWidget(self.video_title)
 
         self.player_controls = QWidget(self.layoutWidget)
         self.player_controls.setObjectName(u"player_controls")
@@ -166,6 +172,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
         self.logo_label.setText(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
         self.dir_label.setText(QCoreApplication.translate("MainWindow", u"Project files", None))
+        self.video_title.setText(QCoreApplication.translate("MainWindow", u"Currently playing : ", None))
         self.play_button.setText(QCoreApplication.translate("MainWindow", u"Play", None))
         self.pause_button.setText(QCoreApplication.translate("MainWindow", u"Pause", None))
         self.stop_button.setText(QCoreApplication.translate("MainWindow", u"Stop", None))

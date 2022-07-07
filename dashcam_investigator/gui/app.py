@@ -8,7 +8,7 @@ from project_manager.project_manager import ProjectManager
 from gui.qt_models import PandasTableModel, VideoListModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
-from PySide2.QtCore import QUrl
+from PySide2.QtCore import QUrl, Qt
 from utils.convert_milli import convert_to_seconds
 
 logger = logging.getLogger(__name__)
@@ -57,8 +57,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dir_tree_view.clicked.connect(self.on_selected)
 
         # Populate the video table view
-        list_model = VideoListModel(self.project_object.video_files)
-        self.video_list_view.setModel(list_model)
+        self.list_model = VideoListModel(self.project_object.video_files)
+        self.video_list_view.setModel(self.list_model)
+        # Collect the currently selected item
         self.video_list_view.clicked.connect(self.on_vid_selected)
 
         # Define media player
@@ -80,7 +81,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.horizontal_slider.sliderMoved.connect(self.video_position)
 
         # Save note when button is clicked
+        self.note_status.setStyleSheet("QLabel { color : green; }")
         self.save_note_button.clicked.connect(self.save_note)
+        self.flag_video_button.clicked.connect(self.flag_video)
 
     def play_video(self):
         """
@@ -137,8 +140,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         logger.debug(f"Saved note for -> {self.current_video.name}")
         self.current_video.notes = self.notes_textbox.toPlainText()
         self.project_manager.write_project_file(data=self.project_object)
-        self.note_status.setStyleSheet("QLabel { color : green; }")
         self.note_status.setText("Note saved!")
+
+    def flag_video(self):
+        """
+        Set flagged property to True and write to file.
+        """
+        index = self.video_list_view.selectedIndexes()
+        logger.debug(f"Flagged video -> {self.current_video.name}")
+        self.current_video.flagged = not self.current_video.flagged
+        if self.current_video.flagged:
+            self.note_status.setText("Video flagged!")
+        else:
+            self.note_status.setText("Video un-flagged!")
+        self.project_manager.write_project_file(data=self.project_object)
+        self.list_model.dataChanged.emit(index[0], index[0])
 
     def on_vid_selected(self, selected_index):
         # Get the video name and pass it on to the on_selected function
@@ -184,7 +200,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         )
         self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
         self.mediaPlayer.setPlaylist(self.mediaPlaylist)
-        self.play_video()
 
         # Set currently playing label
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")

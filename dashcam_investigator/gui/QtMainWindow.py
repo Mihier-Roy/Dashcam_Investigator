@@ -160,11 +160,18 @@ class Ui_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.save_note_button = QPushButton(self.widget)
-        self.save_note_button.setObjectName(u"save_note_button")
+        self.flag_video_button = QPushButton(self.widget)
+        self.flag_video_button.setObjectName(u"flag_video_button")
         sizePolicy2 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.flag_video_button.sizePolicy().hasHeightForWidth())
+        self.flag_video_button.setSizePolicy(sizePolicy2)
+
+        self.verticalLayout.addWidget(self.flag_video_button)
+
+        self.save_note_button = QPushButton(self.widget)
+        self.save_note_button.setObjectName(u"save_note_button")
         sizePolicy2.setHeightForWidth(self.save_note_button.sizePolicy().hasHeightForWidth())
         self.save_note_button.setSizePolicy(sizePolicy2)
 
@@ -225,8 +232,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.file_tab.setCurrentIndex(0)
-        self.data_tabs.setCurrentIndex(0)
+        self.file_tab.setCurrentIndex(1)
+        self.data_tabs.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -244,6 +251,7 @@ class Ui_MainWindow(object):
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.map_tab), QCoreApplication.translate("MainWindow", u"Map", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.metadata_tab), QCoreApplication.translate("MainWindow", u"Metadata", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.graph_tab), QCoreApplication.translate("MainWindow", u"Speed Graph", None))
+        self.flag_video_button.setText(QCoreApplication.translate("MainWindow", u"Flag Video", None))
         self.save_note_button.setText(QCoreApplication.translate("MainWindow", u"Save Note", None))
         self.note_status.setText("")
         self.label.setText(QCoreApplication.translate("MainWindow", u"Enter notes for this video", None))

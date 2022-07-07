@@ -35,6 +35,7 @@ The application was built using the following open source projects
 - Filetype
 - gpxpy (To process GPX data)
 - folium (To create maps)
+- altair (To create declarative charts)
 
 ### Log configuration
 

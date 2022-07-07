@@ -12,6 +12,7 @@ PySide2 = "^5.15.2"
 filetype = "^1.0.13"
 folium = "^0.12.1"
 gpxpy = "^1.5.0"
+altair = "^4.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

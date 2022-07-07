@@ -212,7 +212,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.data_tabs.setCurrentIndex(3)
+        self.data_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

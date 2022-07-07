@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    # def __init__(self, dir_path, video_path, metadata_df):
-    def __init__(self, project_object):
+    def __init__(
+        self, project_manger: ProjectManager, project_object: ProjectStructure
+    ) -> None:
         super(MainWindow, self).__init__()
         self.setupUi(self)
+        self.project_manager = project_manger
         self.project_object = project_object
         self.current_video = None
 
@@ -129,6 +131,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         logger.debug(f"Saved note for -> {self.current_video.name}")
         self.current_video.notes = self.notes_textbox.toPlainText()
+        self.project_manager.write_project_file(data=self.project_object)
         self.note_status.setStyleSheet("QLabel { color : green; }")
         self.note_status.setText("Note saved!")
 
@@ -213,6 +216,6 @@ def run():
             Path(output_path, "dashcam_investigator.json")
         )
 
-    window = MainWindow(project_object=project_object)
+    window = MainWindow(project_manager, project_object)
     window.show()
     sys.exit(app.exec_())

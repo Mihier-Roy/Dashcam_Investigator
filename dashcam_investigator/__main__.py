@@ -3,7 +3,8 @@ import logging.config
 from pathlib import Path
 import os
 from core.walk_directory import walk_directory
-from core.extract_metadata import process_gps_data, process_file_meta, process_time_meta
+from core.extract_metadata import process_gps_data, process_file_meta
+from core.output_generator import OutputGenerator
 from project_manager.project_manager import ProjectManager
 from gui import app
 
@@ -25,8 +26,8 @@ if __name__ == "__main__":
     # Launch GUI
     # app.run()
     # main()
-    input_path = Path("H:\\DissertationDataset\\Trancend\\DP220")
-    output_path = Path("E:\\Output_Trancend")
+    input_path = Path("H:\\DissertationDataset\\Nextbase312")
+    output_path = Path("E:\\Output_Nextbase_312")
 
     # If project exists, load project
     if Path(output_path, "dashcam_investigator.json").exists():
@@ -49,23 +50,51 @@ if __name__ == "__main__":
         # Write updated object to file
         project_manager.write_project_file(data=project_object)
 
-    # Extract GPS data for all video files
-    for index, video in enumerate(project_object.video_files):
-        logger.debug(f"Processing video {index+1}/{len(project_object.video_files)}")
-        gps_data = process_gps_data(
-            video_path=Path(video.file_path),
-            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
-        )
-        video.meta_files.append(gps_data)
-        file_meta = process_file_meta(
-            video_path=Path(video.file_path),
-            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
-        )
-        video.meta_files.append(file_meta)
-        time_meta = process_time_meta(
-            video_path=Path(video.file_path),
-            output_dir=Path(project_object.project_info.project_directory, "Metadata"),
-        )
-        video.meta_files.append(time_meta)
+        # Extract metadata for all video files
+        for index, video in enumerate(project_object.video_files):
+            logger.debug(
+                f"Processing video {index+1}/{len(project_object.video_files)}"
+            )
+            gps_data = process_gps_data(
+                video_path=Path(video.file_path),
+                output_dir=Path(
+                    project_object.project_info.project_directory, "Metadata"
+                ),
+            )
+            video.meta_files.append(gps_data)
+            file_meta = process_file_meta(
+                video_path=Path(video.file_path),
+                output_dir=Path(
+                    project_object.project_info.project_directory, "Metadata"
+                ),
+            )
+            video.meta_files.append(file_meta)
 
-    project_manager.write_project_file(data=project_object)
+        project_manager.write_project_file(data=project_object)
+
+        # Generate map and speed graph from extracted metadata
+        for index, video in enumerate(project_object.video_files):
+            logger.debug(
+                f"Processed output for {index+1}/{len(project_object.video_files)}"
+            )
+            video_name = video.name[0:-4]
+            logger.debug(f"Video name -> {video_name}")
+            map_output = Path(
+                project_object.project_info.project_directory,
+                "Maps",
+                f"{video_name}_map.html",
+            )
+            graph_output = Path(
+                project_object.project_info.project_directory,
+                "Graphs",
+                f"{video_name}_speed_graph.html",
+            )
+            output_generator = OutputGenerator()
+            # Generate route map and save output file
+            output_generator.generate_map(video_file=video, output_path=map_output)
+            video.output_files.append(str(map_output.resolve()))
+            # Generate speed graph and save output file
+            output_generator.generate_speed_chart(output_path=graph_output)
+            video.output_files.append(str(graph_output.resolve()))
+
+        project_manager.write_project_file(data=project_object)

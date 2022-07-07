@@ -4,6 +4,7 @@ import pathlib
 import sys
 from PySide2 import QtWidgets, QtGui, QtCore
 import pandas as pd
+from project_manager.project_datatypes import ProjectStructure, FileAttributes
 from gui.table_models import PandasTableModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist, QMediaContent
@@ -14,9 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self, dir_path, video_path, metadata_df, gps_df):
+    # def __init__(self, dir_path, video_path, metadata_df):
+    def __init__(self, project_object):
         super(MainWindow, self).__init__()
         self.setupUi(self)
+        self.project_object = project_object
 
         # Move the application window to the center of the screen
         logger.debug("Moving window to the center of the screen")
@@ -30,11 +33,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(x_coordinates, y_coordinates)
 
         # Load current directory into tree view
-        logger.debug(f"Loading selected input directory to the TreeView -> {dir_path} ")
+        logger.debug(
+            f"Loading selected input directory to the TreeView -> {self.project_object.project_info.input_directory} "
+        )
         model = QtWidgets.QFileSystemModel()
-        model.setRootPath(str(dir_path.resolve()))
+        model.setRootPath(
+            str(
+                pathlib.Path(self.project_object.project_info.input_directory).resolve()
+            )
+        )
         self.dir_tree_view.setModel(model)
-        self.dir_tree_view.setRootIndex(model.index(str(dir_path.resolve())))
+        self.dir_tree_view.setRootIndex(
+            model.index(
+                str(
+                    pathlib.Path(
+                        self.project_object.project_info.input_directory
+                    ).resolve()
+                )
+            )
+        )
         self.dir_tree_view.hideColumn(1)
         self.dir_tree_view.hideColumn(2)
         self.dir_tree_view.hideColumn(3)
@@ -46,12 +63,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         logger.debug("Loading media player")
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlaylist = QMediaPlaylist()
-
-        # Add the video file path
-        logger.debug(f"Adding to playlist -> {video_path}")
-        self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
-        # Set the QMediaPlaylist for the QMediaPlayer.
-        self.mediaPlayer.setPlaylist(self.mediaPlaylist)
         # Set the video output from the QMediaPlayer to the QVideoWidget.
         self.mediaPlayer.setVideoOutput(self.video_player)
 
@@ -65,14 +76,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaPlayer.positionChanged.connect(self.change_position)
         # Set the video position in QMediaPlayer based on the QSlider position.
         self.horizontal_slider.sliderMoved.connect(self.video_position)
-
-        ######################################
-        # Metadata tab view
-        ######################################
-        self.metadata_model = PandasTableModel(metadata_df)
-        self.metadata_table.setModel(self.metadata_model)
-        # self.gps_model = PandasTableModel(gps_df)
-        # self.gps_table.setModel(self.gps_model)
 
     def play_video(self):
         """
@@ -125,55 +128,65 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def on_selected(self, selected_index):
         # Get the path of the selected file
         fs = QtWidgets.QFileSystemModel()
-        file_path = pathlib.Path(fs.filePath(selected_index))
 
-        # Stop current video and clear playlist
-        self.mediaPlayer.stop()
-        self.mediaPlaylist.clear()
-        # Add selected video to playlist and initalise the media player
-        logger.debug(
-            f"New item selected. Adding to playlist -> {str(file_path.resolve())}"
-        )
-        self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(file_path.resolve())))
-        self.mediaPlayer.setPlaylist(self.mediaPlaylist)
+        if not fs.isDir(selected_index):
+            file_name = fs.fileName(selected_index)
+            file_path = pathlib.Path(fs.filePath(selected_index))
 
-        ######################################
-        # Map tab
-        ######################################
-        with open(
-            "E:\\Output_Nextbase_312\\Maps\\2019_1120_112611_037_map.html", "r"
-        ) as f:
-            html_str = f.read()
-        self.maps_web_view.setHtml(html_str)
+            ######################################
+            # Video player
+            ######################################
+            # Stop current video and clear playlist
+            self.mediaPlayer.stop()
+            self.mediaPlaylist.clear()
+            # Add selected video to playlist and initalise the media player
+            logger.debug(
+                f"New item selected. Adding to playlist -> {str(file_path.resolve())}"
+            )
+            self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(file_path.resolve())))
+            self.mediaPlayer.setPlaylist(self.mediaPlaylist)
 
-        ######################################
-        # Speed Graph tab
-        ######################################
-        with open(
-            "E:\\Output_Nextbase_312\\Graphs\\2019_1120_112611_037_speed_graph.html",
-            "r",
-        ) as f:
-            graph_str = f.read()
-        self.graph_web_view.setHtml(graph_str)
+            # Set currently playing label
+            self.video_title.setText(f"Currently playing : {str(file_path.resolve())}")
+
+            # Get information for the selected video
+            current_video: FileAttributes = [
+                video
+                for video in self.project_object.video_files
+                if video.name == file_name
+            ][0]
+
+            map_file = current_video.output_files[0]
+            graph_file = current_video.output_files[1]
+            metadata_file = current_video.meta_files[1]
+
+            ######################################
+            # Map tab
+            ######################################
+            with pathlib.Path(map_file).open() as f:
+                html_str = f.read()
+            self.maps_web_view.setHtml(html_str)
+
+            ######################################
+            # Metadata tab
+            ######################################
+            metadata_df = pd.read_csv(metadata_file).T
+            metadata_df.rename(columns={0: "Value"}, inplace=True)
+            self.metadata_model = PandasTableModel(metadata_df)
+            self.metadata_table.setModel(self.metadata_model)
+
+            ######################################
+            # Speed Graph tab
+            ######################################
+            with pathlib.Path(graph_file).open() as f:
+                graph_str = f.read()
+            self.graph_web_view.setHtml(graph_str)
 
 
-def run():
+def run(project_object: ProjectStructure):
     logger.info("---Running Dashcam Investigator---")
-    dir_path = pathlib.Path("H:/DissertationDataset", "Nextbase312")
-    video_path = pathlib.Path(
-        "H:\\DissertationDataset\\Nextbase312\\DCIM\\MOVIE\\2019_1120_112611_037.MOV"
-    )
-    metadata_df = pd.read_csv(
-        "E:\\Output_Nextbase_312\\Metadata\\2019_1120_112611_037_fileinfo.csv"
-    )
-    metadata_df = metadata_df.T
-    metadata_df.rename(columns={0: "Value"}, inplace=True)
-    # gps_df = pd.read_csv(
-    #     "C:/Users/mihie/AppData/Local/Temp/2019_1119_165917_001_gpsdata_converted.csv",
-    #     names=["GPS Speed", "GPS Latitude", "GPS Logitude"],
-    # )
     app = QtWidgets.QApplication([])
     logger.debug("Initialising and displaying main window")
-    window = MainWindow(dir_path, video_path, metadata_df, gps_df=pd.DataFrame())
+    window = MainWindow(project_object=project_object)
     window.show()
     sys.exit(app.exec_())

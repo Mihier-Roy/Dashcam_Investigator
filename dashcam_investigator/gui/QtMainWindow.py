@@ -135,6 +135,9 @@ class Ui_MainWindow(object):
         self.data_tabs.addTab(self.graph_tab, "")
         self.notes_tab = QWidget()
         self.notes_tab.setObjectName(u"notes_tab")
+        self.notes_textbox = QTextEdit(self.notes_tab)
+        self.notes_textbox.setObjectName(u"notes_textbox")
+        self.notes_textbox.setGeometry(QRect(10, 10, 1231, 361))
         self.data_tabs.addTab(self.notes_tab, "")
 
         self.main_view_layout.addWidget(self.data_tabs)
@@ -153,7 +156,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.data_tabs.setCurrentIndex(3)
+        self.data_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -169,6 +172,7 @@ class Ui_MainWindow(object):
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.map_tab), QCoreApplication.translate("MainWindow", u"Map", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.metadata_tab), QCoreApplication.translate("MainWindow", u"Metadata", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.graph_tab), QCoreApplication.translate("MainWindow", u"Speed Graph", None))
+        self.notes_textbox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Enter notes for this video here.", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.notes_tab), QCoreApplication.translate("MainWindow", u"Notes", None))
     # retranslateUi
 

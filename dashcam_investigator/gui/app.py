@@ -1,9 +1,10 @@
 import logging
-import pathlib
-import sys
-from PySide2 import QtWidgets, QtGui
 import pandas as pd
+import sys
+from pathlib import Path
+from PySide2 import QtWidgets, QtGui
 from project_manager.project_datatypes import ProjectStructure, FileAttributes
+from project_manager.project_manager import ProjectManager
 from gui.table_models import PandasTableModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
@@ -38,18 +39,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         )
         model = QtWidgets.QFileSystemModel()
         model.setRootPath(
-            str(
-                pathlib.Path(self.project_object.project_info.input_directory).resolve()
-            )
+            str(Path(self.project_object.project_info.input_directory).resolve())
         )
         self.dir_tree_view.setModel(model)
         self.dir_tree_view.setRootIndex(
             model.index(
-                str(
-                    pathlib.Path(
-                        self.project_object.project_info.input_directory
-                    ).resolve()
-                )
+                str(Path(self.project_object.project_info.input_directory).resolve())
             )
         )
         self.dir_tree_view.hideColumn(1)
@@ -144,7 +139,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if not fs.isDir(selected_index):
             file_name = fs.fileName(selected_index)
-            file_path = pathlib.Path(fs.filePath(selected_index))
+            file_path = Path(fs.filePath(selected_index))
 
             ######################################
             # Video player
@@ -177,7 +172,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             ######################################
             # Map tab
             ######################################
-            with pathlib.Path(map_file).open() as f:
+            with Path(map_file).open() as f:
                 html_str = f.read()
             self.maps_web_view.setHtml(html_str)
 
@@ -192,7 +187,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             ######################################
             # Speed Graph tab
             ######################################
-            with pathlib.Path(graph_file).open() as f:
+            with Path(graph_file).open() as f:
                 graph_str = f.read()
             self.graph_web_view.setHtml(graph_str)
 
@@ -202,10 +197,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.notes_textbox.setText(str(self.current_video.notes))
 
 
-def run(project_object: ProjectStructure):
+def run():
     logger.info("---Running Dashcam Investigator---")
     app = QtWidgets.QApplication([])
     logger.debug("Initialising and displaying main window")
+
+    # Set project options
+    input_path = Path("H:\\DissertationDataset\\Nextbase312")
+    output_path = Path("E:\\Output_Nextbase_312")
+
+    # If project exists, load project
+    if Path(output_path, "dashcam_investigator.json").exists():
+        project_manager = ProjectManager()
+        project_object = project_manager.load_existing_project(
+            Path(output_path, "dashcam_investigator.json")
+        )
+
     window = MainWindow(project_object=project_object)
     window.show()
     sys.exit(app.exec_())

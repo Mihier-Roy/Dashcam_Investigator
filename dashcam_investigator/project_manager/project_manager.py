@@ -11,7 +11,13 @@ from project_manager.project_datatypes import (
 logger = logging.getLogger(__name__)
 
 DASHCAM_INVESTIGATOR_PROJECT_FILENAME = "dashcam_investigator.json"
-DASHCAM_INVESTIGATOR_DIRECTORIES = ["Maps", "Metadata", "Reports", "Timelines"]
+DASHCAM_INVESTIGATOR_DIRECTORIES = [
+    "Graphs",
+    "Maps",
+    "Metadata",
+    "Reports",
+    "Timelines",
+]
 
 
 class ProjectManager:

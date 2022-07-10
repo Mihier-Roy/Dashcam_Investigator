@@ -35,7 +35,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         y_coordinates = (screen_size.height() - self.height()) / 2 - 20
         self.move(x_coordinates, y_coordinates)
 
-        # Load current directory into tree view
+        # Disable the project tab
+        self.navigation_tab_widget.setTabEnabled(1, False)
+
+        # Load current project directory to tree view
         logger.debug(
             f"Loading selected input directory to the TreeView -> {self.project_object.project_info.input_directory} "
         )

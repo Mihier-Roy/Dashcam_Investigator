@@ -21,8 +21,16 @@ DASHCAM_INVESTIGATOR_DIRECTORIES = [
 
 
 class ProjectManager:
-    def __init__(self, input_dir: Path = None, output_dir: Path = None) -> None:
-        self.project_info = ProjectInfo(input_dir, output_dir, "Case 001", "")
+    def __init__(
+        self,
+        input_dir: Path = None,
+        output_dir: Path = None,
+        case_name: str = "",
+        investigator_name: str = "",
+    ) -> None:
+        self.project_info = ProjectInfo(
+            input_dir, output_dir, case_name, investigator_name
+        )
         self.project_directory = output_dir
         self.project_file = (
             Path(self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME)

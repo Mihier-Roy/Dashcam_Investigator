@@ -3,13 +3,14 @@ import pandas as pd
 import sys
 from pathlib import Path
 from PySide2 import QtWidgets, QtGui
-from dashcam_investigator.project_manager.create_new_project import create_new_project
-from project_manager.project_datatypes import ProjectStructure, FileAttributes
+from project_manager.create_new_project import create_new_project
+from project_manager.project_datatypes import FileAttributes
 from project_manager.project_manager import ProjectManager
 from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
 from gui.QtMainWindow import Ui_MainWindow
+from gui.NewProjectDialog import Ui_Dialog
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
-from PySide2.QtCore import QUrl, Qt
+from PySide2.QtCore import QUrl
 from utils.convert_milli import convert_to_seconds
 
 logger = logging.getLogger(__name__)
@@ -183,8 +184,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.stack_widget.setCurrentIndex(1)
 
     def start_new_project(self):
-        logger.debug(f"Starting a new project.")
-        create_new_project(self.project_manager)
+        """
+        Launch the new project dialog and setup a new project.
+        """
+        logger.debug(f"Starting a new project. Launched new project dialog.")
+        dialog = NewProjectDialog(self)
+        dialog.exec()
+        # If the user closes the dialog by clicking on 'Okay', then begin processing
+        if dialog.result() == 1:
+            logger.debug(f"Retreiving values entered into dialog.")
+            input_dir, output_dir, case_name, investigator_name = dialog.save()
+
+            logger.debug(f"Creating a new project with inputs provided.")
+            # Create a new project manager object and begin processing data
+            self.project_manager = ProjectManager(
+                input_dir=input_dir,
+                output_dir=output_dir,
+                case_name=case_name,
+                investigator_name=investigator_name,
+            )
+
+            logger.debug(f"Processing files from input directory")
+            # create_new_project(self.project_manager)
+
+            # progress = QtWidgets.QProgressDialog("Copying files...", "Abort Copy", 0, numFiles, self)
+            # progress.setWindowModality(Qt.WindowModal)
 
     ######################################
     # Notes/flag controls
@@ -294,6 +318,65 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Notes tab
         ######################################
         self.notes_textbox.setText(str(self.current_video.notes))
+
+
+class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):
+    """
+    Launches the dialog to collect information to create a new project.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.input_dir = None
+        self.output_dir = None
+        self.case_name = None
+        self.investigator_name = None
+
+        # Run the .setupUi() method to show the GUI
+        self.setupUi(self)
+
+        # Open file dialog for input dir
+        self.input_dir_button.clicked.connect(self.get_input_dir)
+
+        # Open file dialog for output dir
+        self.output_dir_button.clicked.connect(self.get_output_dir)
+
+    def get_input_dir(self):
+        """
+        Sets the input directory path
+        """
+        dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Open Directory",
+            "C:",
+            QtWidgets.QFileDialog.ShowDirsOnly
+            | QtWidgets.QFileDialog.DontResolveSymlinks,
+        )
+
+        if dir != None:
+            self.input_edit.setText(dir)
+            self.input_dir = Path(dir)
+
+    def get_output_dir(self):
+        """
+        Sets the output directory path
+        """
+        dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Open Directory",
+            "C:",
+            QtWidgets.QFileDialog.ShowDirsOnly
+            | QtWidgets.QFileDialog.DontResolveSymlinks,
+        )
+
+        if dir != None:
+            self.output_edit.setText(dir)
+            self.output_dir = Path(dir)
+
+    def save(self):
+        self.case_name = self.case_edit.toPlainText()
+        self.investigator_name = self.investigator_edit.toPlainText()
+        return self.input_dir, self.output_dir, self.case_name, self.investigator_name
 
 
 def run():

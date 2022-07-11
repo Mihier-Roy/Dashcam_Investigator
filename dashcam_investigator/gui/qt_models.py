@@ -53,8 +53,6 @@ class NavigationListModel(QtCore.QAbstractListModel):
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
             return self._data[index.row()]
-        if role == QtCore.Qt.DecorationRole:
-            return QtGui.QColor("red")
 
     def rowCount(self, index):
         return len(self._data)

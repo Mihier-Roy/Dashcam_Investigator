@@ -3,6 +3,7 @@ import pandas as pd
 import sys
 from pathlib import Path
 from PySide2 import QtWidgets, QtGui
+from dashcam_investigator.project_manager.create_new_project import create_new_project
 from project_manager.project_datatypes import ProjectStructure, FileAttributes
 from project_manager.project_manager import ProjectManager
 from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
@@ -41,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Handle navigation
         self.navigation_tab.clicked.connect(self.navigate)
 
+        # Handle starting a new project
+        self.new_project_button.clicked.connect(self.start_new_project)
         # Handle opening an existing project
         self.existing_project_button.clicked.connect(self.open_existing_project)
 
@@ -133,6 +136,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.mediaPlayer.setPosition(position)
 
+    ######################################
+    # New/Load project controls
+    ######################################
     def open_existing_project(self):
         """
         Launches a QFileDialog which allows the user to select a .json file.
@@ -175,6 +181,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 # Navigate to the project page
                 self.stack_widget.setCurrentIndex(1)
+
+    def start_new_project(self):
+        logger.debug(f"Starting a new project.")
+        create_new_project(self.project_manager)
 
     ######################################
     # Notes/flag controls

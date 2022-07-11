@@ -16,13 +16,11 @@ NAVIGATION_PAGES = ["Welcome", "Project"]
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(
-        self, project_manger: ProjectManager, project_object: ProjectStructure
-    ) -> None:
+    def __init__(self) -> None:
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        self.project_manager = project_manger
-        self.project_object = project_object
+        self.project_manager = ProjectManager()
+        self.project_object = None
         self.current_video = None
 
         # Move the application window to the center of the screen
@@ -43,30 +41,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Handle navigation
         self.navigation_tab.clicked.connect(self.navigate)
 
-        # Load current project directory to tree view
-        logger.debug(
-            f"Loading selected input directory to the TreeView -> {self.project_object.project_info.input_directory} "
-        )
-        model = QtWidgets.QFileSystemModel()
-        model.setRootPath(
-            str(Path(self.project_object.project_info.input_directory).resolve())
-        )
-        self.dir_tree_view.setModel(model)
-        self.dir_tree_view.setRootIndex(
-            model.index(
-                str(Path(self.project_object.project_info.input_directory).resolve())
-            )
-        )
-        self.dir_tree_view.hideColumn(1)
-        self.dir_tree_view.hideColumn(2)
-        self.dir_tree_view.hideColumn(3)
-        self.dir_tree_view.show()
-        # Collect the currently selected item
+        # Handle opening an existing project
+        self.existing_project_button.clicked.connect(self.open_existing_project)
+
+        # Collect the currently selected item from the tree view
         self.dir_tree_view.clicked.connect(self.on_selected)
 
-        # Populate the video table view
-        self.list_model = VideoListModel(self.project_object.video_files)
-        self.video_list_view.setModel(self.list_model)
         # Collect the currently selected item
         self.video_list_view.clicked.connect(self.on_vid_selected)
 
@@ -93,6 +73,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.save_note_button.clicked.connect(self.save_note)
         self.flag_video_button.clicked.connect(self.flag_video)
 
+    ######################################
+    # Navigation controls
+    ######################################
     def navigate(self, selected_index):
         """
         Set the current page of the stack widget to the index of the list view
@@ -149,6 +132,49 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         :return:
         """
         self.mediaPlayer.setPosition(position)
+
+    def open_existing_project(self):
+        """
+        Launches a QFileDialog which allows the user to select a .json file.
+        """
+        file_name = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Open File", "C:", ("JSON (*.json)")
+        )
+        if file_name != None:
+            # If project exists, load
+            logger.debug(f"Opening existing project file -> {file_name[0]}")
+            file_path = Path(file_name[0])
+            # If the file is a dashcam_investigator file, load the project from it
+            if file_path.name == "dashcam_investigator.json":
+                # Load project into object
+                self.project_object = self.project_manager.load_existing_project(
+                    file_path
+                )
+
+                # Populate the video table view
+                self.list_model = VideoListModel(self.project_object.video_files)
+                self.video_list_view.setModel(self.list_model)
+
+                # Load current project directory to tree view
+                tree_path = Path(
+                    self.project_object.project_info.input_directory
+                ).resolve()
+                logger.debug(
+                    f"Loading selected input directory to the TreeView -> {tree_path}"
+                )
+                model = QtWidgets.QFileSystemModel()
+                model.setRootPath(str(tree_path))
+                self.dir_tree_view.setModel(model)
+                self.dir_tree_view.setRootIndex(model.index(str(tree_path)))
+
+                # Ensure that the tree view shows only the name columns
+                self.dir_tree_view.hideColumn(1)
+                self.dir_tree_view.hideColumn(2)
+                self.dir_tree_view.hideColumn(3)
+                self.dir_tree_view.show()
+
+                # Navigate to the project page
+                self.stack_widget.setCurrentIndex(1)
 
     ######################################
     # Notes/flag controls
@@ -269,13 +295,6 @@ def run():
     input_path = Path("H:\\DissertationDataset\\Nextbase312")
     output_path = Path("E:\\Output_Nextbase_312")
 
-    # If project exists, load project
-    if Path(output_path, "dashcam_investigator.json").exists():
-        project_manager = ProjectManager()
-        project_object = project_manager.load_existing_project(
-            Path(output_path, "dashcam_investigator.json")
-        )
-
-    window = MainWindow(project_manager, project_object)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec_())

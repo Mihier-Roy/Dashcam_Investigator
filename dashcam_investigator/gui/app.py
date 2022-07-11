@@ -39,6 +39,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Load the navigation list
         navigation_model = NavigationListModel(NAVIGATION_PAGES)
         self.navigation_tab.setModel(navigation_model)
+        self.navigation_tab.setStyleSheet("QListView::item { padding: 25px; }")
         # Handle navigation
         self.navigation_tab.clicked.connect(self.navigate)
 

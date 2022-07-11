@@ -5,13 +5,14 @@ from pathlib import Path
 from PySide2 import QtWidgets, QtGui
 from project_manager.project_datatypes import ProjectStructure, FileAttributes
 from project_manager.project_manager import ProjectManager
-from gui.qt_models import PandasTableModel, VideoListModel
+from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
 from gui.QtMainWindow import Ui_MainWindow
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl, Qt
 from utils.convert_milli import convert_to_seconds
 
 logger = logging.getLogger(__name__)
+NAVIGATION_PAGES = ["Welcome", "Project"]
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -35,8 +36,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         y_coordinates = (screen_size.height() - self.height()) / 2 - 20
         self.move(x_coordinates, y_coordinates)
 
-        # Disable the project tab
-        self.navigation_tab_widget.setTabEnabled(1, False)
+        # Load the navigation list
+        navigation_model = NavigationListModel(NAVIGATION_PAGES)
+        self.navigation_tab.setModel(navigation_model)
+        # Handle navigation
+        self.navigation_tab.clicked.connect(self.navigate)
 
         # Load current project directory to tree view
         logger.debug(
@@ -87,6 +91,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.note_status.setStyleSheet("QLabel { color : green; }")
         self.save_note_button.clicked.connect(self.save_note)
         self.flag_video_button.clicked.connect(self.flag_video)
+
+    def navigate(self, selected_index):
+        # Set the current page of the stack widget to the index of the list view
+        self.stack_widget.setCurrentIndex(selected_index.row())
 
     def play_video(self):
         """

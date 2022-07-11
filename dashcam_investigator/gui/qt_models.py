@@ -43,3 +43,18 @@ class VideoListModel(QtCore.QAbstractListModel):
 
     def rowCount(self, index):
         return len(self._data)
+
+
+class NavigationListModel(QtCore.QAbstractListModel):
+    def __init__(self, data):
+        super(NavigationListModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self._data[index.row()]
+        if role == QtCore.Qt.DecorationRole:
+            return QtGui.QColor("red")
+
+    def rowCount(self, index):
+        return len(self._data)

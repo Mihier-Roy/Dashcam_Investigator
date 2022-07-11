@@ -68,4 +68,7 @@ def create_new_project(project_manager: ProjectManager) -> ProjectStructure:
         output_generator.generate_speed_chart(output_path=graph_output)
         video.output_files.append(str(graph_output.resolve()))
 
+    # Save updated object to file
+    project_manager.write_project_file(data=project_object)
+
     return project_object

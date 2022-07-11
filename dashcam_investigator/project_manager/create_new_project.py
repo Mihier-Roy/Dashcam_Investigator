@@ -4,7 +4,7 @@ from core.extract_metadata import process_file_meta, process_gps_data
 from core.output_generator import OutputGenerator
 from core.walk_directory import walk_directory
 from project_manager.project_datatypes import ProjectStructure
-from project_manager import ProjectManager
+from project_manager.project_manager import ProjectManager
 
 logger = logging.getLogger(__name__)
 

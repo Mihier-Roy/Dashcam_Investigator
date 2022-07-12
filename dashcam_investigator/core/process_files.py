@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, List
+from typing import List, Tuple
 import filetype
 import logging
 from project_manager.project_datatypes import FileAttributes
@@ -7,18 +7,20 @@ from project_manager.project_datatypes import FileAttributes
 logger = logging.getLogger(__name__)
 
 
-def walk_directory(
-    input_dir: Path,
+def process_files(
+    input_path: Path, setValue
 ) -> Tuple[List[FileAttributes], List[FileAttributes], List[FileAttributes]]:
     """
-    This function walks through a given input path and categorises files into 'video', 'image' or 'other' based on the MIME type.
+    This function identifies the file type and computes a FileAttributes object which is saved to the project file.
     """
-    video_files: list[FileAttributes] = []
-    image_files: list[FileAttributes] = []
-    other_files: list[FileAttributes] = []
-    # Iterate recursively through all the files in a directory
-    for item in input_dir.rglob("*"):
+    video_files = []
+    image_files = []
+    other_files = []
+    current_index = 1
+    for item in Path(input_path).rglob("*"):
         if item.is_file():
+            setValue(current_index)
+            current_index += 1
             file_type = filetype.guess_mime(item.resolve())
             if file_type is not None:
                 if file_type.split("/")[0] == "video":

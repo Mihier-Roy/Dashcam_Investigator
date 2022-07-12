@@ -1,6 +1,6 @@
 from pathlib import Path
 from PySide2 import QtWidgets
-from QtNewProjectDialog import Ui_Dialog
+from gui.QtNewProjectDialog import Ui_Dialog
 
 
 class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):

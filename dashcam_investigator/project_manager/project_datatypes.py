@@ -1,6 +1,6 @@
 from pathlib import Path
 from datetime import datetime
-from utils.generate_file_hash import generate_file_hash
+from utils.common import generate_file_hash
 
 
 class ProjectInfo:

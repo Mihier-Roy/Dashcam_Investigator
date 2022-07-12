@@ -2,16 +2,18 @@ import logging
 import pandas as pd
 import sys
 from pathlib import Path
-from PySide2 import QtWidgets, QtGui
-from project_manager.create_new_project import create_new_project
+from PySide2 import QtWidgets, QtGui, QtCore
+from core.get_file_count import get_file_count
+from core.process_files import process_files
+from gui.worker_class import Worker
+from gui.new_project_class import NewProjectDialog
 from project_manager.project_datatypes import FileAttributes
 from project_manager.project_manager import ProjectManager
 from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
 from gui.QtMainWindow import Ui_MainWindow
-from gui.NewProjectDialog import Ui_Dialog
 from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
 from PySide2.QtCore import QUrl
-from utils.convert_milli import convert_to_seconds
+from utils.common import convert_to_seconds
 
 logger = logging.getLogger(__name__)
 NAVIGATION_PAGES = ["Welcome", "Project"]
@@ -25,6 +27,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.project_object = None
         self.current_video = None
 
+        # Intialise a thread pool to run background tasks
+        self.threadpool = QtCore.QThreadPool()
+        logger.debug(f"Multithreading with {self.threadpool.maxThreadCount()} threads")
+
         # Move the application window to the center of the screen
         logger.debug("Moving window to the center of the screen")
         # Get current screen size
@@ -36,6 +42,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         y_coordinates = (screen_size.height() - self.height()) / 2 - 20
         self.move(x_coordinates, y_coordinates)
 
+        ######################################
+        # Navigation
+        ######################################
         # Load the navigation list
         navigation_model = NavigationListModel(NAVIGATION_PAGES)
         self.navigation_tab.setModel(navigation_model)
@@ -43,15 +52,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Handle navigation
         self.navigation_tab.clicked.connect(self.navigate)
 
+        ######################################
+        # Project controls
+        ######################################
         # Handle starting a new project
         self.new_project_button.clicked.connect(self.start_new_project)
         # Handle opening an existing project
         self.existing_project_button.clicked.connect(self.open_existing_project)
 
+        ######################################
+        # Video selection controls
+        ######################################
         # Collect the currently selected item from the tree view
         self.dir_tree_view.clicked.connect(self.on_selected)
-
-        # Collect the currently selected item
+        # Collect the currently selected item from list view
         self.video_list_view.clicked.connect(self.on_vid_selected)
 
         # Define media player
@@ -61,6 +75,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Set the video output from the QMediaPlayer to the QVideoWidget.
         self.mediaPlayer.setVideoOutput(self.video_player)
 
+        ######################################
+        # Video playback controls
+        ######################################
         # Set the QPushButtons to play, pause and stop the video in the QVideoWidget.
         self.play_button.clicked.connect(self.play_video)
         self.pause_button.clicked.connect(self.pause_video)
@@ -72,10 +89,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Set the video position in QMediaPlayer based on the QSlider position.
         self.horizontal_slider.sliderMoved.connect(self.video_position)
 
+        ######################################
+        # Save/flag video controls
+        ######################################
         # Save note/flag status when button is clicked
         self.note_status.setStyleSheet("QLabel { color : green; }")
         self.save_note_button.clicked.connect(self.save_note)
         self.flag_video_button.clicked.connect(self.flag_video)
+
+    ######################################
+    # Thread signal collectors
+    ######################################
+    def update_progress_dialog(self, current):
+        self.progress.setLabelText(f"Processing files... ({current}/{self.file_count})")
+        self.progress.setValue(current)
+
+    def update_object(self, output):
+        (
+            self.project_object.video_files,
+            self.project_object.image_files,
+            self.project_object.other_files,
+        ) = output
+
+    def thread_complete(self):
+        self.progress.hide()
+        logger.debug(f"Thread completed execution.")
 
     ######################################
     # Navigation controls
@@ -195,20 +233,40 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             logger.debug(f"Retreiving values entered into dialog.")
             input_dir, output_dir, case_name, investigator_name = dialog.save()
 
-            logger.debug(f"Creating a new project with inputs provided.")
             # Create a new project manager object and begin processing data
+            logger.debug(f"Creating a new project with inputs provided.")
             self.project_manager = ProjectManager(
                 input_dir=input_dir,
                 output_dir=output_dir,
                 case_name=case_name,
                 investigator_name=investigator_name,
             )
+            self.project_object = self.project_manager.new_project()
 
-            logger.debug(f"Processing files from input directory")
-            # create_new_project(self.project_manager)
+            # Get the total number of files in the directory
+            logger.debug(f"Counting files in directory")
+            self.file_count = get_file_count(input_dir)
 
-            # progress = QtWidgets.QProgressDialog("Copying files...", "Abort Copy", 0, numFiles, self)
-            # progress.setWindowModality(Qt.WindowModal)
+            logger.debug(f"Processing {self.file_count} files from input directory")
+            # Iterate through the directory and categorise files
+            worker = Worker(process_files, input_dir)
+            worker.signals.result.connect(self.update_object)
+            worker.signals.finished.connect(self.thread_complete)
+            worker.signals.progress.connect(self.update_progress_dialog)
+
+            # Execute
+            self.threadpool.start(worker)
+
+            # Initalise progress bar
+            self.progress = QtWidgets.QProgressDialog(
+                "Processing files...", None, 0, self.file_count, self
+            )
+            self.progress.setWindowModality(QtCore.Qt.WindowModal)
+            self.progress.setWindowTitle("Processing files...")
+            self.progress.show()
+
+            # Write updated object to file
+            # self.project_manager.write_project_file(data=self.project_object)
 
     ######################################
     # Notes/flag controls
@@ -320,74 +378,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.notes_textbox.setText(str(self.current_video.notes))
 
 
-class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):
-    """
-    Launches the dialog to collect information to create a new project.
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.input_dir = None
-        self.output_dir = None
-        self.case_name = None
-        self.investigator_name = None
-
-        # Run the .setupUi() method to show the GUI
-        self.setupUi(self)
-
-        # Open file dialog for input dir
-        self.input_dir_button.clicked.connect(self.get_input_dir)
-
-        # Open file dialog for output dir
-        self.output_dir_button.clicked.connect(self.get_output_dir)
-
-    def get_input_dir(self):
-        """
-        Sets the input directory path
-        """
-        dir = QtWidgets.QFileDialog.getExistingDirectory(
-            self,
-            "Open Directory",
-            "C:",
-            QtWidgets.QFileDialog.ShowDirsOnly
-            | QtWidgets.QFileDialog.DontResolveSymlinks,
-        )
-
-        if dir != None:
-            self.input_edit.setText(dir)
-            self.input_dir = Path(dir)
-
-    def get_output_dir(self):
-        """
-        Sets the output directory path
-        """
-        dir = QtWidgets.QFileDialog.getExistingDirectory(
-            self,
-            "Open Directory",
-            "C:",
-            QtWidgets.QFileDialog.ShowDirsOnly
-            | QtWidgets.QFileDialog.DontResolveSymlinks,
-        )
-
-        if dir != None:
-            self.output_edit.setText(dir)
-            self.output_dir = Path(dir)
-
-    def save(self):
-        self.case_name = self.case_edit.toPlainText()
-        self.investigator_name = self.investigator_edit.toPlainText()
-        return self.input_dir, self.output_dir, self.case_name, self.investigator_name
-
-
 def run():
     logger.info("---Running Dashcam Investigator---")
     app = QtWidgets.QApplication([])
     logger.debug("Initialising and displaying main window")
-
-    # Set project options
-    input_path = Path("H:\\DissertationDataset\\Nextbase312")
-    output_path = Path("E:\\Output_Nextbase_312")
-
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

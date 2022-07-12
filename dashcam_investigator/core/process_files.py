@@ -1,22 +1,21 @@
-from pathlib import Path
-from typing import List, Tuple
 import filetype
 import logging
+from pathlib import Path
+from core.extract_metadata import process_file_meta, process_gps_data
+from core.output_generator import OutputGenerator
+from project_manager.project_datatypes import ProjectStructure
 from project_manager.project_datatypes import FileAttributes
 
 logger = logging.getLogger(__name__)
 
 
 def process_files(
-    input_path: Path, progress_callback
-) -> Tuple[List[FileAttributes], List[FileAttributes], List[FileAttributes]]:
+    input_path: Path, project_object, progress_callback
+) -> ProjectStructure:
     """
     This function identifies the file type and computes a FileAttributes object which is saved to the project file.
     """
-    video_files = []
-    image_files = []
-    other_files = []
-
+    project_dir = project_object.project_info.project_directory
     current_progress = 1
     for item in Path(input_path).rglob("*"):
         if item.is_file():
@@ -29,12 +28,49 @@ def process_files(
             if file_type is not None:
                 if file_type.split("/")[0] == "video":
                     logger.debug(f"Video found : {item.name}")
-                    video_files.append(FileAttributes(item))
+                    video = FileAttributes(item)
+                    # Extract metadata
+                    video = extract_meta(video, project_dir)
+                    # Create maps
+                    video = create_map(video, project_dir)
+                    # Update object
+                    project_object.video_files.append(video)
+
                 elif file_type.split("/")[0] == "image":
                     logger.debug(f"Image found : {item.name}")
-                    image_files.append(FileAttributes(item))
+                    project_object.image_files.append(FileAttributes(item))
             else:
                 logger.debug(f"Other file found: {item.name}")
-                other_files.append(FileAttributes(item))
+                project_object.other_files.append(FileAttributes(item))
 
-    return video_files, image_files, other_files
+    return project_object
+
+
+def extract_meta(video, project_dir):
+    gps_data = process_gps_data(
+        video_path=Path(video.file_path),
+        output_dir=Path(project_dir, "Metadata"),
+    )
+    video.meta_files.append(gps_data)
+    file_meta = process_file_meta(
+        video_path=Path(video.file_path),
+        output_dir=Path(project_dir, "Metadata"),
+    )
+    video.meta_files.append(file_meta)
+
+    return video
+
+
+def create_map(video, project_dir):
+    video_name = video.name[0:-4]
+    map_output = Path(project_dir, "Maps", f"{video_name}_map.html")
+    graph_output = Path(project_dir, "Graphs", f"{video_name}_speed_graph.html")
+    output_generator = OutputGenerator()
+    # Generate route map and save output file
+    output_generator.generate_map(video_file=video, output_path=map_output)
+    video.output_files.append(str(map_output.resolve()))
+    # Generate speed graph and save output file
+    output_generator.generate_speed_chart(output_path=graph_output)
+    video.output_files.append(str(graph_output.resolve()))
+
+    return video

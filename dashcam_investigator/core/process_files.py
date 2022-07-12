@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_files(
-    input_path: Path,
+    input_path: Path, progress_callback
 ) -> Tuple[List[FileAttributes], List[FileAttributes], List[FileAttributes]]:
     """
     This function identifies the file type and computes a FileAttributes object which is saved to the project file.
@@ -17,8 +17,14 @@ def process_files(
     image_files = []
     other_files = []
 
+    current_progress = 1
     for item in Path(input_path).rglob("*"):
         if item.is_file():
+            # Emit the current progress
+            # Value sent will be picked up by the update_progress_dialog function (app.py)
+            progress_callback.emit(current_progress)
+            current_progress += 1
+
             file_type = filetype.guess_mime(item.resolve())
             if file_type is not None:
                 if file_type.split("/")[0] == "video":

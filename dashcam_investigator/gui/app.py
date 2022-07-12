@@ -105,11 +105,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.progress.setValue(current)
 
     def update_object(self, output):
-        (
-            self.project_object.video_files,
-            self.project_object.image_files,
-            self.project_object.other_files,
-        ) = output
+        self.project_object = output
+        self.project_manager.write_project_file(data=self.project_object)
+        logger.debug(f"Processing completed!")
+        # Navigate to the project page
+        self.stack_widget.setCurrentIndex(1)
 
     def thread_complete(self):
         self.progress.hide()
@@ -248,15 +248,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.file_count = get_file_count(input_dir)
 
             logger.debug(f"Processing {self.file_count} files from input directory")
-            # Iterate through the directory and categorise files
-            worker = Worker(process_files, input_dir)
-            worker.signals.result.connect(self.update_object)
-            worker.signals.finished.connect(self.thread_complete)
-            worker.signals.progress.connect(self.update_progress_dialog)
-
-            # Execute
-            self.threadpool.start(worker)
-
             # Initalise progress bar
             self.progress = QtWidgets.QProgressDialog(
                 "Processing files...", None, 0, self.file_count, self
@@ -265,8 +256,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.progress.setWindowTitle("Processing files...")
             self.progress.show()
 
-            # Write updated object to file
-            # self.project_manager.write_project_file(data=self.project_object)
+            # Iterate through the directory and categorise files
+            worker = Worker(process_files, input_dir, self.project_object)
+            worker.signals.result.connect(self.update_object)
+            worker.signals.finished.connect(self.thread_complete)
+            worker.signals.progress.connect(self.update_progress_dialog)
+            self.threadpool.start(worker)
 
     ######################################
     # Notes/flag controls

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_files(
-    input_path: Path, setValue
+    input_path: Path,
 ) -> Tuple[List[FileAttributes], List[FileAttributes], List[FileAttributes]]:
     """
     This function identifies the file type and computes a FileAttributes object which is saved to the project file.
@@ -16,11 +16,9 @@ def process_files(
     video_files = []
     image_files = []
     other_files = []
-    current_index = 1
+
     for item in Path(input_path).rglob("*"):
         if item.is_file():
-            setValue(current_index)
-            current_index += 1
             file_type = filetype.guess_mime(item.resolve())
             if file_type is not None:
                 if file_type.split("/")[0] == "video":

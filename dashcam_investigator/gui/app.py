@@ -109,6 +109,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.project_manager.write_project_file(data=self.project_object)
         logger.debug(f"Processing completed!")
         # Navigate to the project page
+        self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
     def thread_complete(self):
@@ -196,27 +197,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     file_path
                 )
 
-                # Populate the video table view
-                self.list_model = VideoListModel(self.project_object.video_files)
-                self.video_list_view.setModel(self.list_model)
-
-                # Load current project directory to tree view
-                tree_path = Path(
-                    self.project_object.project_info.input_directory
-                ).resolve()
-                logger.debug(
-                    f"Loading selected input directory to the TreeView -> {tree_path}"
-                )
-                model = QtWidgets.QFileSystemModel()
-                model.setRootPath(str(tree_path))
-                self.dir_tree_view.setModel(model)
-                self.dir_tree_view.setRootIndex(model.index(str(tree_path)))
-
-                # Ensure that the tree view shows only the name columns
-                self.dir_tree_view.hideColumn(1)
-                self.dir_tree_view.hideColumn(2)
-                self.dir_tree_view.hideColumn(3)
-                self.dir_tree_view.show()
+                # Load tree and video data
+                self.load_data()
 
                 # Navigate to the project page
                 self.stack_widget.setCurrentIndex(1)
@@ -254,6 +236,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             )
             self.progress.setWindowModality(QtCore.Qt.WindowModal)
             self.progress.setWindowTitle("Processing files...")
+            self.progress.setWindowFlags(
+                QtCore.Qt.Window
+                | QtCore.Qt.WindowTitleHint
+                | QtCore.Qt.CustomizeWindowHint
+            )
             self.progress.show()
 
             # Iterate through the directory and categorise files
@@ -262,6 +249,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             worker.signals.finished.connect(self.thread_complete)
             worker.signals.progress.connect(self.update_progress_dialog)
             self.threadpool.start(worker)
+
+    def load_data(self):
+        # Populate the video table view
+        list_model = VideoListModel(self.project_object.video_files)
+        self.video_list_view.setModel(list_model)
+
+        # Load current project directory to tree view
+        tree_path = Path(self.project_object.project_info.input_directory).resolve()
+        logger.debug(f"Loading selected input directory to the TreeView -> {tree_path}")
+        model = QtWidgets.QFileSystemModel()
+        model.setRootPath(str(tree_path))
+        self.dir_tree_view.setModel(model)
+        self.dir_tree_view.setRootIndex(model.index(str(tree_path)))
+
+        # Ensure that the tree view shows only the name columns
+        self.dir_tree_view.hideColumn(1)
+        self.dir_tree_view.hideColumn(2)
+        self.dir_tree_view.hideColumn(3)
+        self.dir_tree_view.show()
 
     ######################################
     # Notes/flag controls

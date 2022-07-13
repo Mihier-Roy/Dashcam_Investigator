@@ -128,3 +128,5 @@ def generate_report(project_object: ProjectStructure):
     with output_file.open("w") as file:
         file.write(html_report)
     logger.debug(f"Completed report generation.")
+
+    return output_file

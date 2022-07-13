@@ -5,6 +5,7 @@ from pathlib import Path
 from PySide2 import QtWidgets, QtGui, QtCore
 from core.get_file_count import get_file_count
 from core.process_files import process_files
+from core.generate_report import generate_report
 from gui.worker_class import Worker
 from gui.new_project_class import NewProjectDialog
 from project_manager.project_datatypes import FileAttributes
@@ -59,6 +60,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.new_project_button.clicked.connect(self.start_new_project)
         # Handle opening an existing project
         self.existing_project_button.clicked.connect(self.open_existing_project)
+
+        ######################################
+        # Report generation
+        ######################################
+        self.actionGenerate_Report.triggered.connect(self.create_report)
 
         ######################################
         # Video selection controls
@@ -252,8 +258,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def load_data(self):
         # Populate the video table view
-        list_model = VideoListModel(self.project_object.video_files)
-        self.video_list_view.setModel(list_model)
+        self.list_model = VideoListModel(self.project_object.video_files)
+        self.video_list_view.setModel(self.list_model)
 
         # Load current project directory to tree view
         tree_path = Path(self.project_object.project_info.input_directory).resolve()
@@ -268,6 +274,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dir_tree_view.hideColumn(2)
         self.dir_tree_view.hideColumn(3)
         self.dir_tree_view.show()
+
+    ######################################
+    # Generate a report
+    ######################################
+    def create_report(self):
+        if self.project_object != None:
+            report_path = generate_report(self.project_object)
+            self.project_object.project_info.report_path = str(report_path.resolve())
+            dlg = QtWidgets.QMessageBox(self)
+            dlg.setWindowTitle("Report generator")
+            dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
+            dlg.setIcon(QtWidgets.QMessageBox.Information)
+            dlg.setText(f"Report generated!\n View the report at : {report_path}")
+            dlg.exec_()
 
     ######################################
     # Notes/flag controls

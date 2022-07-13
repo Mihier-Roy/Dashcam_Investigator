@@ -282,6 +282,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.project_object != None:
             report_path = generate_report(self.project_object)
             self.project_object.project_info.report_path = str(report_path.resolve())
+            self.project_manager.write_project_file(data=self.project_object)
             dlg = QtWidgets.QMessageBox(self)
             dlg.setWindowTitle("Report generator")
             dlg.setStandardButtons(QtWidgets.QMessageBox.Close)

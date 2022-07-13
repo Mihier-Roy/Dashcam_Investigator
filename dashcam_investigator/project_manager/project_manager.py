@@ -29,7 +29,7 @@ class ProjectManager:
         investigator_name: str = "",
     ) -> None:
         self.project_info = ProjectInfo(
-            input_dir, output_dir, case_name, investigator_name
+            input_dir, output_dir, case_name, investigator_name, ""
         )
         self.project_directory = output_dir
         self.project_file = (

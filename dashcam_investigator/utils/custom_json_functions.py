@@ -49,6 +49,7 @@ def convert_to_project_info(projInfo):
         date_created=projInfo["date_created"],
         case_name=projInfo["case_name"],
         investigator_name=projInfo["investigator_name"],
+        report_path=projInfo["report_path"],
     )
 
 

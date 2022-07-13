@@ -14,6 +14,7 @@ class ProjectInfo:
         output_dir: Path,
         case_name: str,
         investigator_name: str,
+        report_path: str,
         date_created=None,
     ) -> None:
         self.input_directory = input_dir
@@ -23,20 +24,7 @@ class ProjectInfo:
         )
         self.case_name = case_name
         self.investigator_name = investigator_name
-
-    def new_obj(
-        self,
-        input_directory,
-        project_directory,
-        date_created,
-        case_name,
-        investigator_name,
-    ):
-        self.input_directory = Path(input_directory)
-        self.project_directory = Path(project_directory)
-        self.date_created = date_created
-        self.case_name = case_name
-        self.investigator_name = investigator_name
+        self.report_path = report_path
 
     def JSON_object(self) -> dict:
         return dict(
@@ -45,6 +33,7 @@ class ProjectInfo:
             date_created=self.date_created,
             case_name=self.case_name,
             investigator_name=self.investigator_name,
+            report_path=self.report_path,
         )
 
 

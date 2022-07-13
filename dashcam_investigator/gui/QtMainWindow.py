@@ -21,17 +21,13 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1600, 1000)
-        self.actionNew_project = QAction(MainWindow)
-        self.actionNew_project.setObjectName(u"actionNew_project")
-        self.actionOpen_project = QAction(MainWindow)
-        self.actionOpen_project.setObjectName(u"actionOpen_project")
-        self.actionGenerate_report = QAction(MainWindow)
-        self.actionGenerate_report.setObjectName(u"actionGenerate_report")
+        self.actionGenerate_Report = QAction(MainWindow)
+        self.actionGenerate_Report.setObjectName(u"actionGenerate_Report")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.navigation_tab = QListView(self.centralwidget)
         self.navigation_tab.setObjectName(u"navigation_tab")
-        self.navigation_tab.setGeometry(QRect(0, 94, 151, 905))
+        self.navigation_tab.setGeometry(QRect(0, 94, 151, 881))
         font = QFont()
         font.setPointSize(12)
         self.navigation_tab.setFont(font)
@@ -261,22 +257,29 @@ class Ui_MainWindow(object):
         self.tool_label.setAlignment(Qt.AlignCenter)
         self.tool_label.setWordWrap(True)
         MainWindow.setCentralWidget(self.centralwidget)
+        self.menuBar = QMenuBar(MainWindow)
+        self.menuBar.setObjectName(u"menuBar")
+        self.menuBar.setGeometry(QRect(0, 0, 1600, 26))
+        self.menuFile = QMenu(self.menuBar)
+        self.menuFile.setObjectName(u"menuFile")
+        MainWindow.setMenuBar(self.menuBar)
+
+        self.menuBar.addAction(self.menuFile.menuAction())
+        self.menuFile.addAction(self.actionGenerate_Report)
 
         self.retranslateUi(MainWindow)
 
         self.stack_widget.setCurrentIndex(0)
-        self.file_tab.setCurrentIndex(1)
-        self.data_tabs.setCurrentIndex(3)
+        self.file_tab.setCurrentIndex(0)
+        self.data_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionNew_project.setText(QCoreApplication.translate("MainWindow", u"New project", None))
-        self.actionOpen_project.setText(QCoreApplication.translate("MainWindow", u"Open project", None))
-        self.actionGenerate_report.setText(QCoreApplication.translate("MainWindow", u"Generate report", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
+        self.actionGenerate_Report.setText(QCoreApplication.translate("MainWindow", u"Generate Report", None))
         self.welcome_label.setText(QCoreApplication.translate("MainWindow", u"Welcome to the tool! Please select an action to perform", None))
         self.new_project_button.setText(QCoreApplication.translate("MainWindow", u"Create a new project", None))
         self.or_label.setText(QCoreApplication.translate("MainWindow", u"OR", None))
@@ -299,5 +302,6 @@ class Ui_MainWindow(object):
         self.notes_textbox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Start typing here...", None))
         self.data_tabs.setTabText(self.data_tabs.indexOf(self.notes_tab), QCoreApplication.translate("MainWindow", u"Notes", None))
         self.tool_label.setText(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
+        self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
     # retranslateUi
 

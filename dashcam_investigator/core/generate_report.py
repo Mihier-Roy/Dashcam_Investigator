@@ -1,5 +1,6 @@
 import json
 import logging
+import pandas as pd
 from pathlib import Path
 from project_manager.project_datatypes import ProjectStructure
 
@@ -23,12 +24,22 @@ def generate_report(project_object: ProjectStructure):
     logger.debug(f"Generating HTML report")
     list_of_links = ""
     notes_dict = dict()
+    hash_dict = dict()
+    info_dict = dict()
     for video in flagged_vids:
-        list_of_links += f'<li><a href="{video.output_files[0]}" onclick="openMap()">{video.name[0:-4]}</a></li>'
-        notes_dict[video.name[0:-4]] = video.notes
+        dict_key = video.name[0:-4]
+        list_of_links += f'<li><a href="{video.output_files[0]}" onclick="openFiles(\'{Path(video.output_files[1]).as_posix()}\')">{dict_key}</a></li>'
+        notes_dict[dict_key] = video.notes
+        hash_dict[dict_key] = video.sha256_hash
+        video_meta = pd.read_csv(video.meta_files[1])
+        info_dict[
+            dict_key
+        ] = f'Create Date : {video_meta["CreateDate"].values[0]} \r Video Duration: {video_meta["Duration"].values[0]} \r Device Information: {video_meta["Format"].values[0]} {video_meta["Information"].values[0]}'
 
     # Convert notes dict to JSON
     video_notes = json.dumps(notes_dict)
+    video_hash = json.dumps(hash_dict)
+    video_info = json.dumps(info_dict)
 
     # Create a HTML report with the relevant data
     html_report = f"""<html>
@@ -85,10 +96,15 @@ def generate_report(project_object: ProjectStructure):
 
 <script>
     const notes = {video_notes}
-    function openMap() {{
+    const hashes = {video_hash}
+    const info = {video_info}
+    function openFiles(speed_graph_url) {{
         event.preventDefault()
-        document.getElementById("iframe").src = event.target.href;
+        document.getElementById("map-iframe").src = event.target.href;
+        document.getElementById("graph-iframe").src = speed_graph_url;
         document.getElementById("videoTitle").innerText = "Selected video : " + event.target.innerText;
+        document.getElementById("hashTitle").innerText = "SHA256 Hash : " + hashes[event.target.innerText];
+        document.getElementById("infoTitle").innerText = info[event.target.innerText];
         document.getElementById("videoNotes").innerText = "Video Notes";
         document.getElementById("noteContent").innerText = notes[event.target.innerText];
         document.getElementById("noteContent").style.display = "block"
@@ -113,10 +129,13 @@ def generate_report(project_object: ProjectStructure):
         <div id="notes">
             <h1 id="placeholder">Please select a video</h1>
             <h3 id="videoTitle"></h3>
+            <h4 id="hashTitle"></h4>
+            <h5 id="infoTitle"></h4>
             <h4 id="videoNotes"></h4>
             <p id="noteContent" />
         </div>
-        <iframe id="iframe" height="65%" width="95%"></iframe>
+        <iframe id="map-iframe" height="60%" width="90%"></iframe>
+        <iframe id="graph-iframe" height="60%" width="90%"></iframe>
     </div>
 
 </body>

@@ -36,14 +36,14 @@ class MetaDataFrames:
         # Load the data into a Pandas dataframe (by way of a list)
         data = []
         for point_idx, point in enumerate(segment.points):
+            # get_speed returns m/s. Convert to km/h
+            speed = (
+                segment.get_speed(point_idx) * 3.6
+                if segment.get_speed(point_idx) is not None
+                else None
+            )
             data.append(
-                [
-                    point.longitude,
-                    point.latitude,
-                    point.elevation,
-                    point.time,
-                    segment.get_speed(point_idx),
-                ]
+                [point.longitude, point.latitude, point.elevation, point.time, speed]
             )
         columns = [
             "Longitude",

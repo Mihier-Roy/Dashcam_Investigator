@@ -25,6 +25,9 @@ class ProjectInfo:
         self.case_name = case_name
         self.investigator_name = investigator_name
         self.report_path = report_path
+        self.num_videos = None
+        self.num_images = None
+        self.num_other = None
 
     def JSON_object(self) -> dict:
         return dict(
@@ -34,6 +37,9 @@ class ProjectInfo:
             case_name=self.case_name,
             investigator_name=self.investigator_name,
             report_path=self.report_path,
+            num_videos=self.num_videos,
+            num_images=self.num_images,
+            num_other=self.num_other,
         )
 
 

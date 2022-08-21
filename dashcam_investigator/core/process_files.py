@@ -43,6 +43,11 @@ def process_files(
                 logger.debug(f"Other file found: {item.name}")
                 project_object.other_files.append(FileAttributes(item))
 
+    # Write count of videos, images, and other files discovered
+    project_object.project_info.num_videos = len(project_object.video_files)
+    project_object.project_info.num_images = len(project_object.image_files)
+    project_object.project_info.num_other = len(project_object.other_files)
+
     return project_object
 
 

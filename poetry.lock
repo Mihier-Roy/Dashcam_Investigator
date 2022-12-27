@@ -132,14 +132,14 @@ python-versions = "*"
 
 [[package]]
 name = "folium"
-version = "0.12.1.post1"
+version = "0.14.0"
 description = "Make beautiful maps with Leaflet.js & Python"
 category = "main"
 optional = false
 python-versions = ">=3.5"
 
 [package.dependencies]
-branca = ">=0.3.0"
+branca = ">=0.6.0"
 jinja2 = ">=2.9"
 numpy = "*"
 requests = "*"
@@ -415,7 +415,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "517e11ae0cc20764f124e49d76d8033ed682333842487a50f505c27840fe270c"
+content-hash = "732c2faa57bdfccb0afa907958bcf7d346ddecb00b09e4233cb1e23e037052c5"
 
 [metadata.files]
 altair = [
@@ -473,8 +473,8 @@ filetype = [
     {file = "filetype-1.2.0.tar.gz", hash = "sha256:66b56cd6474bf41d8c54660347d37afcc3f7d1970648de365c102ef77548aadb"},
 ]
 folium = [
-    {file = "folium-0.12.1.post1-py2.py3-none-any.whl", hash = "sha256:e856ae1de0b322a719b01ceed64ea16f6f011bd28ed22e954a7f7884313da672"},
-    {file = "folium-0.12.1.post1.tar.gz", hash = "sha256:e91e57d8298f3ccf4cce3c5e065bea6eb17033e3c5432b8a22214009c266b2ab"},
+    {file = "folium-0.14.0-py2.py3-none-any.whl", hash = "sha256:c894e2c029a8ca40e043a311978a895cefe32d746a94263f807dd7b6b2e9c679"},
+    {file = "folium-0.14.0.tar.gz", hash = "sha256:8ec44697d18f5932e0fdaee8b19da98625de4d0e72cb30ef56f9479f18e11b9f"},
 ]
 gpxpy = [
     {file = "gpxpy-1.5.0.tar.gz", hash = "sha256:e6993a8945eae07a833cd304b88bbc6c3c132d63b2bf4a9b0a5d9097616b8708"},

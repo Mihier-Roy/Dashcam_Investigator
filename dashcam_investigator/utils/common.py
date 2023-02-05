@@ -1,5 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
+from typing import Tuple
 
 
 def generate_file_hash(file_path: Path) -> str:
@@ -16,7 +17,7 @@ def generate_file_hash(file_path: Path) -> str:
         return hash_function.hexdigest()
 
 
-def convert_to_seconds(milliseconds):
+def convert_to_seconds(milliseconds: int) -> Tuple[int, int]:
     """
     This function converts video duration from milliseconds to seconds and minutes.
     param: milliseconds -> video duration in milliseconds

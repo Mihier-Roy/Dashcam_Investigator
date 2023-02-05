@@ -8,7 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 def initialise_map(video_metadata: DataFrame) -> Mappy:
-    # Initialises an instance of the Mappy class, which manages a folium map
+    """
+    Initialises an instance of the Mappy class, which manages a folium map
+    """
     logger.debug("Initialising map")
     mappy = Mappy(video_metadata)
     mappy.add_tilelayers()
@@ -20,7 +22,9 @@ def initialise_map(video_metadata: DataFrame) -> Mappy:
 
 
 def generate_speed_colour_map(speed: DataFrame) -> linear:
-    # Takes in a dataframe containing a large list of speed, and uses this to generate a branca linear colour map.
+    """
+    Takes in a dataframe containing a large list of speed, and uses this to generate a branca linear colour map.
+    """
     colour_map = linear.Set1_09.scale(speed["Speed"].min(), speed["Speed"].max())
     colour_map.caption = "Speed colour scale: "
     return colour_map

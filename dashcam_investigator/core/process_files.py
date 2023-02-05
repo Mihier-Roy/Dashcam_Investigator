@@ -51,7 +51,10 @@ def process_files(
     return project_object
 
 
-def extract_meta(video, project_dir):
+def extract_meta(video: FileAttributes, project_dir: Path) -> FileAttributes:
+    """
+    Extracts GPS and file metadata and saves the paths of these files in the FileAttributes object
+    """
     gps_data = process_gps_data(
         video_path=Path(video.file_path),
         output_dir=Path(project_dir, "Metadata"),
@@ -66,7 +69,10 @@ def extract_meta(video, project_dir):
     return video
 
 
-def create_map(video, project_dir):
+def create_map(video: FileAttributes, project_dir: Path) -> FileAttributes:
+    """
+    Generates a map and saves the paths of the map in the FileAttributes object
+    """
     video_name = video.name[0:-4]
     map_output = Path(project_dir, "Maps", f"{video_name}_map.html")
     graph_output = Path(project_dir, "Graphs", f"{video_name}_speed_graph.html")

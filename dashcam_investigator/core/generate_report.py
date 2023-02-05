@@ -7,7 +7,12 @@ from project_manager.project_datatypes import ProjectStructure
 logger = logging.getLogger(__name__)
 
 
-def generate_report(project_object: ProjectStructure):
+def generate_report(project_object: ProjectStructure) -> str:
+    """
+    Creates a HTML report of the flagged videos along with all notes.
+    params: project_object
+    returns: Path to the HTML file
+    """
     # Identify flagged videos
     logger.debug(f"Beginning report generation.")
     flagged_vids = [

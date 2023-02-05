@@ -17,6 +17,9 @@ class OutputGenerator:
         self.speed_data = None
 
     def generate_map(self, video_file: FileAttributes, output_path: Path):
+        """
+        Generates a map with all the relevant information extracted from the video
+        """
         # Convert extracted metadata to Dataframe
         video_meta_handler = MetaDataFrames(video_file.name, video_file.meta_files)
         video_meta_handler.convert_to_datetime()
@@ -49,7 +52,9 @@ class OutputGenerator:
         mappy.canvas.save(output_path)
 
     def generate_speed_chart(self, output_path: Path) -> Chart:
-        # Takes in a dataframe of speed and datetime data, and returns an altair Chart of that data
+        """
+        Takes in a dataframe of speed and datetime data, and returns an altair Chart of that data
+        """
         logger.debug("Generating speed map")
         data_transformers.disable_max_rows()
         speed_chart = (

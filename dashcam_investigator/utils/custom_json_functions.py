@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Union
 from project_manager.project_datatypes import (
     ProjectStructure,
     ProjectInfo,
@@ -20,7 +21,7 @@ class ProjectEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def project_decoder(dictionary):
+def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
     """
     Converts a JSON dictionary into a ProjectStructure object if the tool_name attribute is present.
     params: dictinary -> JSON dictionary
@@ -46,7 +47,7 @@ def project_decoder(dictionary):
     return dictionary
 
 
-def convert_to_project_info(proj_info):
+def convert_to_project_info(proj_info: list) -> ProjectInfo:
     """
     Converts a JSON object into a ProjectInfo object
     params: proj_info -> list
@@ -62,7 +63,7 @@ def convert_to_project_info(proj_info):
     )
 
 
-def convert_to_file_attr(input_list):
+def convert_to_file_attr(input_list: list) -> list:
     """
     Converts a list of JSON objects into a FileAttributes object.
     params: input_list -> list

@@ -30,6 +30,11 @@ class ProjectInfo:
         self.num_other = None
 
     def JSON_object(self) -> dict:
+        """
+        Converts the ProjectInfo object to a dictionary which can be written to JSON
+        params: self
+        returns: dict
+        """
         return dict(
             input_directory=str(self.input_directory.resolve()),
             project_directory=str(self.project_directory.resolve()),
@@ -45,7 +50,7 @@ class ProjectInfo:
 
 class FileAttributes:
     """
-    Objects of this class are used to record the details of each file identified in an input directory.
+    Objects of this class are used to record the details of files identified in an input directory
     These files are saved to the project's JSON file for use throughout the application.
     """
 
@@ -72,6 +77,11 @@ class FileAttributes:
         self.notes = "" if notes is None else notes
 
     def JSON_object(self) -> dict:
+        """
+        Converts the FileAttributes object to a dictionary which can be written to JSON
+        params: self
+        returns: dict
+        """
         return dict(
             file_path=str(self.file_path.resolve()),
             name=self.name,
@@ -104,6 +114,11 @@ class ProjectStructure:
         self.other_files: list[FileAttributes] = other_files
 
     def JSON_object(self) -> dict:
+        """
+        Converts the ProjectStructure object to a dictionary which can be written to JSON
+        params: self
+        returns: dict
+        """
         return dict(
             tool_name=self.tool_name,
             project_info=self.project_info,

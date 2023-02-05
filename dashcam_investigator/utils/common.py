@@ -17,6 +17,11 @@ def generate_file_hash(file_path: Path) -> str:
 
 
 def convert_to_seconds(milliseconds):
+    """
+    This function converts video duration from milliseconds to seconds and minutes.
+    param: milliseconds -> video duration in milliseconds
+    returns: seconds, minutes
+    """
     seconds = int((milliseconds / 1000) % 60)
     minutes = int((milliseconds / (1000 * 60)) % 60)
     if seconds < 10:

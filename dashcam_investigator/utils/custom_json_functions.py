@@ -10,18 +10,22 @@ from project_manager.project_datatypes import (
 class ProjectEncoder(json.JSONEncoder):
     """
     Define a JSON encoder which overrides the default implementation.
-    This definition checks for the presence of a JSON_object function so that nested objects can be written to JSON.
+    Checks for a JSON_object aatribute and calls the function to allow writing nested objects to JSON.
     """
 
-    def default(self, obj):
-        if hasattr(obj, "JSON_object"):
-            return obj.JSON_object()
-        else:
-            return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if hasattr(o, "JSON_object"):
+            return o.JSON_object()
+
+        return json.JSONEncoder.default(self, o)
 
 
 def project_decoder(dictionary):
-    # If the json dictionary contains the tool_name key, then convert the dictionary to the ProjectStructure object
+    """
+    Converts a JSON dictionary into a ProjectStructure object if the tool_name attribute is present.
+    params: dictinary -> JSON dictionary
+    returns: ProjectStructure or unmodified dictionary
+    """
     video_files = []
     image_files = []
     other_files = []
@@ -42,18 +46,28 @@ def project_decoder(dictionary):
     return dictionary
 
 
-def convert_to_project_info(projInfo):
+def convert_to_project_info(proj_info):
+    """
+    Converts a JSON object into a ProjectInfo object
+    params: proj_info -> list
+    returns: ProjectInfo
+    """
     return ProjectInfo(
-        input_dir=Path(projInfo["input_directory"]),
-        output_dir=Path(projInfo["project_directory"]),
-        date_created=projInfo["date_created"],
-        case_name=projInfo["case_name"],
-        investigator_name=projInfo["investigator_name"],
-        report_path=projInfo["report_path"],
+        input_dir=Path(proj_info["input_directory"]),
+        output_dir=Path(proj_info["project_directory"]),
+        date_created=proj_info["date_created"],
+        case_name=proj_info["case_name"],
+        investigator_name=proj_info["investigator_name"],
+        report_path=proj_info["report_path"],
     )
 
 
 def convert_to_file_attr(input_list):
+    """
+    Converts a list of JSON objects into a FileAttributes object.
+    params: input_list -> list
+    returns: output_list -> list of file attribute objects
+    """
     output_list = []
 
     for item in input_list:

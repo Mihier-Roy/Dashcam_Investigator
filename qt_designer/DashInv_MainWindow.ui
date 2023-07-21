@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1200</width>
-    <height>800</height>
+    <height>802</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Dashcam Investigator</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="horizontalLayoutWidget">
@@ -43,11 +43,11 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>1143</width>
+          <width>1142</width>
           <height>797</height>
          </rect>
         </property>
-        <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <widget class="QWidget" name="">
          <property name="geometry">
           <rect>
            <x>0</x>
@@ -56,127 +56,101 @@
            <height>801</height>
           </rect>
          </property>
-         <layout class="QHBoxLayout" name="right_h_layout">
-          <item>
-           <layout class="QVBoxLayout" name="left_file_v_layout">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetMaximumSize</enum>
+         <layout class="QGridLayout" name="content_grid">
+          <item row="0" column="2">
+           <layout class="QVBoxLayout" name="file_info_v_layout">
+            <property name="topMargin">
+             <number>0</number>
             </property>
             <item>
-             <widget class="Pivot" name="file_viewer_tabs">
-              <property name="maximumSize">
+             <widget class="QVideoWidget" name="video_display_widget" native="true">
+              <property name="minimumSize">
                <size>
-                <width>200</width>
-                <height>16777215</height>
+                <width>0</width>
+                <height>300</height>
                </size>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="ListView" name="video_files_list_view">
-              <property name="maximumSize">
-               <size>
-                <width>200</width>
-                <height>16777215</height>
-               </size>
+             <widget class="QSplitter" name="playback_controls_spliter">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
+              <widget class="PrimaryPushButton" name="play_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Primary push button</string>
+               </property>
+               <property name="icon">
+                <iconset theme="PLAY">
+                 <normaloff>.</normaloff>.</iconset>
+               </property>
+              </widget>
+              <widget class="PushButton" name="pause_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Push button</string>
+               </property>
+              </widget>
+              <widget class="ProgressBar" name="video_progress_bar">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>10</height>
+                </size>
+               </property>
+              </widget>
+              <widget class="LineEdit" name="video_duration_display">
+               <property name="maximumSize">
+                <size>
+                 <width>35</width>
+                 <height>33</height>
+                </size>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="autoFillBackground">
+                <bool>false</bool>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </widget>
             </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
-             <layout class="QVBoxLayout" name="video_workarea_v_layout">
-              <item alignment="Qt::AlignTop">
-               <widget class="QVideoWidget" name="video_display_widget" native="true">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>300</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="playback_controls_h_layout">
-                <item>
-                 <widget class="PrimaryPushButton" name="play_button">
-                  <property name="minimumSize">
-                   <size>
-                    <width>30</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>30</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Primary push button</string>
-                  </property>
-                  <property name="icon">
-                   <iconset theme="PLAY">
-                    <normaloff>.</normaloff>.</iconset>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="PushButton" name="pause_button">
-                  <property name="minimumSize">
-                   <size>
-                    <width>30</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>30</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Push button</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="ProgressBar" name="video_progress_bar">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>10</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="LineEdit" name="video_duration_display">
-                  <property name="maximumSize">
-                   <size>
-                    <width>35</width>
-                    <height>33</height>
-                   </size>
-                  </property>
-                  <property name="mouseTracking">
-                   <bool>false</bool>
-                  </property>
-                  <property name="acceptDrops">
-                   <bool>false</bool>
-                  </property>
-                  <property name="autoFillBackground">
-                   <bool>false</bool>
-                  </property>
-                  <property name="readOnly">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="Pivot" name="video_info_pivot">
@@ -195,23 +169,38 @@
              </widget>
             </item>
             <item>
-             <widget class="ScrollArea" name="video_info_scroll_area">
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents_6">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>562</width>
-                 <height>395</height>
-                </rect>
-               </property>
-              </widget>
+             <widget class="QStackedWidget" name="video_info_stacked_widget">
+              <widget class="QWidget" name="page"/>
+              <widget class="QWidget" name="page_2"/>
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="file_browser_v_layout_3">
+            <item alignment="Qt::AlignLeft">
+             <widget class="Pivot" name="file_browser_pivot"/>
+            </item>
+            <item alignment="Qt::AlignHCenter">
+             <widget class="QStackedWidget" name="file_browser_stacked_widget">
+              <property name="minimumSize">
+               <size>
+                <width>210</width>
+                <height>0</height>
+               </size>
+              </property>
+              <widget class="QWidget" name="page_3"/>
+              <widget class="QWidget" name="page_4"/>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="1">
+           <widget class="Line" name="line">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -257,11 +246,6 @@
   <customwidget>
    <class>LineEdit</class>
    <extends>QLineEdit</extends>
-   <header>qfluentwidgets</header>
-  </customwidget>
-  <customwidget>
-   <class>ListView</class>
-   <extends>QListView</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>

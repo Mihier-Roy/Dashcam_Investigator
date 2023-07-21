@@ -19,7 +19,6 @@ from qfluentwidgets import NavigationInterface
 from qfluentwidgets import Pivot
 from qfluentwidgets import ProgressBar
 from qfluentwidgets import LineEdit
-from qfluentwidgets import ListView
 from PySide2.QtMultimediaWidgets import QVideoWidget
 
 
@@ -27,7 +26,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1200, 800)
+        MainWindow.resize(1200, 802)
         MainWindow.setMinimumSize(QSize(1200, 800))
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -47,44 +46,26 @@ class Ui_MainWindow(object):
         self.right_scroll_area_2.setWidgetResizable(True)
         self.right_scroll_widget = QWidget()
         self.right_scroll_widget.setObjectName(u"right_scroll_widget")
-        self.right_scroll_widget.setGeometry(QRect(0, 0, 1143, 797))
-        self.horizontalLayoutWidget_2 = QWidget(self.right_scroll_widget)
-        self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
-        self.horizontalLayoutWidget_2.setGeometry(QRect(0, 0, 1141, 801))
-        self.right_h_layout = QHBoxLayout(self.horizontalLayoutWidget_2)
-        self.right_h_layout.setObjectName(u"right_h_layout")
-        self.right_h_layout.setContentsMargins(0, 0, 0, 0)
-        self.left_file_v_layout = QVBoxLayout()
-        self.left_file_v_layout.setObjectName(u"left_file_v_layout")
-        self.left_file_v_layout.setSizeConstraint(QLayout.SetMaximumSize)
-        self.file_viewer_tabs = Pivot(self.horizontalLayoutWidget_2)
-        self.file_viewer_tabs.setObjectName(u"file_viewer_tabs")
-        self.file_viewer_tabs.setMaximumSize(QSize(200, 16777215))
-
-        self.left_file_v_layout.addWidget(self.file_viewer_tabs)
-
-        self.video_files_list_view = ListView(self.horizontalLayoutWidget_2)
-        self.video_files_list_view.setObjectName(u"video_files_list_view")
-        self.video_files_list_view.setMaximumSize(QSize(200, 16777215))
-
-        self.left_file_v_layout.addWidget(self.video_files_list_view)
-
-
-        self.right_h_layout.addLayout(self.left_file_v_layout)
-
-        self.verticalLayout_3 = QVBoxLayout()
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.video_workarea_v_layout = QVBoxLayout()
-        self.video_workarea_v_layout.setObjectName(u"video_workarea_v_layout")
-        self.video_display_widget = QVideoWidget(self.horizontalLayoutWidget_2)
+        self.right_scroll_widget.setGeometry(QRect(0, 0, 1142, 797))
+        self.widget = QWidget(self.right_scroll_widget)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(0, 0, 1141, 801))
+        self.content_grid = QGridLayout(self.widget)
+        self.content_grid.setObjectName(u"content_grid")
+        self.content_grid.setContentsMargins(0, 0, 0, 0)
+        self.file_info_v_layout = QVBoxLayout()
+        self.file_info_v_layout.setObjectName(u"file_info_v_layout")
+        self.file_info_v_layout.setContentsMargins(-1, 0, -1, -1)
+        self.video_display_widget = QVideoWidget(self.widget)
         self.video_display_widget.setObjectName(u"video_display_widget")
         self.video_display_widget.setMinimumSize(QSize(0, 300))
 
-        self.video_workarea_v_layout.addWidget(self.video_display_widget, 0, Qt.AlignTop)
+        self.file_info_v_layout.addWidget(self.video_display_widget)
 
-        self.playback_controls_h_layout = QHBoxLayout()
-        self.playback_controls_h_layout.setObjectName(u"playback_controls_h_layout")
-        self.play_button = PrimaryPushButton(self.horizontalLayoutWidget_2)
+        self.playback_controls_spliter = QSplitter(self.widget)
+        self.playback_controls_spliter.setObjectName(u"playback_controls_spliter")
+        self.playback_controls_spliter.setOrientation(Qt.Horizontal)
+        self.play_button = PrimaryPushButton(self.playback_controls_spliter)
         self.play_button.setObjectName(u"play_button")
         self.play_button.setMinimumSize(QSize(30, 0))
         self.play_button.setMaximumSize(QSize(30, 16777215))
@@ -96,57 +77,83 @@ class Ui_MainWindow(object):
             icon.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         
         self.play_button.setIcon(icon)
-
-        self.playback_controls_h_layout.addWidget(self.play_button)
-
-        self.pause_button = PushButton(self.horizontalLayoutWidget_2)
+        self.playback_controls_spliter.addWidget(self.play_button)
+        self.pause_button = PushButton(self.playback_controls_spliter)
         self.pause_button.setObjectName(u"pause_button")
         self.pause_button.setMinimumSize(QSize(30, 0))
         self.pause_button.setMaximumSize(QSize(30, 16777215))
-
-        self.playback_controls_h_layout.addWidget(self.pause_button)
-
-        self.video_progress_bar = ProgressBar(self.horizontalLayoutWidget_2)
+        self.playback_controls_spliter.addWidget(self.pause_button)
+        self.video_progress_bar = ProgressBar(self.playback_controls_spliter)
         self.video_progress_bar.setObjectName(u"video_progress_bar")
         self.video_progress_bar.setMaximumSize(QSize(16777215, 10))
-
-        self.playback_controls_h_layout.addWidget(self.video_progress_bar)
-
-        self.video_duration_display = LineEdit(self.horizontalLayoutWidget_2)
+        self.playback_controls_spliter.addWidget(self.video_progress_bar)
+        self.video_duration_display = LineEdit(self.playback_controls_spliter)
         self.video_duration_display.setObjectName(u"video_duration_display")
         self.video_duration_display.setMaximumSize(QSize(35, 33))
         self.video_duration_display.setMouseTracking(False)
         self.video_duration_display.setAcceptDrops(False)
         self.video_duration_display.setAutoFillBackground(False)
         self.video_duration_display.setReadOnly(True)
+        self.playback_controls_spliter.addWidget(self.video_duration_display)
 
-        self.playback_controls_h_layout.addWidget(self.video_duration_display)
+        self.file_info_v_layout.addWidget(self.playback_controls_spliter)
 
+        self.line_2 = QFrame(self.widget)
+        self.line_2.setObjectName(u"line_2")
+        self.line_2.setFrameShape(QFrame.HLine)
+        self.line_2.setFrameShadow(QFrame.Sunken)
 
-        self.video_workarea_v_layout.addLayout(self.playback_controls_h_layout)
+        self.file_info_v_layout.addWidget(self.line_2)
 
-
-        self.verticalLayout_3.addLayout(self.video_workarea_v_layout)
-
-        self.video_info_pivot = Pivot(self.horizontalLayoutWidget_2)
+        self.video_info_pivot = Pivot(self.widget)
         self.video_info_pivot.setObjectName(u"video_info_pivot")
         self.video_info_pivot.setMinimumSize(QSize(210, 45))
         self.video_info_pivot.setMaximumSize(QSize(16777215, 45))
 
-        self.verticalLayout_3.addWidget(self.video_info_pivot)
+        self.file_info_v_layout.addWidget(self.video_info_pivot)
 
-        self.video_info_scroll_area = ScrollArea(self.horizontalLayoutWidget_2)
-        self.video_info_scroll_area.setObjectName(u"video_info_scroll_area")
-        self.video_info_scroll_area.setWidgetResizable(True)
-        self.scrollAreaWidgetContents_6 = QWidget()
-        self.scrollAreaWidgetContents_6.setObjectName(u"scrollAreaWidgetContents_6")
-        self.scrollAreaWidgetContents_6.setGeometry(QRect(0, 0, 562, 395))
-        self.video_info_scroll_area.setWidget(self.scrollAreaWidgetContents_6)
+        self.video_info_stacked_widget = QStackedWidget(self.widget)
+        self.video_info_stacked_widget.setObjectName(u"video_info_stacked_widget")
+        self.page = QWidget()
+        self.page.setObjectName(u"page")
+        self.video_info_stacked_widget.addWidget(self.page)
+        self.page_2 = QWidget()
+        self.page_2.setObjectName(u"page_2")
+        self.video_info_stacked_widget.addWidget(self.page_2)
 
-        self.verticalLayout_3.addWidget(self.video_info_scroll_area)
+        self.file_info_v_layout.addWidget(self.video_info_stacked_widget)
 
 
-        self.right_h_layout.addLayout(self.verticalLayout_3)
+        self.content_grid.addLayout(self.file_info_v_layout, 0, 2, 1, 1)
+
+        self.file_browser_v_layout_3 = QVBoxLayout()
+        self.file_browser_v_layout_3.setObjectName(u"file_browser_v_layout_3")
+        self.file_browser_pivot = Pivot(self.widget)
+        self.file_browser_pivot.setObjectName(u"file_browser_pivot")
+
+        self.file_browser_v_layout_3.addWidget(self.file_browser_pivot, 0, Qt.AlignLeft)
+
+        self.file_browser_stacked_widget = QStackedWidget(self.widget)
+        self.file_browser_stacked_widget.setObjectName(u"file_browser_stacked_widget")
+        self.file_browser_stacked_widget.setMinimumSize(QSize(210, 0))
+        self.page_3 = QWidget()
+        self.page_3.setObjectName(u"page_3")
+        self.file_browser_stacked_widget.addWidget(self.page_3)
+        self.page_4 = QWidget()
+        self.page_4.setObjectName(u"page_4")
+        self.file_browser_stacked_widget.addWidget(self.page_4)
+
+        self.file_browser_v_layout_3.addWidget(self.file_browser_stacked_widget, 0, Qt.AlignHCenter)
+
+
+        self.content_grid.addLayout(self.file_browser_v_layout_3, 0, 0, 1, 1)
+
+        self.line = QFrame(self.widget)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.VLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+
+        self.content_grid.addWidget(self.line, 0, 1, 1, 1)
 
         self.right_scroll_area_2.setWidget(self.right_scroll_widget)
 
@@ -160,7 +167,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
         self.play_button.setText(QCoreApplication.translate("MainWindow", u"Primary push button", None))
         self.pause_button.setText(QCoreApplication.translate("MainWindow", u"Push button", None))
     # retranslateUi

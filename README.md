@@ -10,10 +10,16 @@ The following commands can be used to install the dependencies and run the appli
 
 ```bash
 # Install dependencies
-$ poetry install
+poetry install
 
 # Run the application using the Poetry virtual environment
-$ poetry run python ./dashcam_investigator/__main__.py 
+poetry run python ./dashcam_investigator/__main__.py 
+```
+
+The application uses Qt to create the GUI. The UI was designed using [Qt Designer](). The design files used are found in the `qt_designer` folder. To convert design files into Python code seen in the `fluent_gui` folder, run the following command:
+
+```bash
+poetry run pyside2-uic ./qt_designer/DashInv_MainWindow.ui -o ./fluent_gui/QtFluentMainWindow.py 
 ```
 
 ### Dependencies

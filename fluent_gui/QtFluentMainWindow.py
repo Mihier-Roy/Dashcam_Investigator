@@ -15,10 +15,12 @@ from PySide2.QtWidgets import *
 from qfluentwidgets import PushButton
 from qfluentwidgets import PrimaryPushButton
 from qfluentwidgets import ScrollArea
+from qfluentwidgets import TitleLabel
 from qfluentwidgets import NavigationInterface
 from qfluentwidgets import Pivot
 from qfluentwidgets import ProgressBar
 from qfluentwidgets import LineEdit
+from qfluentwidgets import ListWidget
 from PySide2.QtMultimediaWidgets import QVideoWidget
 
 
@@ -47,22 +49,22 @@ class Ui_MainWindow(object):
         self.right_scroll_widget = QWidget()
         self.right_scroll_widget.setObjectName(u"right_scroll_widget")
         self.right_scroll_widget.setGeometry(QRect(0, 0, 1142, 797))
-        self.widget = QWidget(self.right_scroll_widget)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(0, 0, 1141, 801))
-        self.content_grid = QGridLayout(self.widget)
+        self.layoutWidget = QWidget(self.right_scroll_widget)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(0, 0, 1141, 801))
+        self.content_grid = QGridLayout(self.layoutWidget)
         self.content_grid.setObjectName(u"content_grid")
         self.content_grid.setContentsMargins(0, 0, 0, 0)
         self.file_info_v_layout = QVBoxLayout()
         self.file_info_v_layout.setObjectName(u"file_info_v_layout")
         self.file_info_v_layout.setContentsMargins(-1, 0, -1, -1)
-        self.video_display_widget = QVideoWidget(self.widget)
+        self.video_display_widget = QVideoWidget(self.layoutWidget)
         self.video_display_widget.setObjectName(u"video_display_widget")
         self.video_display_widget.setMinimumSize(QSize(0, 300))
 
         self.file_info_v_layout.addWidget(self.video_display_widget)
 
-        self.playback_controls_spliter = QSplitter(self.widget)
+        self.playback_controls_spliter = QSplitter(self.layoutWidget)
         self.playback_controls_spliter.setObjectName(u"playback_controls_spliter")
         self.playback_controls_spliter.setOrientation(Qt.Horizontal)
         self.play_button = PrimaryPushButton(self.playback_controls_spliter)
@@ -98,21 +100,21 @@ class Ui_MainWindow(object):
 
         self.file_info_v_layout.addWidget(self.playback_controls_spliter)
 
-        self.line_2 = QFrame(self.widget)
+        self.line_2 = QFrame(self.layoutWidget)
         self.line_2.setObjectName(u"line_2")
         self.line_2.setFrameShape(QFrame.HLine)
         self.line_2.setFrameShadow(QFrame.Sunken)
 
         self.file_info_v_layout.addWidget(self.line_2)
 
-        self.video_info_pivot = Pivot(self.widget)
+        self.video_info_pivot = Pivot(self.layoutWidget)
         self.video_info_pivot.setObjectName(u"video_info_pivot")
         self.video_info_pivot.setMinimumSize(QSize(210, 45))
         self.video_info_pivot.setMaximumSize(QSize(16777215, 45))
 
         self.file_info_v_layout.addWidget(self.video_info_pivot)
 
-        self.video_info_stacked_widget = QStackedWidget(self.widget)
+        self.video_info_stacked_widget = QStackedWidget(self.layoutWidget)
         self.video_info_stacked_widget.setObjectName(u"video_info_stacked_widget")
         self.page = QWidget()
         self.page.setObjectName(u"page")
@@ -128,27 +130,30 @@ class Ui_MainWindow(object):
 
         self.file_browser_v_layout_3 = QVBoxLayout()
         self.file_browser_v_layout_3.setObjectName(u"file_browser_v_layout_3")
-        self.file_browser_pivot = Pivot(self.widget)
-        self.file_browser_pivot.setObjectName(u"file_browser_pivot")
+        self.TitleLabel = TitleLabel(self.layoutWidget)
+        self.TitleLabel.setObjectName(u"TitleLabel")
 
-        self.file_browser_v_layout_3.addWidget(self.file_browser_pivot, 0, Qt.AlignLeft)
+        self.file_browser_v_layout_3.addWidget(self.TitleLabel, 0, Qt.AlignLeft)
 
-        self.file_browser_stacked_widget = QStackedWidget(self.widget)
-        self.file_browser_stacked_widget.setObjectName(u"file_browser_stacked_widget")
-        self.file_browser_stacked_widget.setMinimumSize(QSize(210, 0))
-        self.page_3 = QWidget()
-        self.page_3.setObjectName(u"page_3")
-        self.file_browser_stacked_widget.addWidget(self.page_3)
-        self.page_4 = QWidget()
-        self.page_4.setObjectName(u"page_4")
-        self.file_browser_stacked_widget.addWidget(self.page_4)
+        self.file_list_widget = ListWidget(self.layoutWidget)
+        self.file_list_widget.setObjectName(u"file_list_widget")
 
-        self.file_browser_v_layout_3.addWidget(self.file_browser_stacked_widget, 0, Qt.AlignHCenter)
+        self.file_browser_v_layout_3.addWidget(self.file_list_widget)
+
+        self.TitleLabel_2 = TitleLabel(self.layoutWidget)
+        self.TitleLabel_2.setObjectName(u"TitleLabel_2")
+
+        self.file_browser_v_layout_3.addWidget(self.TitleLabel_2, 0, Qt.AlignLeft)
+
+        self.file_properties_list_widget = ListWidget(self.layoutWidget)
+        self.file_properties_list_widget.setObjectName(u"file_properties_list_widget")
+
+        self.file_browser_v_layout_3.addWidget(self.file_properties_list_widget)
 
 
         self.content_grid.addLayout(self.file_browser_v_layout_3, 0, 0, 1, 1)
 
-        self.line = QFrame(self.widget)
+        self.line = QFrame(self.layoutWidget)
         self.line.setObjectName(u"line")
         self.line.setFrameShape(QFrame.VLine)
         self.line.setFrameShadow(QFrame.Sunken)
@@ -170,5 +175,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Dashcam Investigator", None))
         self.play_button.setText(QCoreApplication.translate("MainWindow", u"Primary push button", None))
         self.pause_button.setText(QCoreApplication.translate("MainWindow", u"Push button", None))
+        self.TitleLabel.setText(QCoreApplication.translate("MainWindow", u"Video List", None))
+        self.TitleLabel_2.setText(QCoreApplication.translate("MainWindow", u"Video Properties", None))
     # retranslateUi
 

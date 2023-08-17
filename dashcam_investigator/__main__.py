@@ -6,7 +6,9 @@ import logging
 import logging.config
 from pathlib import Path
 import os
-from gui import app
+
+# from gui import app
+from fluent_gui import app
 
 if __name__ == "__main__":
     # Create a logs directory in AppData\Local\DashcamInvestigator if it doesn't already exist
@@ -24,4 +26,5 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     # Launch GUI
+    # app.run()
     app.run()

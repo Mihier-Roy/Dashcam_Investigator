@@ -41,8 +41,6 @@ class MainWindow(QMainWindow):
         ######################################
         # File tab navigation
         ######################################
-        # Setup list view and tree view interfaces
-        self.ui.list_view_interface = ListWidget(self)
         # Populate the video table view
         stands = [
             "白金之星",
@@ -86,53 +84,16 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(stand)
             # item.setIcon(QIcon(':/qfluentwidgets/images/logo.png'))
             # item.setCheckState(Qt.Unchecked)
-            self.ui.list_view_interface.addItem(item)
-
-        self.ui.tree_view_interface = TreeView(self)
-        tree_path = Path().resolve()
-        logger.debug(f"Loading selected input directory to the TreeView -> {tree_path}")
-        model = QFileSystemModel()
-        model.setRootPath(str(tree_path))
-        self.ui.tree_view_interface.setModel(model)
-        self.ui.tree_view_interface.setRootIndex(model.index(str(tree_path)))
-        # Ensure that the tree view shows only the name columns
-        self.ui.tree_view_interface.hideColumn(1)
-        self.ui.tree_view_interface.hideColumn(2)
-        self.ui.tree_view_interface.hideColumn(3)
-
-        # Add items to tabs
-        self.add_sub_interface(
-            self.ui.tree_view_interface, "tree_view_interface", "Directory Contents"
-        )
-        self.add_sub_interface(
-            self.ui.list_view_interface, "list_view_interface", "Video List"
-        )
-
-        # Create a listner for the onClick navigation
-        self.ui.file_browser_stacked_widget.currentChanged.connect(
-            self.on_file_tab_index_changed
-        )
-        self.ui.file_browser_pivot.setCurrentItem(
-            self.ui.tree_view_interface.objectName()
-        )
-
-    def add_sub_interface(self, widget, objectName, text):
-        widget.setObjectName(objectName)
-        self.ui.file_browser_stacked_widget.addWidget(widget)
-        self.ui.file_browser_pivot.addItem(
-            routeKey=objectName,
-            text=text,
-            onClick=lambda: self.ui.file_browser_stacked_widget.setCurrentWidget(
-                widget
-            ),
-        )
-
-    def on_file_tab_index_changed(self, index):
-        widget = self.ui.file_browser_stacked_widget.widget(index)
-        self.ui.file_browser_pivot.setCurrentItem(widget.objectName())
+            self.ui.file_list_widget.addItem(item)
 
 
 def run():
+    # TODO: Need to simplify the design - Look at that design website for it
+    #   - [x] We can remove the tree view
+    #   - [x] Move the file properties below the video selector
+    #   - [ ] Show map, graph under the video
+    #   - [ ] Another nav tab for a report browser
+    # TODO: Port over more of the functionality
     logger.info("---Running Dashcam Investigator---")
     app = QApplication([])
     logger.debug("Initialising and displaying main window")

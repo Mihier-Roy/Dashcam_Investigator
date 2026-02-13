@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 import sys
 from pathlib import Path
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
 from core.get_file_count import get_file_count
 from core.process_files import process_files
 from core.generate_report import generate_report
@@ -12,8 +12,9 @@ from project_manager.project_datatypes import FileAttributes
 from project_manager.project_manager import ProjectManager
 from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
 from gui.QtMainWindow import Ui_MainWindow
-from PySide2.QtMultimedia import QMediaPlayer, QMediaPlaylist
-from PySide2.QtCore import QUrl
+from PySide6.QtMultimedia import QMediaPlayer
+from PySide6.QtCore import QUrl, QTimer
+import os
 from utils.common import convert_to_seconds
 
 logger = logging.getLogger(__name__)
@@ -76,8 +77,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Define media player
         logger.debug("Loading media player")
-        self.mediaPlayer = QMediaPlayer()
-        self.mediaPlaylist = QMediaPlaylist()
+        self.mediaPlayer = QMediaPlayer(self)
         # Set the video output from the QMediaPlayer to the QVideoWidget.
         self.mediaPlayer.setVideoOutput(self.video_player)
 
@@ -217,7 +217,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         dialog = NewProjectDialog(self)
         dialog.exec()
         # If the user closes the dialog by clicking on 'Okay', then begin processing
-        if dialog.result() == 1:
+        if dialog.result() == QtWidgets.QDialog.Accepted:
             logger.debug(f"Retreiving values entered into dialog.")
             input_dir, output_dir, case_name, investigator_name = dialog.save()
 
@@ -288,7 +288,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
             dlg.setIcon(QtWidgets.QMessageBox.Information)
             dlg.setText(f"Report generated!\n View the report at : {report_path}")
-            dlg.exec_()
+            dlg.exec()
 
     ######################################
     # Notes/flag controls
@@ -359,15 +359,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ######################################
         # Video player
         ######################################
-        # Stop current video and clear playlist
+        # Stop current video
         self.mediaPlayer.stop()
-        self.mediaPlaylist.clear()
-        # Add selected video to playlist and initalise the media player
+        # Set the video source directly (PySide6 uses setSource instead of setPlaylist)
         logger.debug(
-            f"New item selected. Adding to playlist -> {str(video_path.resolve())}"
+            f"New item selected. Loading -> {str(video_path.resolve())}"
         )
-        self.mediaPlaylist.addMedia(QUrl.fromLocalFile(str(video_path.resolve())))
-        self.mediaPlayer.setPlaylist(self.mediaPlaylist)
+        self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
 
         # Set currently playing label
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
@@ -406,4 +404,4 @@ def run():
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

@@ -1,5 +1,5 @@
 from pathlib import Path
-from PySide2 import QtWidgets
+from PySide6 import QtWidgets
 from gui.QtNewProjectDialog import Ui_Dialog
 
 

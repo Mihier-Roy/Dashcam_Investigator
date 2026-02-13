@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from PySide6 import QtWidgets
+
 from dashcam_investigator.gui.QtNewProjectDialog import Ui_Dialog
 
 
@@ -36,7 +38,7 @@ class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):
             | QtWidgets.QFileDialog.DontResolveSymlinks,
         )
 
-        if dir != None:
+        if dir is not None:
             self.input_edit.setText(dir)
 
     def get_output_dir(self):
@@ -51,7 +53,7 @@ class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):
             | QtWidgets.QFileDialog.DontResolveSymlinks,
         )
 
-        if dir != None:
+        if dir is not None:
             self.output_edit.setText(dir)
 
     def save(self):

@@ -1,11 +1,14 @@
 import json
-from pathlib import Path
 import logging
-from dashcam_investigator.utils.custom_json_functions import ProjectEncoder, project_decoder
+from pathlib import Path
+
 from dashcam_investigator.project_manager.project_datatypes import (
-    ProjectStructure,
     ProjectInfo,
-    FileAttributes,
+    ProjectStructure,
+)
+from dashcam_investigator.utils.custom_json_functions import (
+    ProjectEncoder,
+    project_decoder,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,7 @@ class ProjectManager:
         self.project_directory = output_dir
         self.project_file = (
             Path(self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
-            if self.project_directory != None
+            if self.project_directory is not None
             else None
         )
 
@@ -65,7 +68,7 @@ class ProjectManager:
             self.project_directory.touch(DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
 
         # Initialise the ProjectStructure object that is to be written to the JSON file
-        logger.debug(f"Intialising project file")
+        logger.debug("Intialising project file")
         project_structure = ProjectStructure(
             projectInfo=self.project_info,
             video_files=[],
@@ -86,7 +89,7 @@ class ProjectManager:
         self.project_file = project_path
         project_structure = self.read_project_file()
 
-        logger.debug(f"Read project file. Assigning read data to variables.")
+        logger.debug("Read project file. Assigning read data to variables.")
         # Assign read data to object variables
         self.project_info = project_structure.project_info
         self.project_directory = self.project_info.project_directory

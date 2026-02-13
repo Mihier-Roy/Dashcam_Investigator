@@ -1,7 +1,9 @@
 import json
 import logging
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 from dashcam_investigator.project_manager.project_datatypes import ProjectStructure
 
 logger = logging.getLogger(__name__)
@@ -14,10 +16,8 @@ def generate_report(project_object: ProjectStructure) -> str:
     returns: Path to the HTML file
     """
     # Identify flagged videos
-    logger.debug(f"Beginning report generation.")
-    flagged_vids = [
-        video for video in project_object.video_files if video.flagged == True
-    ]
+    logger.debug("Beginning report generation.")
+    flagged_vids = [video for video in project_object.video_files if video.flagged]
     case_name = project_object.project_info.case_name
     investigator_name = project_object.project_info.investigator_name
     output_file = Path(
@@ -26,20 +26,20 @@ def generate_report(project_object: ProjectStructure) -> str:
         f"{case_name}_report.html",
     )
 
-    logger.debug(f"Generating HTML report")
+    logger.debug("Generating HTML report")
     list_of_links = ""
-    notes_dict = dict()
-    hash_dict = dict()
-    info_dict = dict()
+    notes_dict = {}
+    hash_dict = {}
+    info_dict = {}
     for video in flagged_vids:
         dict_key = video.name[0:-4]
         list_of_links += f'<li><a href="{video.output_files[0]}" onclick="openFiles(\'{Path(video.output_files[1]).as_posix()}\')">{dict_key}</a></li>'
         notes_dict[dict_key] = video.notes
         hash_dict[dict_key] = video.sha256_hash
         video_meta = pd.read_csv(video.meta_files[1])
-        info_dict[
-            dict_key
-        ] = f'Create Date : {video_meta["CreateDate"].values[0]} \r Video Duration: {video_meta["Duration"].values[0]} \r Device Information: {video_meta["Format"].values[0]} {video_meta["Information"].values[0]}'
+        info_dict[dict_key] = (
+            f'Create Date : {video_meta["CreateDate"].values[0]} \r Video Duration: {video_meta["Duration"].values[0]} \r Device Information: {video_meta["Format"].values[0]} {video_meta["Information"].values[0]}'
+        )
 
     # Convert notes dict to JSON
     video_notes = json.dumps(notes_dict)
@@ -129,7 +129,7 @@ def generate_report(project_object: ProjectStructure) -> str:
             </ul>
         </div>
     </div>
-    
+
     <div class="split right">
         <div id="notes">
             <h1 id="placeholder">Please select a video</h1>
@@ -151,6 +151,6 @@ def generate_report(project_object: ProjectStructure) -> str:
     logger.debug(f"Writing report to file -> {output_file}")
     with output_file.open("w") as file:
         file.write(html_report)
-    logger.debug(f"Completed report generation.")
+    logger.debug("Completed report generation.")
 
     return output_file

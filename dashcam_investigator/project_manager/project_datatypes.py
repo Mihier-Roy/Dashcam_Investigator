@@ -1,5 +1,6 @@
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 from dashcam_investigator.utils.common import generate_file_hash
 
 
@@ -35,17 +36,17 @@ class ProjectInfo:
         params: self
         returns: dict
         """
-        return dict(
-            input_directory=str(self.input_directory.resolve()),
-            project_directory=str(self.project_directory.resolve()),
-            date_created=self.date_created,
-            case_name=self.case_name,
-            investigator_name=self.investigator_name,
-            report_path=self.report_path,
-            num_videos=self.num_videos,
-            num_images=self.num_images,
-            num_other=self.num_other,
-        )
+        return {
+            "input_directory": str(self.input_directory.resolve()),
+            "project_directory": str(self.project_directory.resolve()),
+            "date_created": self.date_created,
+            "case_name": self.case_name,
+            "investigator_name": self.investigator_name,
+            "report_path": self.report_path,
+            "num_videos": self.num_videos,
+            "num_images": self.num_images,
+            "num_other": self.num_other,
+        }
 
 
 class FileAttributes:
@@ -82,16 +83,16 @@ class FileAttributes:
         params: self
         returns: dict
         """
-        return dict(
-            file_path=str(self.file_path.resolve()),
-            name=self.name,
-            type=self.type,
-            sha256_hash=self.sha256_hash,
-            meta_files=self.meta_files,
-            output_files=self.output_files,
-            flagged=self.flagged,
-            notes=self.notes,
-        )
+        return {
+            "file_path": str(self.file_path.resolve()),
+            "name": self.name,
+            "type": self.type,
+            "sha256_hash": self.sha256_hash,
+            "meta_files": self.meta_files,
+            "output_files": self.output_files,
+            "flagged": self.flagged,
+            "notes": self.notes,
+        }
 
 
 class ProjectStructure:
@@ -119,10 +120,10 @@ class ProjectStructure:
         params: self
         returns: dict
         """
-        return dict(
-            tool_name=self.tool_name,
-            project_info=self.project_info,
-            video_files=self.video_files,
-            image_files=self.image_files,
-            other_files=self.other_files,
-        )
+        return {
+            "tool_name": self.tool_name,
+            "project_info": self.project_info,
+            "video_files": self.video_files,
+            "image_files": self.image_files,
+            "other_files": self.other_files,
+        }

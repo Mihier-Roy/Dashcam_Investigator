@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
 from dashcam_investigator.core.generate_report import generate_report
@@ -177,9 +176,7 @@ class TestGenerateReport:
         # Unflagged video should not be present
         assert "unflagged" not in content
 
-    def test_generate_report_includes_notes(
-        self, create_project_with_flagged_videos
-    ):
+    def test_generate_report_includes_notes(self, create_project_with_flagged_videos):
         """Test that video notes are included in report."""
         project = create_project_with_flagged_videos(num_flagged=2)
         output_file = generate_report(project)
@@ -190,9 +187,7 @@ class TestGenerateReport:
         assert "Note for video 0" in content
         assert "Note for video 1" in content
 
-    def test_generate_report_includes_hashes(
-        self, create_project_with_flagged_videos
-    ):
+    def test_generate_report_includes_hashes(self, create_project_with_flagged_videos):
         """Test that video hashes are included in report."""
         project = create_project_with_flagged_videos(num_flagged=1)
         video = project.video_files[0]
@@ -205,9 +200,7 @@ class TestGenerateReport:
 
         assert expected_hash in content
 
-    def test_generate_report_html_structure(
-        self, create_project_with_flagged_videos
-    ):
+    def test_generate_report_html_structure(self, create_project_with_flagged_videos):
         """Test that report has valid HTML structure."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
@@ -237,9 +230,7 @@ class TestGenerateReport:
         assert "const notes" in content
         assert "const hashes" in content
 
-    def test_generate_report_includes_styling(
-        self, create_project_with_flagged_videos
-    ):
+    def test_generate_report_includes_styling(self, create_project_with_flagged_videos):
         """Test that report includes CSS styling."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
@@ -295,9 +286,7 @@ class TestGenerateReport:
         assert isinstance(output_file, Path)
         assert output_file.exists()
 
-    def test_generate_report_includes_iframes(
-        self, create_project_with_flagged_videos
-    ):
+    def test_generate_report_includes_iframes(self, create_project_with_flagged_videos):
         """Test that report includes iframe elements for maps and graphs."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
@@ -318,5 +307,5 @@ class TestGenerateReport:
 
         # Should contain list items with links
         assert "<li>" in content
-        assert '<a href=' in content
+        assert "<a href=" in content
         assert "onclick=" in content

@@ -1,7 +1,8 @@
 import logging
-import gpxpy
 from pathlib import Path
-from pandas import read_csv, to_datetime, DataFrame
+
+import gpxpy
+from pandas import DataFrame, read_csv, to_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class MetaDataFrames:
         for track in gpx.tracks:
             for segment in track.segments:
                 for point in segment.points:
-                    points.append(tuple([point.latitude, point.longitude]))
+                    points.append((point.latitude, point.longitude))
 
         logger.debug(
             f"Generated dataframe and points list for route lines -> {file_name}"
@@ -70,12 +71,12 @@ class MetaDataFrames:
         """
         Converts the date and time columns in the dataframe to datetime objects, allowing them to be used for other functions
         """
-        logger.debug(f"Converting time formats to pandas datetime objects")
+        logger.debug("Converting time formats to pandas datetime objects")
         try:
             self.gps_df["DateTime"] = to_datetime(
                 arg=self.gps_df["DateTime"], format="%d-%m-%Y %H:%M:%S"
             )
-        except:
+        except Exception:
             self.gps_df["DateTime"] = to_datetime(
                 arg=self.gps_df["DateTime"], format="%y:%m:%d %H:%M:%S"
             )
@@ -88,7 +89,7 @@ class MetaDataFrames:
         """
         Adds a column to the dataframe to identify the source of the data. This is done to make a legend for the speed chart.
         """
-        logger.debug(f"Adding datasource field to dataframe")
+        logger.debug("Adding datasource field to dataframe")
         self.gps_df["DataSource"] = len(self.gps_df.index) * [
             "Extracted metadata using exiftool"
         ]
@@ -97,7 +98,7 @@ class MetaDataFrames:
         """
         Calculates the average speed for the video and adds it to the file info dataframe
         """
-        logger.debug(f"Adding average and max speed to file info dataframe")
+        logger.debug("Adding average and max speed to file info dataframe")
         self.file_info_df["AverageSpeed"] = round(self.gps_df["Speed"].mean(), 2)
         self.file_info_df["MaxSpeed"] = round(self.gps_df["Speed"].max(), 2)
 

@@ -4,8 +4,9 @@ This is the entrypoint of the application that configures logging and then execu
 
 import logging
 import logging.config
-from pathlib import Path
 import os
+from pathlib import Path
+
 from .gui import app
 
 if __name__ == "__main__":

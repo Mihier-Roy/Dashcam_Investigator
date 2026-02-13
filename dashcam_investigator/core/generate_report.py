@@ -2,7 +2,7 @@ import json
 import logging
 import pandas as pd
 from pathlib import Path
-from project_manager.project_datatypes import ProjectStructure
+from dashcam_investigator.project_manager.project_datatypes import ProjectStructure
 
 logger = logging.getLogger(__name__)
 

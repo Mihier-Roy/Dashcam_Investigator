@@ -3,19 +3,19 @@ import pandas as pd
 import sys
 from pathlib import Path
 from PySide6 import QtWidgets, QtGui, QtCore
-from core.get_file_count import get_file_count
-from core.process_files import process_files
-from core.generate_report import generate_report
-from gui.worker_class import Worker
-from gui.new_project_class import NewProjectDialog
-from project_manager.project_datatypes import FileAttributes
-from project_manager.project_manager import ProjectManager
-from gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
-from gui.QtMainWindow import Ui_MainWindow
+from dashcam_investigator.core.get_file_count import get_file_count
+from dashcam_investigator.core.process_files import process_files
+from dashcam_investigator.core.generate_report import generate_report
+from dashcam_investigator.gui.worker_class import Worker
+from dashcam_investigator.gui.new_project_class import NewProjectDialog
+from dashcam_investigator.project_manager.project_datatypes import FileAttributes
+from dashcam_investigator.project_manager.project_manager import ProjectManager
+from dashcam_investigator.gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
+from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
 from PySide6.QtMultimedia import QMediaPlayer
 from PySide6.QtCore import QUrl, QTimer
 import os
-from utils.common import convert_to_seconds
+from dashcam_investigator.utils.common import convert_to_seconds
 
 logger = logging.getLogger(__name__)
 NAVIGATION_PAGES = ["Welcome", "Project"]

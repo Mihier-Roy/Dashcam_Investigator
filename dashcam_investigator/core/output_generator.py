@@ -1,13 +1,13 @@
 from altair import Chart, data_transformers
 from pathlib import Path
 import logging
-from core.generate_dataframe import MetaDataFrames, make_speed_dataframe
-from core.map_functions import (
+from dashcam_investigator.core.generate_dataframe import MetaDataFrames, make_speed_dataframe
+from dashcam_investigator.core.map_functions import (
     add_data_to_map,
     generate_speed_colour_map,
     initialise_map,
 )
-from project_manager.project_datatypes import FileAttributes
+from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import sys
 import traceback
 import logging
-from PySide2.QtCore import QRunnable, Slot, Signal, QObject
+from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 
 logger = logging.getLogger(__name__)
 

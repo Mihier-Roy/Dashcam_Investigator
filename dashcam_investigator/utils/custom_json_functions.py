@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Union
-from project_manager.project_datatypes import (
+from dashcam_investigator.project_manager.project_datatypes import (
     ProjectStructure,
     ProjectInfo,
     FileAttributes,
@@ -53,7 +53,7 @@ def convert_to_project_info(proj_info: list) -> ProjectInfo:
     params: proj_info -> list
     returns: ProjectInfo
     """
-    return ProjectInfo(
+    project = ProjectInfo(
         input_dir=Path(proj_info["input_directory"]),
         output_dir=Path(proj_info["project_directory"]),
         date_created=proj_info["date_created"],
@@ -61,6 +61,11 @@ def convert_to_project_info(proj_info: list) -> ProjectInfo:
         investigator_name=proj_info["investigator_name"],
         report_path=proj_info["report_path"],
     )
+    # Restore count fields if present
+    project.num_videos = proj_info.get("num_videos")
+    project.num_images = proj_info.get("num_images")
+    project.num_other = proj_info.get("num_other")
+    return project
 
 
 def convert_to_file_attr(input_list: list) -> list:

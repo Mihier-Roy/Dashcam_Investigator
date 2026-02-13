@@ -1,7 +1,7 @@
 from branca.colormap import linear
 from folium import FeatureGroup
 from pandas import DataFrame
-from core.map_classes import Mappy, RouteLineMaker, StartMarkerPopup
+from dashcam_investigator.core.map_classes import Mappy, RouteLineMaker, StartMarkerPopup
 import logging
 
 logger = logging.getLogger(__name__)

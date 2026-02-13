@@ -1,10 +1,10 @@
 import filetype
 import logging
 from pathlib import Path
-from core.extract_metadata import process_file_meta, process_gps_data
-from core.output_generator import OutputGenerator
-from project_manager.project_datatypes import ProjectStructure
-from project_manager.project_datatypes import FileAttributes
+from dashcam_investigator.core.extract_metadata import process_file_meta, process_gps_data
+from dashcam_investigator.core.output_generator import OutputGenerator
+from dashcam_investigator.project_manager.project_datatypes import ProjectStructure
+from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 
 logger = logging.getLogger(__name__)
 

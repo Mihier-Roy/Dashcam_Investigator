@@ -1,6 +1,6 @@
 from pathlib import Path
 from PySide6 import QtWidgets
-from gui.QtNewProjectDialog import Ui_Dialog
+from dashcam_investigator.gui.QtNewProjectDialog import Ui_Dialog
 
 
 class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):

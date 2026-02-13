@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 import logging
-from utils.custom_json_functions import ProjectEncoder, project_decoder
-from project_manager.project_datatypes import (
+from dashcam_investigator.utils.custom_json_functions import ProjectEncoder, project_decoder
+from dashcam_investigator.project_manager.project_datatypes import (
     ProjectStructure,
     ProjectInfo,
     FileAttributes,

@@ -13,7 +13,7 @@ A Python desktop application to aid in the forensic investigation of evidence ga
 - **Python 3.10 - 3.12** (3.13+ not supported due to PyInstaller limitations)
 - **[uv](https://docs.astral.sh/uv/)** - Fast, modern Python package manager written in Rust
 
-The project uses [uv](https://docs.astral.sh/uv/) for dependency management. uv is ~10-100x faster than Poetry/pip and provides deterministic builds. Install uv from [here](https://docs.astral.sh/uv/getting-started/installation/).
+The project uses [uv](https://docs.astral.sh/uv/) for dependency management. Install uv from [here](https://docs.astral.sh/uv/getting-started/installation/).
 
 ### Quick Start
 
@@ -30,14 +30,6 @@ $ uv run python -m dashcam_investigator
 $ uv sync --dev
 ```
 
-### Recent Updates (2025)
-
-- **uv Migration** - Switched from Poetry to [uv](https://docs.astral.sh/uv/) for ~100x faster dependency resolution
-- **PySide6 Upgrade** - Modernized GUI framework from PySide2 (Qt 5) to PySide6 (Qt 6)
-- **Dependency Updates** - All packages updated to latest stable versions (pandas 3.0, numpy 2.4, etc.)
-- **Architecture Documentation** - Added [AGENTS.md](./AGENTS.md) with comprehensive system design
-- **Python 3.10-3.12** - Target runtime compatibility
-
 ### Dependencies
 
 #### System Requirements
@@ -53,7 +45,7 @@ All Python dependencies are automatically resolved and installed by uv. Current 
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **PySide6** | 6.10.2 | Modern Qt6 GUI framework (upgraded from PySide2) |
+| **PySide6** | 6.10.2 | Qt6 GUI framework |
 | **Pandas** | 3.0.0 | Data manipulation and analysis |
 | **NumPy** | 2.4.2 | Numerical computing |
 | **gpxpy** | 1.6.2 | GPS data processing |

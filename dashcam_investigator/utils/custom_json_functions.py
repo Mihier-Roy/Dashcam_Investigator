@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
 from typing import Union
+
 from dashcam_investigator.project_manager.project_datatypes import (
-    ProjectStructure,
-    ProjectInfo,
     FileAttributes,
+    ProjectInfo,
+    ProjectStructure,
 )
 
 

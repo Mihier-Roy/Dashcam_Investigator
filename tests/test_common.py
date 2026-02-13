@@ -1,9 +1,5 @@
 """Tests for common utility functions."""
 
-from pathlib import Path
-
-import pytest
-
 from dashcam_investigator.utils.common import convert_to_seconds, generate_file_hash
 
 

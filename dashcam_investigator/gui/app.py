@@ -1,20 +1,25 @@
 import logging
-import pandas as pd
 import sys
 from pathlib import Path
-from PySide6 import QtWidgets, QtGui, QtCore
+
+import pandas as pd
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import QUrl
+from PySide6.QtMultimedia import QMediaPlayer
+
+from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
-from dashcam_investigator.core.generate_report import generate_report
-from dashcam_investigator.gui.worker_class import Worker
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
+from dashcam_investigator.gui.qt_models import (
+    NavigationListModel,
+    PandasTableModel,
+    VideoListModel,
+)
+from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
+from dashcam_investigator.gui.worker_class import Worker
 from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 from dashcam_investigator.project_manager.project_manager import ProjectManager
-from dashcam_investigator.gui.qt_models import PandasTableModel, VideoListModel, NavigationListModel
-from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
-from PySide6.QtMultimedia import QMediaPlayer
-from PySide6.QtCore import QUrl, QTimer
-import os
 from dashcam_investigator.utils.common import convert_to_seconds
 
 logger = logging.getLogger(__name__)
@@ -113,14 +118,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def update_object(self, output):
         self.project_object = output
         self.project_manager.write_project_file(data=self.project_object)
-        logger.debug(f"Processing completed!")
+        logger.debug("Processing completed!")
         # Navigate to the project page
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
     def thread_complete(self):
         self.progress.hide()
-        logger.debug(f"Thread completed execution.")
+        logger.debug("Thread completed execution.")
 
     ######################################
     # Navigation controls
@@ -192,7 +197,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         file_name = QtWidgets.QFileDialog.getOpenFileName(
             self, "Open File", "C:", ("JSON (*.json)")
         )
-        if file_name != None:
+        if file_name is not None:
             # If project exists, load
             logger.debug(f"Opening existing project file -> {file_name[0]}")
             file_path = Path(file_name[0])
@@ -213,16 +218,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         Launch the new project dialog and setup a new project.
         """
-        logger.debug(f"Starting a new project. Launched new project dialog.")
+        logger.debug("Starting a new project. Launched new project dialog.")
         dialog = NewProjectDialog(self)
         dialog.exec()
         # If the user closes the dialog by clicking on 'Okay', then begin processing
         if dialog.result() == QtWidgets.QDialog.Accepted:
-            logger.debug(f"Retreiving values entered into dialog.")
+            logger.debug("Retreiving values entered into dialog.")
             input_dir, output_dir, case_name, investigator_name = dialog.save()
 
             # Create a new project manager object and begin processing data
-            logger.debug(f"Creating a new project with inputs provided.")
+            logger.debug("Creating a new project with inputs provided.")
             self.project_manager = ProjectManager(
                 input_dir=input_dir,
                 output_dir=output_dir,
@@ -232,7 +237,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.project_object = self.project_manager.new_project()
 
             # Get the total number of files in the directory
-            logger.debug(f"Counting files in directory")
+            logger.debug("Counting files in directory")
             self.file_count = get_file_count(input_dir)
 
             logger.debug(f"Processing {self.file_count} files from input directory")
@@ -279,7 +284,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Generate a report
     ######################################
     def create_report(self):
-        if self.project_object != None:
+        if self.project_object is not None:
             report_path = generate_report(self.project_object)
             self.project_object.project_info.report_path = str(report_path.resolve())
             self.project_manager.write_project_file(data=self.project_object)
@@ -362,9 +367,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Stop current video
         self.mediaPlayer.stop()
         # Set the video source directly (PySide6 uses setSource instead of setPlaylist)
-        logger.debug(
-            f"New item selected. Loading -> {str(video_path.resolve())}"
-        )
+        logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
 
         # Set currently playing label

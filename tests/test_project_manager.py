@@ -1,9 +1,6 @@
 """Tests for project manager functionality."""
 
 import json
-from pathlib import Path
-
-import pytest
 
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
@@ -37,7 +34,9 @@ class TestProjectManager:
         assert manager.project_directory == output_dir
         assert manager.project_info.case_name == "Test Case"
         assert manager.project_info.investigator_name == "John Doe"
-        assert manager.project_file == output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        assert (
+            manager.project_file == output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        )
 
     def test_init_with_none_output_dir(self):
         """Test ProjectManager initialization with None output directory."""
@@ -64,7 +63,7 @@ class TestProjectManager:
             investigator_name="Jane Doe",
         )
 
-        project_structure = manager.new_project()
+        manager.new_project()
 
         # Verify project directory was created
         assert output_dir.exists()
@@ -129,7 +128,7 @@ class TestProjectManager:
             investigator_name="John",
         )
 
-        project_structure = manager.new_project()
+        manager.new_project()
 
         # Should still work and create subdirectories
         assert output_dir.exists()

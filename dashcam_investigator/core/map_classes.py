@@ -1,19 +1,20 @@
+import logging
+
+from branca import colormap
 from folium import (
-    TileLayer,
+    ColorLine,
+    FeatureGroup,
+    Icon,
+    IFrame,
+    LayerControl,
     Map,
     Marker,
-    Icon,
-    LayerControl,
-    ColorLine,
     Popup,
-    IFrame,
-    FeatureGroup,
+    TileLayer,
 )
+from folium.plugins import Draw, MeasureControl
 from folium.vector_layers import PolyLine
-from folium.plugins import MeasureControl, Draw
-from branca import colormap
 from pandas import DataFrame
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class RouteLineMaker:
         """
         Marker(
             location=self.points[0],
-            tooltip=f"Start of route line. Click to see file details.",
+            tooltip="Start of route line. Click to see file details.",
             popup=popup,
             icon=Icon(icon="plus-circle", prefix="fa"),
         ).add_to(self.start_marker_group)
@@ -93,93 +94,93 @@ class StartMarkerPopup:
             """<html  lang="en">
 			<head>
 			<meta  charset="UTF-8">
-	<style> 
+	<style>
 	table {
-		font-family:  arial,  sans-serif; 
-		border-collapse:  collapse; 
+		font-family:  arial,  sans-serif;
+		border-collapse:  collapse;
 		width:  100%;
 	}
 
 	td,  th  {
-		border:  1px  solid  #dddddd; 
-		text-align:  left;  
+		border:  1px  solid  #dddddd;
+		text-align:  left;
 		padding:  8px;
 	}
-	 
 
 
-	tr:nth-child(even) { 
+
+	tr:nth-child(even) {
 		background-color:  #dddddd;
 	}
 	</style>
-	 
+
 			</head>
 			<body>
-			 
+
 
 			<h1>File Information</h1>
 			<table style ="width:100%">
-				<tr>	
+				<tr>
 					<th> File  Attribute(s)</th>
 					<th> Value(s)</th>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	Name:  </td>
 					<td> """
             + self.file_name
             + """ </td>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	File Type  </td>
 					<td> """
             + self.file_type
             + """	 </td>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	File Size  </td>
 					<td>	"""
             + self.file_size
             + """  </td>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	MIME Type  </td>
 					<td>	"""
             + self.MIMEType
             + """   </td>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	Video Length  </td>
 					<td>	"""
             + self.duration
             + """  </td>
 				</tr>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	Average  Speed:	</td>
 					<td>	"""
             + str(self.average_speed)
             + """  </td>
-				</tr>	
-				<tr>	
+				</tr>
+				<tr>
 					<td>	Highest  Speed:	</td>
 					<td>	"""
             + str(self.max_speed)
             + """  </td>
 				</tr>
-				<tr>		 
+				<tr>
 					<td>  File Create Date and Time:	</td>
 					<td>  """
             + str(self.file_create_date)
             + """  </td>
 				</tr>
 			</tr>
-		
+
 		</table>
 
 
 		</body>
-		</html>  
-		
+		</html>
+
 		"""
         )
         iframe = IFrame(html=self.popup_html, width=500, height=300)

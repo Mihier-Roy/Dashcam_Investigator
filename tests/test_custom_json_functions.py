@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,

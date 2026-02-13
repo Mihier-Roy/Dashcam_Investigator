@@ -1,9 +1,11 @@
+import logging
 import sys
 import traceback
-import logging
-from PySide6.QtCore import QRunnable, Slot, Signal, QObject
+
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 logger = logging.getLogger(__name__)
+
 
 # Adapted from https://www.pythonguis.com/tutorials/multithreading-pyside-applications-qthreadpool/
 class WorkerSignals(QObject):
@@ -45,10 +47,10 @@ class Worker(QRunnable):
         Initialise the runner function with passed args, kwargs.
         """
 
-        logger.debug(f"Begin thread execution")
+        logger.debug("Begin thread execution")
         try:
             result = self.fn(*self.args, **self.kwargs)
-        except:
+        except Exception:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))

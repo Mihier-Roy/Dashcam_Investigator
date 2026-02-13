@@ -1,7 +1,6 @@
 """Tests for GPS data processing and dataframe generation."""
 
 from datetime import datetime
-from pathlib import Path
 
 import gpxpy
 import pandas as pd
@@ -170,9 +169,7 @@ class TestMetaDataFrames:
         assert isinstance(meta.file_info_df["AverageSpeed"].iloc[0], (int, float))
         assert isinstance(meta.file_info_df["MaxSpeed"].iloc[0], (int, float))
 
-    def test_process_gpx_to_df_with_elevation(
-        self, create_gpx_file, create_csv_file
-    ):
+    def test_process_gpx_to_df_with_elevation(self, create_gpx_file, create_csv_file):
         """Test that elevation data is correctly extracted."""
         gpx_file = create_gpx_file("test.gpx", num_points=3)
         csv_file = create_csv_file("test_fileinfo.csv")

@@ -1,7 +1,6 @@
 """Tests for file processing pipeline."""
 
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -37,7 +36,7 @@ class TestExtractMeta:
         mock_gps.return_value = "/tmp/output.gpx"
         mock_file_meta.return_value = "/tmp/output.csv"
 
-        result = extract_meta(video_attr, project_dir)
+        extract_meta(video_attr, project_dir)
 
         # Verify both functions were called
         assert mock_gps.called
@@ -120,9 +119,7 @@ class TestCreateMap:
         mock_generator_class.assert_called_once()
 
     @patch("dashcam_investigator.core.process_files.OutputGenerator")
-    def test_create_map_generates_map_and_graph(
-        self, mock_generator_class, temp_dir
-    ):
+    def test_create_map_generates_map_and_graph(self, mock_generator_class, temp_dir):
         """Test that both map and speed graph are generated."""
         video_file = temp_dir / "test_video.mp4"
         video_file.write_text("content")
@@ -209,14 +206,12 @@ class TestProcessFiles:
             # Create a video file (simulated)
             video_file = input_dir / "video.mp4"
             # Write MP4 signature bytes
-            video_file.write_bytes(
-                b"\x00\x00\x00\x20\x66\x74\x79\x70\x69\x73\x6F\x6D"
-            )
+            video_file.write_bytes(b"\x00\x00\x00\x20\x66\x74\x79\x70\x69\x73\x6f\x6d")
 
             # Create an image file (simulated)
             image_file = input_dir / "image.jpg"
             # Write JPEG signature bytes
-            image_file.write_bytes(b"\xFF\xD8\xFF\xE0")
+            image_file.write_bytes(b"\xff\xd8\xff\xe0")
 
             # Create a text file (other)
             text_file = input_dir / "data.txt"

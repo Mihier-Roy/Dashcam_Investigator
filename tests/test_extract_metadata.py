@@ -1,9 +1,6 @@
 """Tests for metadata extraction functions."""
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from dashcam_investigator.core.extract_metadata import (
     process_file_meta,
@@ -49,9 +46,7 @@ class TestProcessGpsData:
         assert result == str(expected_output.resolve())
 
     @patch("dashcam_investigator.core.extract_metadata.system")
-    def test_process_gps_data_with_different_extensions(
-        self, mock_system, temp_dir
-    ):
+    def test_process_gps_data_with_different_extensions(self, mock_system, temp_dir):
         """Test GPS extraction with different video file extensions."""
         for ext in [".mp4", ".avi", ".mov", ".mkv"]:
             video_path = temp_dir / f"video{ext}"
@@ -103,9 +98,7 @@ class TestProcessFileMeta:
         assert result == str(expected_output.resolve())
 
     @patch("dashcam_investigator.core.extract_metadata.system")
-    def test_process_file_meta_includes_required_flags(
-        self, mock_system, temp_dir
-    ):
+    def test_process_file_meta_includes_required_flags(self, mock_system, temp_dir):
         """Test that exiftool command includes all required flags."""
         video_path = temp_dir / "video.mp4"
         video_path.write_text("content")
@@ -125,9 +118,7 @@ class TestProcessFileMeta:
         assert "-csv" in call_args
 
     @patch("dashcam_investigator.core.extract_metadata.system")
-    def test_process_file_meta_with_different_extensions(
-        self, mock_system, temp_dir
-    ):
+    def test_process_file_meta_with_different_extensions(self, mock_system, temp_dir):
         """Test file metadata extraction with different extensions."""
         for ext in [".mp4", ".avi", ".jpg", ".png"]:
             video_path = temp_dir / f"file{ext}"

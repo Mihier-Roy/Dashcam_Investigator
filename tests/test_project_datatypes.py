@@ -1,11 +1,5 @@
 """Tests for project data type classes."""
 
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,

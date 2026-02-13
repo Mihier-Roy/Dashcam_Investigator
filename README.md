@@ -1,54 +1,96 @@
 # Dashcam Investigator
 
-A python desktop application to aid in the forensic investigation of evidence gathered from dashcam devices.
+A Python desktop application to aid in the forensic investigation of evidence gathered from dashcam devices.
+
+## Documentation
+
+- **[AGENTS.md](./AGENTS.md)** - Comprehensive architecture documentation covering all system components, data flow, and module responsibilities
 
 ## Development
 
-The project was built using Python 3.9 and uses [Poetry](https://python-poetry.org/) for dependency management. Before getting started with development, install Poetry by following the instructions [here](https://python-poetry.org/docs/)
+### Requirements
 
-The following commands can be used to install the dependencies and run the application.
+- **Python 3.10 - 3.12** (3.13+ not supported due to PyInstaller limitations)
+- **[uv](https://docs.astral.sh/uv/)** - Fast, modern Python package manager written in Rust
+
+The project uses [uv](https://docs.astral.sh/uv/) for dependency management. uv is ~10-100x faster than Poetry/pip and provides deterministic builds. Install uv from [here](https://docs.astral.sh/uv/getting-started/installation/).
+
+### Quick Start
+
+The following commands can be used to install dependencies and run the application:
 
 ```bash
-# Install dependencies
-$ poetry install
+# Install dependencies and create virtual environment
+$ uv sync
 
-# Run the application using the Poetry virtual environment
-$ poetry run python ./dashcam_investigator/__main__.py 
+# Run the application
+$ uv run python -m dashcam_investigator
+
+# Install with development dependencies
+$ uv sync --dev
 ```
+
+### Recent Updates (2025)
+
+- **uv Migration** - Switched from Poetry to [uv](https://docs.astral.sh/uv/) for ~100x faster dependency resolution
+- **PySide6 Upgrade** - Modernized GUI framework from PySide2 (Qt 5) to PySide6 (Qt 6)
+- **Dependency Updates** - All packages updated to latest stable versions (pandas 3.0, numpy 2.4, etc.)
+- **Architecture Documentation** - Added [AGENTS.md](./AGENTS.md) with comprehensive system design
+- **Python 3.10-3.12** - Target runtime compatibility
 
 ### Dependencies
 
-#### Software dependencies
-The following software must be installed on the system where the application is executed.
+#### System Requirements
 
-- [ExifTool by Phil Harvey]() is used to extract metadata from video and image files to generate maps, timelines and other graphs. Exiftool is included in the archive presented on the Releases page of this project, however as long as `exiftool` is available on the PATH of the system, it should work as intended. 
-- The application requires video codecs to be installed separately on the computer to support video playback. Please download and install the [K-Lite Codec Pack](https://www.codecguide.com/download_k-lite_codec_pack_basic.htm) to enable video playback.
+The following software must be installed on the system where the application is executed:
 
-#### Python Packages
-The application was built using the following open source projects
+- **[ExifTool by Phil Harvey](https://exiftool.org/)** - Used to extract metadata (GPS data, timestamps, codecs) from video and image files. ExifTool must be available on the system PATH, or included with the application bundle.
+- **Video Codecs** - The application requires video codecs to support playback. Install the [K-Lite Codec Pack](https://www.codecguide.com/download_k-lite_codec_pack_basic.htm) for Windows or use your system's codec manager.
 
-- PySide2 (Qt for Python, to build a GUI using Qt 5.15.2.1)
-- Pandas
-- Numpy
-- Black (code formatting)
-- PyTest (unit testing)
-- Filetype
-- gpxpy (To process GPX data)
-- folium (To create maps)
-- altair (To create declarative charts)
-- pyinstaller (To create executable binaries)
+#### Python Dependencies
+
+All Python dependencies are automatically resolved and installed by uv. Current versions:
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| **PySide6** | 6.10.2 | Modern Qt6 GUI framework (upgraded from PySide2) |
+| **Pandas** | 3.0.0 | Data manipulation and analysis |
+| **NumPy** | 2.4.2 | Numerical computing |
+| **gpxpy** | 1.6.2 | GPS data processing |
+| **folium** | 0.20.0 | Interactive map generation |
+| **Altair** | 6.0.0 | Declarative data visualization |
+| **Filetype** | 1.2.0 | File type detection |
+| **PyInstaller** | 6.18.0 | Create standalone executables |
+| **Black** | 26.1.0 | Code formatting (dev) |
+| **pytest** | 9.0.2 | Unit testing (dev) |
+
+See `pyproject.toml` for complete dependency specifications and `uv.lock` for pinned versions.
 
 ### Application Configuration
 
 #### Logging
-The application uses Python's built in `logging` module for logging across the application. The module was configured to log `DEBUG` messages and higher to the console during development. In addition, the application writes the following logs to `%LOCALAPPDATA%/DashcamInvestigator/Logs`:
 
-- `error.log` - All `ERROR` and `CRITICAL` messages are written here.
-- `debug.log` - All `DEBUG` and higher events are written here. These logs also include the line and module where the log record was written.
+The application uses Python's built-in `logging` module configured via `log.conf`. Logging behavior:
 
-#### Creating executables
-The PyInstaller module is used to create execuable binaries of the application. Since the tool depends on exiftool and requires the presence of the `gpx.fmt` file to correctly process the GPX data, `exiftool` and `gpx.fmt` are included in the final build directory. The following command is used to run this action:
+- **Console Output** - DEBUG level and higher during development
+- **File Logs** - Written to `%LOCALAPPDATA%/DashcamInvestigator/Logs/`:
+  - `error.log` - ERROR and CRITICAL messages
+  - `debug.log` - DEBUG and higher messages with module/line information
+
+#### Building Executables
+
+PyInstaller creates standalone Windows executables. The build includes ExifTool and supporting files:
 
 ```bash
-poetry run pyinstaller --clean --noconsole --add-data "gpx.fmt;." --add-data "log.conf;." --add-binary "exiftool.exe;." --name DashcamInvestigator .\dashcam_investigator\__main__.py
+# Build with uv
+uv run pyinstaller \
+  --clean \
+  --noconsole \
+  --add-data "gpx.fmt;." \
+  --add-data "log.conf;." \
+  --add-binary "exiftool.exe;." \
+  --name DashcamInvestigator \
+  dashcam_investigator/__main__.py
 ```
+
+**Build Output:** `dist/DashcamInvestigator/` - Standalone application directory

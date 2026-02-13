@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a release'
+        required: true
+        type: boolean
+        default: false
+      release_version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: false
+        type: string
+
+jobs:
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run ruff linter
+        run: |
+          uv run ruff check .
+
+      - name: Check formatting with black
+        run: |
+          uv run black --check .
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run tests with pytest
+        run: |
+          uv run pytest -v
+
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Verify package can be imported
+        run: |
+          uv run python -c "import dashcam_investigator; print('Package imported successfully')"
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, test, build]
+    if: github.event_name == 'workflow_dispatch' && inputs.create_release == true
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Build Windows executable
+        run: |
+          uv run pyinstaller --clean --onefile --windowed --name DashcamInvestigator dashcam_investigator/__main__.py
+
+      - name: Determine release version
+        id: version
+        run: |
+          if [ -n "${{ inputs.release_version }}" ]; then
+            echo "version=${{ inputs.release_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=v$(date +'%Y.%m.%d-%H%M%S')" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -16,6 +16,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,37 @@ def qss_path() -> Path:
 
 def static_url(rel: str, base: str = "dci://app/static/") -> str:
     """Build a URL pointing at a static asset. Default base uses the dci:// scheme."""
-    rel = rel.lstrip("/")
+    rel = lstrip_url(rel)
     return f"{base.rstrip('/')}/{rel}"
+
+
+def lstrip_url(rel: str) -> str:
+    return rel.lstrip("/")
+
+
+@lru_cache(maxsize=128)
+def _read_icon(name: str) -> str:
+    """Read an SVG file from static/icons/. Cached because icons are small and reused."""
+    path = static_path() / "icons" / f"{name}.svg"
+    if not path.is_file():
+        logger.warning("Icon not found: %s", path)
+        return ""
+    return path.read_text()
+
+
+def inline_svg(name: str, cls: str = "icon") -> Markup:
+    """Return an inline <svg> for the named icon, ready to drop into HTML.
+
+    The class attribute on the SVG is replaced with `cls` so callers can
+    size or recolor without overriding the file. Markup() prevents
+    autoescaping.
+    """
+    svg = _read_icon(name)
+    if not svg:
+        return Markup("")
+    if 'class="icon"' in svg:
+        svg = svg.replace('class="icon"', f'class="{cls}"', 1)
+    return Markup(svg)
 
 
 @lru_cache(maxsize=1)
@@ -68,6 +98,7 @@ def _build_env() -> Environment:
         keep_trailing_newline=True,
     )
     env.globals["static"] = static_url
+    env.globals["inline_svg"] = inline_svg
     env.globals["app"] = True  # overridden to False when rendering the report
     return env
 

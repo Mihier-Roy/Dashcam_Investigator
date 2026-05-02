@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Design preview — Dashcam Investigator</title>
+    <link rel="stylesheet" href="../dashcam_investigator/gui/assets/static/css/tokens.css">
+    <link rel="stylesheet" href="../dashcam_investigator/gui/assets/static/css/base.css">
+    <link rel="stylesheet" href="../dashcam_investigator/gui/assets/static/css/components.css">
+    <style>
+        body { padding: var(--space-5); max-width: 1100px; margin: 0 auto; }
+        section { margin: var(--space-6) 0; }
+        section h2 { border-bottom: 1px solid var(--border); padding-bottom: var(--space-2); }
+        .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-3); }
+        .swatch { padding: var(--space-3); border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+        .swatch-block { height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .swatch-name { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+        .controls { position: sticky; top: 0; padding: var(--space-3) 0; background: var(--bg); display: flex; gap: var(--space-2); align-items: center; border-bottom: 1px solid var(--border); margin-bottom: var(--space-3); z-index: 10; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <strong>Theme:</strong>
+        <button class="btn btn-secondary btn-sm" onclick="setTheme('system')">System</button>
+        <button class="btn btn-secondary btn-sm" onclick="setTheme('light')">Light</button>
+        <button class="btn btn-secondary btn-sm" onclick="setTheme('dark')">Dark</button>
+        <span class="muted">Current: <code id="current-theme">system</code></span>
+    </div>
+
+    <h1>Design preview</h1>
+    <p class="muted">Every component used by the app. Use this page to spot regressions when tokens change.</p>
+
+    <section>
+        <h2>Color tokens</h2>
+        <div class="swatch-grid">
+            <div class="swatch"><div class="swatch-block" style="background: var(--bg)"></div><div class="swatch-name">--bg</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--bg-elevated)"></div><div class="swatch-name">--bg-elevated</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--bg-hover)"></div><div class="swatch-name">--bg-hover</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--bg-selected)"></div><div class="swatch-name">--bg-selected</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--border)"></div><div class="swatch-name">--border</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--accent)"></div><div class="swatch-name">--accent</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--flag)"></div><div class="swatch-name">--flag</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--success)"></div><div class="swatch-name">--success</div></div>
+            <div class="swatch"><div class="swatch-block" style="background: var(--danger)"></div><div class="swatch-name">--danger</div></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Typography</h2>
+        <h1>Heading 1 — 24px / 600</h1>
+        <h2>Heading 2 — 20px / 600</h2>
+        <h3>Heading 3 — 16px / 600</h3>
+        <h4>Heading 4 — 14px / 600</h4>
+        <h5>Heading 5 — caption uppercase</h5>
+        <p>Body text. The quick brown fox jumps over the lazy dog. <a href="#">Inline link.</a></p>
+        <p class="muted">Muted text for secondary info.</p>
+        <p><code class="mono">monospace 12.5px</code> · <small>small 12px muted</small></p>
+        <pre>uv run python -m dashcam_investigator</pre>
+    </section>
+
+    <section>
+        <h2>Buttons</h2>
+        <div class="cluster">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-ghost">Ghost</button>
+            <button class="btn btn-danger">Danger</button>
+            <button class="btn btn-primary" disabled>Disabled</button>
+        </div>
+        <div class="cluster" style="margin-top: var(--space-3)">
+            <button class="btn btn-primary btn-sm">Small</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-lg">Large</button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Inputs</h2>
+        <div class="grid-2">
+            <div>
+                <label class="label" for="i1">Case name</label>
+                <input id="i1" class="input" placeholder="e.g. Operation Sunset">
+            </div>
+            <div>
+                <label class="label" for="i2">Search videos</label>
+                <div class="input-group">
+                    <svg class="icon icon-prefix" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="i2" class="input" placeholder="Filter by name or hash…">
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: var(--space-3)">
+            <label class="label" for="i3">Investigation notes</label>
+            <textarea id="i3" class="textarea" placeholder="Start typing here..."></textarea>
+        </div>
+    </section>
+
+    <section>
+        <h2>Badges</h2>
+        <div class="cluster">
+            <span class="badge">Default</span>
+            <span class="badge badge-accent">Selected</span>
+            <span class="badge badge-flag">Flagged</span>
+            <span class="badge badge-success">Saved</span>
+            <span class="badge badge-danger">Error</span>
+        </div>
+    </section>
+
+    <section>
+        <h2>Cards</h2>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Create a new project</h3>
+                        <p class="card-subtitle">Start a fresh investigation</p>
+                    </div>
+                </div>
+                <div class="card-body">Walks you through naming a case, picking input/output directories, and processing dashcam files.</div>
+                <div class="card-actions">
+                    <button class="btn btn-primary">New project</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Open an existing project</h3>
+                        <p class="card-subtitle">Load a dashcam_investigator.json</p>
+                    </div>
+                </div>
+                <div class="card-body">Pick up where you left off. Project files store all hashes, notes, flags, and processed metadata.</div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">Open project</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Tabs</h2>
+        <div class="tabs">
+            <button class="tab active">Map</button>
+            <button class="tab">Metadata</button>
+            <button class="tab">Speed Graph</button>
+            <button class="tab">Notes</button>
+        </div>
+        <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0; border-top: 0;">
+            <p>Active tab body content goes here.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>Table</h2>
+        <div class="card" style="padding: 0;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="sortable sorted">Property <span class="sort-indicator">↑</span></th>
+                        <th class="sortable">Value <span class="sort-indicator">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>FileName</td><td class="mono">FRONT_2024-01-15_14-30-00.mp4</td></tr>
+                    <tr><td>Duration</td><td>00:05:30</td></tr>
+                    <tr><td>Format</td><td>H.264 / MP4</td></tr>
+                    <tr><td>Resolution</td><td>1920×1080</td></tr>
+                    <tr><td>SHA256</td><td class="mono truncate" style="max-width: 360px">3b0c2f7e1d8a4b…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>List rows</h2>
+        <div class="card" style="padding: var(--space-2);">
+            <div class="list">
+                <div class="list-row selected">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <div class="fill">
+                        <div class="title">FRONT_2024-01-15_14-30-00.mp4</div>
+                        <div class="meta">5:30 · 1920×1080 · 142 MB</div>
+                    </div>
+                    <span class="badge badge-flag">Flagged</span>
+                </div>
+                <div class="list-row">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <div class="fill">
+                        <div class="title">REAR_2024-01-15_14-30-00.mp4</div>
+                        <div class="meta">5:30 · 1280×720 · 88 MB</div>
+                    </div>
+                </div>
+                <div class="list-row">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <div class="fill">
+                        <div class="title">FRONT_2024-01-15_14-35-00.mp4</div>
+                        <div class="meta">5:30 · 1920×1080 · 138 MB</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Empty states</h2>
+        <div class="grid-2">
+            <div class="empty">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <div class="empty-title">No GPS data</div>
+                <div>This video has no embedded GPS track.</div>
+            </div>
+            <div class="empty">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <div class="empty-title">Nothing flagged yet</div>
+                <div>Flagged videos will appear in the exported report.</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Toasts</h2>
+        <div class="cluster">
+            <span class="toast toast-success">✓ Note saved</span>
+            <span class="toast toast-flag">⚑ Video flagged</span>
+            <span class="toast toast-danger">! Failed to write project file</span>
+            <span class="toast">Default toast</span>
+        </div>
+    </section>
+
+    <section>
+        <h2>Dividers</h2>
+        <div>Above</div>
+        <div class="divider"></div>
+        <div>Below</div>
+        <div class="row" style="margin-top: var(--space-3)">
+            <div>Left</div>
+            <div class="divider-vertical"></div>
+            <div>Right</div>
+        </div>
+    </section>
+
+    <script>
+        function setTheme(name) {
+            if (name === 'system') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', name);
+            }
+            document.getElementById('current-theme').textContent = name;
+            localStorage.setItem('dci-preview-theme', name);
+        }
+        const stored = localStorage.getItem('dci-preview-theme');
+        if (stored) setTheme(stored);
+    </script>
+</body>
+</html>

@@ -66,3 +66,48 @@ def test_helper_paths_match_assets_path(subdir: str, expected: Path) -> None:
         "qss": renderer.qss_path,
     }
     assert helpers[subdir]() == renderer.assets_path() / expected
+
+
+def test_inline_svg_returns_svg_markup() -> None:
+    svg = renderer.inline_svg("flag")
+    assert svg.startswith("<svg")
+    assert "</svg>" in str(svg)
+
+
+def test_inline_svg_swaps_class_attribute() -> None:
+    svg = str(renderer.inline_svg("flag", cls="icon icon-lg"))
+    assert 'class="icon icon-lg"' in svg
+    assert 'class="icon"' not in svg
+
+
+def test_inline_svg_unknown_returns_empty() -> None:
+    assert str(renderer.inline_svg("definitely-not-an-icon")) == ""
+
+
+def test_qss_files_exist_for_both_themes() -> None:
+    qss = renderer.qss_path()
+    assert (qss / "light.qss").is_file()
+    assert (qss / "dark.qss").is_file()
+    light = (qss / "light.qss").read_text()
+    dark = (qss / "dark.qss").read_text()
+    assert "QMainWindow" in light and "QMainWindow" in dark
+    assert "QMenuBar" in light and "QMenuBar" in dark
+    assert "QSplitter" in light and "QSplitter" in dark
+
+
+def test_components_css_defines_required_classes() -> None:
+    text = (renderer.static_path() / "css" / "components.css").read_text()
+    for cls in (
+        ".btn",
+        ".btn-primary",
+        ".card",
+        ".input",
+        ".badge",
+        ".table",
+        ".tabs",
+        ".list-row",
+        ".empty",
+        ".toast",
+        ".divider",
+    ):
+        assert cls in text, f"components.css missing {cls}"

@@ -1,0 +1,5 @@
+{# Inline an SVG icon by name. Usage: {% include "partials/_icon.html" with context %}
+   with `name` set in the surrounding scope, or call the macro version below. #}
+{% macro icon(name, cls="icon") -%}
+{{ inline_svg(name, cls) }}
+{%- endmacro %}

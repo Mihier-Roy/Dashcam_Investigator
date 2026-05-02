@@ -1,6 +1,4 @@
-// Receives theme changes from Qt and applies them to <html>. Phase 2 will
-// hook this up to a Qt-side QStyleHints listener; for now it just reacts
-// to whatever the bridge emits.
+// Applies whatever theme the Qt-side ThemeManager emits.
 
 (function () {
     const apply = (name) => {
@@ -11,7 +9,7 @@
         }
     };
 
-    window.addEventListener("api:ready", () => {
+    window.apiReady.then(() => {
         window.events.addEventListener("theme", (e) => apply(e.detail));
     });
 })();

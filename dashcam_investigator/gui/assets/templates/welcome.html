@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashcam Investigator{% endblock %}
+{% block body %}
+<main class="welcome">
+    <div class="welcome-hero">
+        <h1>Dashcam Investigator</h1>
+        <p>Forensic analysis of dashcam evidence — GPS tracks, speed profiles, metadata, and exportable reports.</p>
+    </div>
+
+    <div class="welcome-grid">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Create a new project</h3>
+                    <p class="card-subtitle">Start a fresh investigation</p>
+                </div>
+            </div>
+            <div class="card-body">
+                Walks you through naming a case, picking input/output directories, and processing dashcam files.
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-primary btn-block" id="btn-new" type="button">
+                    {{ inline_svg('plus') }}
+                    <span>New project</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Open an existing project</h3>
+                    <p class="card-subtitle">Load a dashcam_investigator.json</p>
+                </div>
+            </div>
+            <div class="card-body">
+                Pick up where you left off. Project files store all hashes, notes, flags, and processed metadata.
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-secondary btn-block" id="btn-open" type="button">
+                    {{ inline_svg('folder') }}
+                    <span>Open project</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="{{ static('js/pages/welcome.js') }}" defer></script>
+{% endblock %}

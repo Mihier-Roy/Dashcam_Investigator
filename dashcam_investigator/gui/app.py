@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from pathlib import Path
@@ -17,10 +18,14 @@ from dashcam_investigator.gui.qt_models import (
     VideoListModel,
 )
 from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
+from dashcam_investigator.gui.theme import ThemeManager
+from dashcam_investigator.gui.web.bridge import Bridge
+from dashcam_investigator.gui.web.panel import WebPanel
 from dashcam_investigator.gui.worker_class import Worker
 from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 from dashcam_investigator.project_manager.project_manager import ProjectManager
 from dashcam_investigator.utils.common import convert_to_seconds
+from dashcam_investigator.utils.custom_json_functions import ProjectEncoder
 
 logger = logging.getLogger(__name__)
 NAVIGATION_PAGES = ["Welcome", "Project"]
@@ -50,6 +55,27 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(x_coordinates, y_coordinates)
 
         ######################################
+        # Web layer (Phase 3+)
+        ######################################
+        # Bridge is the single QObject exposed to every WebPanel via QWebChannel.
+        self.bridge = Bridge(self, parent=self)
+        self.theme_manager = ThemeManager(self.bridge, parent=self)
+
+        # Replace the Qt Designer-built welcome page with a WebPanel rendered
+        # from welcome.html. The rest of the stack (project page) stays Qt
+        # for now and gets converted in later phases.
+        old_welcome = self.stack_widget.widget(0)
+        self.stack_widget.removeWidget(old_welcome)
+        old_welcome.deleteLater()
+        self.welcome_panel = WebPanel("welcome.html", self.bridge, parent=self)
+        self.stack_widget.insertWidget(0, self.welcome_panel)
+        self.stack_widget.setCurrentIndex(0)
+
+        # Push the resolved theme to JS + apply matching QSS now that the
+        # webview exists.
+        self.theme_manager.apply_initial()
+
+        ######################################
         # Navigation
         ######################################
         # Load the navigation list
@@ -58,14 +84,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.navigation_tab.setStyleSheet("QListView::item { padding: 25px; }")
         # Handle navigation
         self.navigation_tab.clicked.connect(self.navigate)
-
-        ######################################
-        # Project controls
-        ######################################
-        # Handle starting a new project
-        self.new_project_button.clicked.connect(self.start_new_project)
-        # Handle opening an existing project
-        self.existing_project_button.clicked.connect(self.open_existing_project)
 
         ######################################
         # Report generation
@@ -399,6 +417,41 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Notes tab
         ######################################
         self.notes_textbox.setText(str(self.current_video.notes))
+
+
+    ######################################
+    # BridgeController protocol — Phase 3 wires new/open/report/theme;
+    # video/notes/flag/metadata land in Phases 4-6.
+    ######################################
+    def request_new_project(self) -> None:
+        self.start_new_project()
+
+    def request_open_project(self) -> None:
+        self.open_existing_project()
+
+    def select_video(self, name: str) -> None:
+        logger.debug("select_video stub: %s (Phase 4)", name)
+
+    def set_flag(self, name: str, flagged: bool) -> None:
+        logger.debug("set_flag stub: %s=%s (Phase 5)", name, flagged)
+
+    def save_notes(self, name: str, text: str) -> None:
+        logger.debug("save_notes stub: %s (Phase 5)", name)
+
+    def generate_report(self) -> None:
+        self.create_report()
+
+    def set_theme(self, name: str) -> None:
+        self.theme_manager.set_mode(name)  # type: ignore[arg-type]
+
+    def get_project_json(self) -> str:
+        if self.project_object is None:
+            return "null"
+        return json.dumps(self.project_object, cls=ProjectEncoder)
+
+    def get_metadata_json(self, name: str) -> str:
+        logger.debug("get_metadata_json stub: %s (Phase 5)", name)
+        return "[]"
 
 
 def run():

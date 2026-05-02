@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Protocol
+from typing import Any, Protocol
 
 from PySide6.QtCore import QObject, Signal, Slot
+
+from dashcam_investigator.utils.custom_json_functions import ProjectEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -93,8 +95,10 @@ class Bridge(QObject):
         return self._controller.get_metadata_json(name)
 
     # --- helpers used by the controller --------------------------------
-    def emit_project(self, project_dict: dict) -> None:
-        self.project_loaded.emit(json.dumps(project_dict, default=str))
+    def emit_project(self, project: Any) -> None:
+        """Emit a ProjectStructure (or any object/dict the encoder handles)."""
+        self.project_loaded.emit(json.dumps(project, cls=ProjectEncoder))
 
-    def emit_video(self, video_dict: dict) -> None:
-        self.video_changed.emit(json.dumps(video_dict, default=str))
+    def emit_video(self, video: Any) -> None:
+        """Emit a FileAttributes (or dict) representing the selected video."""
+        self.video_changed.emit(json.dumps(video, cls=ProjectEncoder))

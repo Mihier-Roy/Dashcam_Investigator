@@ -15,7 +15,6 @@ from dashcam_investigator.gui.new_project_class import NewProjectDialog
 from dashcam_investigator.gui.qt_models import (
     NavigationListModel,
     PandasTableModel,
-    VideoListModel,
 )
 from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
 from dashcam_investigator.gui.theme import ThemeManager
@@ -71,6 +70,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stack_widget.insertWidget(0, self.welcome_panel)
         self.stack_widget.setCurrentIndex(0)
 
+        # Replace the Qt directory tree + video list (file_tab) with a single
+        # WebPanel rendering sidebar.html. file_tab was a child of project_page
+        # at fixed geometry; we reparent the panel and match the geometry until
+        # Phase 7 introduces real layouts.
+        sidebar_geo = self.file_tab.geometry()
+        sidebar_parent = self.file_tab.parentWidget()
+        self.file_tab.hide()
+        self.file_tab.deleteLater()
+        self.sidebar_panel = WebPanel("sidebar.html", self.bridge, parent=sidebar_parent)
+        self.sidebar_panel.setGeometry(sidebar_geo)
+        self.sidebar_panel.show()
+
         # Push the resolved theme to JS + apply matching QSS now that the
         # webview exists.
         self.theme_manager.apply_initial()
@@ -91,12 +102,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionGenerate_Report.triggered.connect(self.create_report)
 
         ######################################
-        # Video selection controls
+        # Video selection: handled by the sidebar WebPanel via Bridge.selectVideo
         ######################################
-        # Collect the currently selected item from the tree view
-        self.dir_tree_view.clicked.connect(self.on_selected)
-        # Collect the currently selected item from list view
-        self.video_list_view.clicked.connect(self.on_vid_selected)
 
         # Define media player
         logger.debug("Loading media player")
@@ -280,23 +287,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.threadpool.start(worker)
 
     def load_data(self):
-        # Populate the video table view
-        self.list_model = VideoListModel(self.project_object.video_files)
-        self.video_list_view.setModel(self.list_model)
-
-        # Load current project directory to tree view
-        tree_path = Path(self.project_object.project_info.input_directory).resolve()
-        logger.debug(f"Loading selected input directory to the TreeView -> {tree_path}")
-        model = QtWidgets.QFileSystemModel()
-        model.setRootPath(str(tree_path))
-        self.dir_tree_view.setModel(model)
-        self.dir_tree_view.setRootIndex(model.index(str(tree_path)))
-
-        # Ensure that the tree view shows only the name columns
-        self.dir_tree_view.hideColumn(1)
-        self.dir_tree_view.hideColumn(2)
-        self.dir_tree_view.hideColumn(3)
-        self.dir_tree_view.show()
+        """Push the current project to every WebPanel listening on the bridge."""
+        if self.project_object is None:
+            return
+        logger.debug("Broadcasting project to web panels")
+        self.bridge.emit_project(self.project_object)
 
     ######################################
     # Generate a report
@@ -327,38 +322,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def flag_video(self):
         """
-        Set flagged property to True and write to file.
+        Toggle the flagged property on the current video and persist.
+        Notifies the sidebar via the bridge so its badge updates.
         """
-        index = self.video_list_view.selectedIndexes()
-        logger.debug(f"Flagged video -> {self.current_video.name}")
+        if self.current_video is None:
+            return
         self.current_video.flagged = not self.current_video.flagged
+        logger.debug(
+            "Flag toggled -> %s = %s", self.current_video.name, self.current_video.flagged
+        )
         if self.current_video.flagged:
             self.note_status.setText("Video flagged!")
         else:
             self.note_status.setText("Video un-flagged!")
         self.project_manager.write_project_file(data=self.project_object)
-        self.list_model.dataChanged.emit(index[0], index[0])
-
-    ######################################
-    # Actions when a video is selected from tree view or list
-    ######################################
-    def on_vid_selected(self, selected_index):
-        """
-        When a video is selected from the List View, get the file name and pass it to load_video_data
-        """
-        self.load_video_data(selected_index.data())
-
-    def on_selected(self, selected_index):
-        """
-        When a file is selected from the Tree view, get the file name and pass it to load_video_data
-        """
-        self.note_status.setText("")
-        # Get the path of the selected file
-        fs = QtWidgets.QFileSystemModel()
-
-        if not fs.isDir(selected_index):
-            file_name = fs.fileName(selected_index)
-            self.load_video_data(file_name)
+        self.bridge.flag_changed.emit(self.current_video.name, self.current_video.flagged)
 
     def load_video_data(self, video_name):
         """
@@ -430,7 +408,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.open_existing_project()
 
     def select_video(self, name: str) -> None:
-        logger.debug("select_video stub: %s (Phase 4)", name)
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("select_video: no video named %r in project", name)
+            return
+        self.load_video_data(name)
+        self.bridge.emit_video(self.current_video)
 
     def set_flag(self, name: str, flagged: bool) -> None:
         logger.debug("set_flag stub: %s=%s (Phase 5)", name, flagged)

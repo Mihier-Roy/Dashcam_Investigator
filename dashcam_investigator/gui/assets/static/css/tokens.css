@@ -1,0 +1,82 @@
+/* Design tokens. Single source of truth for colors, spacing, typography.
+   Light is the default; @media flips to dark when the OS asks; [data-theme]
+   on <html> overrides both (set by Qt-driven theme.js). */
+
+:root {
+    --bg: #ffffff;
+    --bg-elevated: #f7f7f8;
+    --bg-hover: #eef0f3;
+    --bg-selected: #e0ecff;
+    --border: #e5e7eb;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --danger: #dc2626;
+    --flag: #f59e0b;
+    --success: #059669;
+
+    --radius: 8px;
+    --radius-sm: 4px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .04);
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0b0d10;
+        --bg-elevated: #14171c;
+        --bg-hover: #1b1f26;
+        --bg-selected: #1e2a40;
+        --border: #232830;
+        --text: #e6e8eb;
+        --text-muted: #8b94a3;
+        --accent: #60a5fa;
+        --accent-fg: #0b0d10;
+        --danger: #f87171;
+        --flag: #fbbf24;
+        --success: #34d399;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+}
+
+[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-elevated: #f7f7f8;
+    --bg-hover: #eef0f3;
+    --bg-selected: #e0ecff;
+    --border: #e5e7eb;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --danger: #dc2626;
+    --flag: #f59e0b;
+    --success: #059669;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+[data-theme="dark"] {
+    --bg: #0b0d10;
+    --bg-elevated: #14171c;
+    --bg-hover: #1b1f26;
+    --bg-selected: #1e2a40;
+    --border: #232830;
+    --text: #e6e8eb;
+    --text-muted: #8b94a3;
+    --accent: #60a5fa;
+    --accent-fg: #0b0d10;
+    --danger: #f87171;
+    --flag: #fbbf24;
+    --success: #34d399;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+}

@@ -4,19 +4,17 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
+from dashcam_investigator.gui.main_window import setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
-from dashcam_investigator.gui.qt_models import NavigationListModel
-from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
 from dashcam_investigator.gui.theme import ThemeManager
 from dashcam_investigator.gui.web.bridge import Bridge
-from dashcam_investigator.gui.web.panel import WebPanel
 from dashcam_investigator.gui.worker_class import Worker
 from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 from dashcam_investigator.project_manager.project_manager import ProjectManager
@@ -24,160 +22,73 @@ from dashcam_investigator.utils.common import convert_to_seconds
 from dashcam_investigator.utils.custom_json_functions import ProjectEncoder
 
 logger = logging.getLogger(__name__)
-NAVIGATION_PAGES = ["Welcome", "Project"]
+
+ORG_NAME = "DashcamInvestigator"
+APP_NAME = "DashcamInvestigator"
 
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
-        super(MainWindow, self).__init__()
-        self.setupUi(self)
+        super().__init__()
         self.project_manager = ProjectManager()
         self.project_object = None
         self.current_video = None
 
-        # Intialise a thread pool to run background tasks
         self.threadpool = QtCore.QThreadPool()
         logger.debug(f"Multithreading with {self.threadpool.maxThreadCount()} threads")
 
-        # Move the application window to the center of the screen
-        logger.debug("Moving window to the center of the screen")
-        # Get current screen size
-        screen_size = QtGui.QScreen.availableGeometry(
-            QtWidgets.QApplication.primaryScreen()
-        )
-        # Compute the  coordinates for the center of the screen
-        x_coordinates = (screen_size.width() - self.width()) / 2
-        y_coordinates = (screen_size.height() - self.height()) / 2 - 20
-        self.move(x_coordinates, y_coordinates)
-
-        ######################################
-        # Web layer (Phase 3+)
-        ######################################
-        # Bridge is the single QObject exposed to every WebPanel via QWebChannel.
+        # The bridge must exist before setup_ui constructs WebPanels.
         self.bridge = Bridge(self, parent=self)
         self.theme_manager = ThemeManager(self.bridge, parent=self)
 
-        # Replace the Qt Designer-built welcome page with a WebPanel rendered
-        # from welcome.html. The rest of the stack (project page) stays Qt
-        # for now and gets converted in later phases.
-        old_welcome = self.stack_widget.widget(0)
-        self.stack_widget.removeWidget(old_welcome)
-        old_welcome.deleteLater()
-        self.welcome_panel = WebPanel("welcome.html", self.bridge, parent=self)
-        self.stack_widget.insertWidget(0, self.welcome_panel)
-        self.stack_widget.setCurrentIndex(0)
+        setup_ui(self, self.bridge)
 
-        # Replace the Qt directory tree + video list (file_tab) with a single
-        # WebPanel rendering sidebar.html. file_tab was a child of project_page
-        # at fixed geometry; we reparent the panel and match the geometry until
-        # Phase 7 introduces real layouts.
-        sidebar_geo = self.file_tab.geometry()
-        sidebar_parent = self.file_tab.parentWidget()
-        self.file_tab.hide()
-        self.file_tab.deleteLater()
-        self.sidebar_panel = WebPanel("sidebar.html", self.bridge, parent=sidebar_parent)
-        self.sidebar_panel.setGeometry(sidebar_geo)
-        self.sidebar_panel.show()
+        self._wire_menu_actions()
+        self._wire_media_player()
 
-        # Replace every data tab body with a WebPanel.
-        self.metadata_panel = self._mount_panel_in_tab(self.metadata_tab, "metadata.html")
-        self.notes_panel = self._mount_panel_in_tab(self.notes_tab, "notes.html")
-        self.map_panel = self._mount_panel_in_tab(
-            self.map_tab,
-            "output_panel.html",
-            context={
-                "subtitle": "GPS track",
-                "empty_icon": "map-pin",
-                "empty_title": "No map loaded",
-                "empty_body": "Select a video from the sidebar to view its GPS track.",
-            },
-        )
-        self.graph_panel = self._mount_panel_in_tab(
-            self.graph_tab,
-            "output_panel.html",
-            context={
-                "subtitle": "Speed profile",
-                "empty_icon": "bar-chart",
-                "empty_title": "No speed profile",
-                "empty_body": "Select a video from the sidebar to view its speed profile.",
-            },
-        )
-
-        # Push the resolved theme to JS + apply matching QSS now that the
-        # webview exists.
+        self._restore_settings()
         self.theme_manager.apply_initial()
 
-        ######################################
-        # Navigation
-        ######################################
-        # Load the navigation list
-        navigation_model = NavigationListModel(NAVIGATION_PAGES)
-        self.navigation_tab.setModel(navigation_model)
-        self.navigation_tab.setStyleSheet("QListView::item { padding: 25px; }")
-        # Handle navigation
-        self.navigation_tab.clicked.connect(self.navigate)
-
-        ######################################
-        # Report generation
-        ######################################
+    # --- Setup helpers -------------------------------------------------
+    def _wire_menu_actions(self) -> None:
+        self.action_new_project.triggered.connect(self.start_new_project)
+        self.action_open_project.triggered.connect(self.open_existing_project)
         self.actionGenerate_Report.triggered.connect(self.create_report)
 
-        ######################################
-        # Video selection: handled by the sidebar WebPanel via Bridge.selectVideo
-        ######################################
-
-        # Define media player
-        logger.debug("Loading media player")
+    def _wire_media_player(self) -> None:
         self.mediaPlayer = QMediaPlayer(self)
-        # Set the video output from the QMediaPlayer to the QVideoWidget.
         self.mediaPlayer.setVideoOutput(self.video_player)
-
-        ######################################
-        # Video playback controls
-        ######################################
-        # Set the QPushButtons to play, pause and stop the video in the QVideoWidget.
         self.play_button.clicked.connect(self.play_video)
         self.pause_button.clicked.connect(self.pause_video)
         self.stop_button.clicked.connect(self.stop_video)
-        # Set the total range for the QSlider.
         self.mediaPlayer.durationChanged.connect(self.change_duration)
-        # Set the current value for the QSlider.
         self.mediaPlayer.positionChanged.connect(self.change_position)
-        # Set the video position in QMediaPlayer based on the QSlider position.
         self.horizontal_slider.sliderMoved.connect(self.video_position)
 
-        ######################################
-        # Save/flag controls live in notes.html — the Bridge routes
-        # JS button clicks to set_flag / save_notes below.
-        ######################################
+    # --- QSettings persistence ----------------------------------------
+    def _restore_settings(self) -> None:
+        s = QtCore.QSettings()
+        geometry = s.value("window/geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
+        h_state = s.value("window/h_splitter")
+        if h_state:
+            self.h_splitter.restoreState(h_state)
+        v_state = s.value("window/v_splitter")
+        if v_state:
+            self.v_splitter.restoreState(v_state)
 
-    ######################################
-    # Tab content mounting
-    ######################################
-    def _mount_panel_in_tab(
-        self,
-        tab: QtWidgets.QWidget,
-        template_name: str,
-        context: dict | None = None,
-    ) -> WebPanel:
-        """Replace all children of `tab` with a WebPanel filling it via a layout."""
-        for child in list(tab.children()):
-            if isinstance(child, QtWidgets.QWidget):
-                child.hide()
-                child.deleteLater()
-        existing_layout = tab.layout()
-        if existing_layout is not None:
-            QtWidgets.QWidget().setLayout(existing_layout)  # detach + drop
-        layout = QtWidgets.QVBoxLayout(tab)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        panel = WebPanel(template_name, self.bridge, parent=tab, context=context)
-        layout.addWidget(panel)
-        return panel
+    def _save_settings(self) -> None:
+        s = QtCore.QSettings()
+        s.setValue("window/geometry", self.saveGeometry())
+        s.setValue("window/h_splitter", self.h_splitter.saveState())
+        s.setValue("window/v_splitter", self.v_splitter.saveState())
 
-    ######################################
-    # Thread signal collectors
-    ######################################
+    def closeEvent(self, event):  # noqa: N802 (Qt API)
+        self._save_settings()
+        super().closeEvent(event)
+
+    # --- Worker signal collectors -------------------------------------
     def update_progress_dialog(self, current):
         self.progress.setLabelText(f"Processing files... ({current}/{self.file_count})")
         self.progress.setValue(current)
@@ -186,7 +97,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.project_object = output
         self.project_manager.write_project_file(data=self.project_object)
         logger.debug("Processing completed!")
-        # Navigate to the project page
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
@@ -194,139 +104,90 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.progress.hide()
         logger.debug("Thread completed execution.")
 
-    ######################################
-    # Navigation controls
-    ######################################
-    def navigate(self, selected_index):
-        """
-        Set the current page of the stack widget to the index of the list view
-        """
-        self.stack_widget.setCurrentIndex(selected_index.row())
-
-    ######################################
-    # Video player controls
-    ######################################
+    # --- Video player controls ----------------------------------------
     def play_video(self):
-        """
-        Handles the clicked signal generated by playButton and plays the video in the mediaPlayer.
-        """
         self.mediaPlayer.play()
         duration = self.mediaPlayer.duration()
         sec, min = convert_to_seconds(int(duration))
         self.total_duration.setText(f"{min}:{sec}")
 
     def pause_video(self):
-        """
-        Handles the clicked signal generated by playButton and pauses video in the mediaPlayer.
-        """
         self.mediaPlayer.pause()
 
     def stop_video(self):
-        """
-        Handles the clicked signal generated by playButton and stops the video in the mediaPlayer.
-        """
         self.mediaPlayer.stop()
 
     def change_position(self, position):
-        """
-        Handles the positionChanged signal generated by the mediaPlayer.
-        Sets the current value of the QSlider to the current position of the video in the QMediaPlayer.
-        :param position: current position of the video in the QMediaPlayer.
-        """
         self.horizontal_slider.setValue(position)
         sec, min = convert_to_seconds(int(position))
         self.current_duration.setText(f"{min}:{sec}")
 
     def change_duration(self, duration):
-        """
-        Handles the durationChanged signal generated by the mediaPlayer.
-        Sets the range of the QSlider.
-        :param duration: Total duration of the video in the QMediaPlayer.
-        """
         self.horizontal_slider.setRange(0, duration)
 
     def video_position(self, position):
-        """
-        Handles the sliderMoved signal generated by the horizontalSlider.
-        Changes the position of the video in the QMediaPlayer on changing the value of the QSlider.
-        :param position: Current position value of the QSlider.
-        :return:
-        """
         self.mediaPlayer.setPosition(position)
 
-    ######################################
-    # New/Load project controls
-    ######################################
+    # --- Project lifecycle --------------------------------------------
     def open_existing_project(self):
-        """
-        Launches a QFileDialog which allows the user to select a .json file.
-        """
         file_name = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Open File", "C:", ("JSON (*.json)")
+            self, "Open project", "", "Dashcam Investigator (dashcam_investigator.json)"
         )
-        if file_name is not None:
-            # If project exists, load
-            logger.debug(f"Opening existing project file -> {file_name[0]}")
-            file_path = Path(file_name[0])
-            # If the file is a dashcam_investigator file, load the project from it
-            if file_path.name == "dashcam_investigator.json":
-                # Load project into object
-                self.project_object = self.project_manager.load_existing_project(
-                    file_path
-                )
-
-                # Load tree and video data
-                self.load_data()
-
-                # Navigate to the project page
-                self.stack_widget.setCurrentIndex(1)
+        if not file_name or not file_name[0]:
+            return
+        file_path = Path(file_name[0])
+        logger.debug(f"Opening existing project file -> {file_path}")
+        if file_path.name != "dashcam_investigator.json":
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Open project",
+                "Please select a dashcam_investigator.json file.",
+            )
+            return
+        self.project_object = self.project_manager.load_existing_project(file_path)
+        self.load_data()
+        self.stack_widget.setCurrentIndex(1)
 
     def start_new_project(self):
-        """
-        Launch the new project dialog and setup a new project.
-        """
         logger.debug("Starting a new project. Launched new project dialog.")
         dialog = NewProjectDialog(self)
         dialog.exec()
-        # If the user closes the dialog by clicking on 'Okay', then begin processing
-        if dialog.result() == QtWidgets.QDialog.Accepted:
-            logger.debug("Retreiving values entered into dialog.")
-            input_dir, output_dir, case_name, investigator_name = dialog.save()
+        if dialog.result() != QtWidgets.QDialog.Accepted:
+            return
 
-            # Create a new project manager object and begin processing data
-            logger.debug("Creating a new project with inputs provided.")
-            self.project_manager = ProjectManager(
-                input_dir=input_dir,
-                output_dir=output_dir,
-                case_name=case_name,
-                investigator_name=investigator_name,
-            )
-            self.project_object = self.project_manager.new_project()
+        logger.debug("Retreiving values entered into dialog.")
+        input_dir, output_dir, case_name, investigator_name = dialog.save()
 
-            # Get the total number of files in the directory
-            logger.debug("Counting files in directory")
-            self.file_count = get_file_count(input_dir)
+        logger.debug("Creating a new project with inputs provided.")
+        self.project_manager = ProjectManager(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            case_name=case_name,
+            investigator_name=investigator_name,
+        )
+        self.project_object = self.project_manager.new_project()
 
-            logger.debug(f"Processing {self.file_count} files from input directory")
-            # Initalise progress bar
-            self.progress = QtWidgets.QProgressDialog(
-                "Processing files...", None, 0, self.file_count, self
-            )
-            self.progress.setWindowModality(QtCore.Qt.WindowModal)
-            self.progress.setWindowTitle("Processing files...")
-            self.progress.setWindowFlags(
-                QtCore.Qt.Window
-                | QtCore.Qt.WindowTitleHint
-                | QtCore.Qt.CustomizeWindowHint
-            )
-            self.progress.show()
+        logger.debug("Counting files in directory")
+        self.file_count = get_file_count(input_dir)
 
-            # Iterate through the directory and categorise files
-            worker = Worker(process_files, input_dir, self.project_object)
-            worker.signals.result.connect(self.update_object)
-            worker.signals.finished.connect(self.thread_complete)
-            worker.signals.progress.connect(self.update_progress_dialog)
-            self.threadpool.start(worker)
+        logger.debug(f"Processing {self.file_count} files from input directory")
+        self.progress = QtWidgets.QProgressDialog(
+            "Processing files...", None, 0, self.file_count, self
+        )
+        self.progress.setWindowModality(QtCore.Qt.WindowModal)
+        self.progress.setWindowTitle("Processing files...")
+        self.progress.setWindowFlags(
+            QtCore.Qt.Window
+            | QtCore.Qt.WindowTitleHint
+            | QtCore.Qt.CustomizeWindowHint
+        )
+        self.progress.show()
+
+        worker = Worker(process_files, input_dir, self.project_object)
+        worker.signals.result.connect(self.update_object)
+        worker.signals.finished.connect(self.thread_complete)
+        worker.signals.progress.connect(self.update_progress_dialog)
+        self.threadpool.start(worker)
 
     def load_data(self):
         """Push the current project to every WebPanel listening on the bridge."""
@@ -335,44 +196,41 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         logger.debug("Broadcasting project to web panels")
         self.bridge.emit_project(self.project_object)
 
-    ######################################
-    # Generate a report
-    ######################################
+    # --- Report -------------------------------------------------------
     def create_report(self):
-        if self.project_object is not None:
-            report_path = generate_report(self.project_object)
-            self.project_object.project_info.report_path = str(report_path.resolve())
-            self.project_manager.write_project_file(data=self.project_object)
-            dlg = QtWidgets.QMessageBox(self)
-            dlg.setWindowTitle("Report generator")
-            dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
-            dlg.setIcon(QtWidgets.QMessageBox.Information)
-            dlg.setText(f"Report generated!\n View the report at : {report_path}")
-            dlg.exec()
+        if self.project_object is None:
+            return
+        report_path = generate_report(self.project_object)
+        self.project_object.project_info.report_path = str(report_path.resolve())
+        self.project_manager.write_project_file(data=self.project_object)
+        dlg = QtWidgets.QMessageBox(self)
+        dlg.setWindowTitle("Report generator")
+        dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
+        dlg.setIcon(QtWidgets.QMessageBox.Information)
+        dlg.setText(f"Report generated!\n View the report at : {report_path}")
+        dlg.exec()
+        self.bridge.report_generated.emit(str(report_path.resolve()))
 
+    # --- Video selection ---------------------------------------------
     def load_video_data(self, video_name):
         """
         Load the selected video into the native player and re-render the
         map / graph WebPanels. Metadata + notes update via the bridge.
         """
-        # Get the attributes of the selected video
         self.current_video: FileAttributes = [
             video
             for video in self.project_object.video_files
             if video.name == video_name
         ][0]
-
         logger.debug(f"Loading video information for -> {self.current_video.name}")
 
         video_path = Path(self.current_video.file_path)
 
-        # Video player (Qt) ---------------------------------------------
         self.mediaPlayer.stop()
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
 
-        # Map + Speed Graph WebPanels -----------------------------------
         self._render_output_panels(self.current_video)
 
     def _render_output_panels(self, video: FileAttributes) -> None:
@@ -399,7 +257,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @staticmethod
     def _read_output(video: FileAttributes, index: int) -> str | None:
-        """Read an output file from a video (map=0, graph=1). Returns None if missing."""
+        """Read an output file from a video (map=0, graph=1). None if missing."""
         if not video.output_files or len(video.output_files) <= index:
             return None
         path = Path(video.output_files[index])
@@ -412,11 +270,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             logger.warning("Failed to read %s: %s", path, exc)
             return None
 
-
-    ######################################
-    # BridgeController protocol — Phase 3 wires new/open/report/theme;
-    # video/notes/flag/metadata land in Phases 4-6.
-    ######################################
+    # --- BridgeController protocol -----------------------------------
     def request_new_project(self) -> None:
         self.start_new_project()
 
@@ -505,6 +359,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 def run():
     logger.info("---Running Dashcam Investigator---")
     app = QtWidgets.QApplication([])
+    app.setOrganizationName(ORG_NAME)
+    app.setApplicationName(APP_NAME)
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
     window.show()

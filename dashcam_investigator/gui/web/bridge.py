@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class BridgeController(Protocol):
-    """Implemented by MainWindow. Phase 1 ships only request/select/getter shapes."""
+    """Implemented by MainWindow."""
 
     def request_new_project(self) -> None: ...
     def request_open_project(self) -> None: ...
@@ -32,6 +32,10 @@ class BridgeController(Protocol):
     def set_theme(self, name: str) -> None: ...
     def get_project_json(self) -> str: ...
     def get_metadata_json(self, name: str) -> str: ...
+    # Phase 9: keyboard shortcut entry points.
+    def toggle_flag_current(self) -> None: ...
+    def select_next_video(self) -> None: ...
+    def select_previous_video(self) -> None: ...
 
 
 class Bridge(QObject):
@@ -45,6 +49,8 @@ class Bridge(QObject):
     theme_changed = Signal(str)         # "light" | "dark"
     progress = Signal(int, int)         # current, total
     report_generated = Signal(str)      # path to report HTML
+    focus_search = Signal()             # sidebar should focus its filter input
+    save_requested = Signal()           # the active panel (notes) should save
 
     def __init__(self, controller: BridgeController, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -93,6 +99,32 @@ class Bridge(QObject):
     @Slot(str, result=str)
     def getMetadataJson(self, name: str) -> str:  # noqa: N802
         return self._controller.get_metadata_json(name)
+
+    # --- Keyboard shortcut entry points -------------------------------
+    @Slot()
+    def focusSearch(self) -> None:  # noqa: N802
+        logger.debug("bridge: focusSearch")
+        self.focus_search.emit()
+
+    @Slot()
+    def requestSaveNotes(self) -> None:  # noqa: N802
+        logger.debug("bridge: requestSaveNotes")
+        self.save_requested.emit()
+
+    @Slot()
+    def toggleFlagCurrent(self) -> None:  # noqa: N802
+        logger.debug("bridge: toggleFlagCurrent")
+        self._controller.toggle_flag_current()
+
+    @Slot()
+    def selectNextVideo(self) -> None:  # noqa: N802
+        logger.debug("bridge: selectNextVideo")
+        self._controller.select_next_video()
+
+    @Slot()
+    def selectPreviousVideo(self) -> None:  # noqa: N802
+        logger.debug("bridge: selectPreviousVideo")
+        self._controller.select_previous_video()
 
     # --- helpers used by the controller --------------------------------
     def emit_project(self, project: Any) -> None:

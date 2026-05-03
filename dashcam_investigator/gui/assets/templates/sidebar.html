@@ -10,9 +10,12 @@
     </header>
 
     <div class="sidebar-controls">
-        <div class="input-group">
+        <div class="input-group" role="search">
             {{ inline_svg('search', cls='icon icon-prefix') }}
-            <input id="filter" class="input" type="search" placeholder="Filter videos…" autocomplete="off" spellcheck="false">
+            <input id="filter" class="input" type="search"
+                   placeholder="Filter videos…"
+                   aria-label="Filter videos by name or hash"
+                   autocomplete="off" spellcheck="false">
         </div>
         <div class="tabs sidebar-tabs" role="tablist" aria-label="View mode">
             <button class="tab active" type="button" data-mode="list" role="tab" aria-selected="true">List</button>

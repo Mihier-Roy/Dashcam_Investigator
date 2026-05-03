@@ -328,6 +328,32 @@ class MainWindow(QtWidgets.QMainWindow):
             return "null"
         return json.dumps(self.project_object, cls=ProjectEncoder)
 
+    # --- Keyboard shortcut entry points -------------------------------
+    def toggle_flag_current(self) -> None:
+        if self.current_video is None:
+            return
+        self.set_flag(self.current_video.name, not self.current_video.flagged)
+
+    def select_next_video(self) -> None:
+        self._cycle_video(1)
+
+    def select_previous_video(self) -> None:
+        self._cycle_video(-1)
+
+    def _cycle_video(self, step: int) -> None:
+        if self.project_object is None:
+            return
+        videos = self.project_object.video_files
+        if not videos:
+            return
+        current_name = self.current_video.name if self.current_video else None
+        try:
+            idx = next(i for i, v in enumerate(videos) if v.name == current_name)
+        except StopIteration:
+            idx = -1
+        new_idx = (idx + step) % len(videos)
+        self.select_video(videos[new_idx].name)
+
     def get_metadata_json(self, name: str) -> str:
         if self.project_object is None:
             return "[]"

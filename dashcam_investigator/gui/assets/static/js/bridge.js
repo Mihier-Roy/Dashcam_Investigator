@@ -47,6 +47,8 @@
             relay("theme_changed",    "theme", false);
             relay("progress",         "progress", false);
             relay("report_generated", "report", false);
+            relay("focus_search",     "focus-search", false);
+            relay("save_requested",   "save-requested", false);
 
             resolve(bridge);
         });

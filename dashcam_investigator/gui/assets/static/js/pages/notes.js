@@ -23,6 +23,7 @@ function showToast(text, kind = "success", timeoutMs = 1600) {
 
 function updateFlagLabel(flagged) {
     $("btn-flag-label").textContent = flagged ? "Un-flag video" : "Flag video";
+    $("btn-flag").setAttribute("aria-pressed", flagged ? "true" : "false");
 }
 
 function applyVideo(v) {
@@ -94,6 +95,16 @@ window.apiReady.then((api) => {
         if (!state.current) return;
         if (text.value !== state.lastSavedText) {
             api.saveNotes(state.current.name, text.value);
+        }
+    });
+
+    // Ctrl+S anywhere in the app routes here via the bridge.
+    window.events.addEventListener("save-requested", () => {
+        if (!state.current) return;
+        if (text.value !== state.lastSavedText) {
+            api.saveNotes(state.current.name, text.value);
+        } else {
+            showToast("Already saved", "success");
         }
     });
 });

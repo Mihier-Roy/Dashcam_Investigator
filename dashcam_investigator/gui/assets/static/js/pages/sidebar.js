@@ -174,6 +174,11 @@ window.apiReady.then((api) => {
         }
     });
 
+    window.events.addEventListener("focus-search", () => {
+        filterInput.focus();
+        filterInput.select();
+    });
+
     body.addEventListener("click", (e) => {
         const folder = e.target.closest(".tree-folder");
         if (folder) {

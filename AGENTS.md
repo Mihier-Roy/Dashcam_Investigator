@@ -5,8 +5,9 @@
 **Dashcam Investigator** is a Python desktop application designed for forensic investigation of dashcam evidence. It provides investigators with tools to analyze video files, extract metadata, visualize GPS data on interactive maps, and generate detailed investigation reports.
 
 **Technology Stack:**
-- Python 3.9+ with Poetry for dependency management
-- PySide2 (Qt 5.15.2) for GUI
+- Python 3.10–3.12 with [uv](https://docs.astral.sh/uv/) for dependency management
+- PySide6 (Qt 6.5+) for the desktop shell, with QtWebEngine for embedded HTML panels
+- Jinja2 for HTML templating (in-app panels and exported report share one template set)
 - Pandas & NumPy for data analysis
 - Folium for interactive mapping
 - Altair for data visualization
@@ -17,55 +18,69 @@
 ## Core Architectural Layers
 
 ### 1. **GUI Layer** (`dashcam_investigator/gui/`)
-Handles all user interface interactions and display logic using Qt/PySide2.
+Hybrid: a thin Qt shell (`QMainWindow` + native video player + dialogs) hosting HTML panels rendered by QtWebEngine. Every content surface (welcome screen, sidebar, metadata table, notes editor, map, speed graph) is a Jinja-rendered template inside a `WebPanel`. A single `Bridge` QObject is exposed to every panel via `QWebChannel`, giving JS one consistent `window.api`.
 
 #### Key Components:
 
 **`app.py` (Main Application Controller)**
-- **Responsibility:** Main application window logic and event orchestration
-- **Key Functions:**
-  - `create_project()` - Initiates new project creation dialog
-  - `load_project()` - Opens existing investigation project
-  - `process_files()` - Triggers file scanning and metadata extraction
-  - `display_video_info()` - Updates UI with video data
-  - `generate_map()` - Renders interactive GPS map for selected video
-  - `generate_graph()` - Generates speed profile charts
-  - `flag_video()`, `save_notes()` - User annotation functions
-  - `generate_report()` - Exports investigation report
-- **Signals/Slots:** Qt signal-slot communication with worker threads
-- **Threading:** Manages QThreadPool for non-blocking operations
+- **Responsibility:** `MainWindow` lifecycle, project state, bridge controller.
+- Implements the `BridgeController` Protocol — every JS-callable slot
+  forwards here: `select_video`, `set_flag`, `save_notes`,
+  `get_metadata_json`, `toggle_flag_current`, `select_next_video`,
+  `select_previous_video`, etc.
+- Persists window geometry + splitter state via `QSettings` on
+  `closeEvent`.
+- Threading via `QThreadPool` for non-blocking file processing.
 
-**`QtMainWindow.py` (Qt Designer UI)**
-- Auto-generated Qt GUI definition
-- Contains UI element hierarchy: main window, stacked widget pages, tabs, dialogs
-- Three main interface pages:
-  1. Welcome page (project selection)
-  2. Project page (investigation workspace)
-  3. Video analysis tabs (Maps, Metadata, Speed Graphs, Notes)
+**`main_window.py` (Hand-written Layout)**
+- `setup_ui(window, bridge)` builds the entire UI in code: menu bar
+  (File → New / Open / Generate report / Exit), `QStackedWidget`
+  (welcome panel + project page), horizontal `QSplitter`
+  (sidebar | right column), vertical `QSplitter` inside the right
+  column (player area | data tabs), and four `WebPanel`s in the tab
+  widget (Map / Metadata / Speed Graph / Notes).
+- No fixed pixel coordinates — layouts handle resizing; both splitter
+  positions and the window geometry are persisted via `QSettings`.
 
-**`new_project_class.py` (Project Creation Logic)**
-- Handles project initialization workflow
-- Validates user inputs (case name, investigator, directories)
-- Creates initial project directory structure
-- Initializes ProjectInfo data model
+**`theme.py` (Theme Manager)**
+- Listens to `QStyleHints.colorSchemeChanged`, broadcasts the resolved
+  theme over `Bridge.theme_changed`, and applies the matching QSS
+  (`light.qss` / `dark.qss`) to the Qt shell so native widgets stay in
+  sync with the embedded web pages.
 
-**`QtNewProjectDialog.py` (Project Dialog UI)**
-- Dialog interface for creating new investigation projects
-- Input fields: case name, investigator name, case number, input/output paths
+**`web/`**
+- `bridge.py` — `Bridge(QObject)` exposed via `QWebChannel`. Signals
+  carry JSON; slots forward to a `BridgeController` (the MainWindow).
+- `panel.py` — `WebPanel(QWebEngineView)` helper that renders a
+  Jinja template, attaches the shared bridge, and serves assets via
+  the custom `dci://` scheme.
+- `scheme.py` — registers `dci://` (must run before `QApplication`)
+  and serves files from `gui/assets/` with proper MIME types. Avoids
+  `file://` quirks that bite QtWebEngine.
+- `renderer.py` — Jinja2 environment, `static_url()`, `inline_svg()`
+  and `inline_css()` globals. Resolves `gui/assets` in both dev and
+  PyInstaller-frozen layouts.
+
+**`assets/`** — static, shipped via PyInstaller `--add-data`.
+- `templates/` — Jinja templates: `base.html`, `welcome.html`,
+  `sidebar.html`, `metadata.html`, `notes.html`, `output_panel.html`
+  (shared by Map + Speed Graph), `report.html`.
+- `static/css/` — `tokens.css` (single source of truth for colors,
+  spacing, typography), `base.css`, `components.css`, `app.css`,
+  `report.css`.
+- `static/js/` — `bridge.js` (QWebChannel handshake + signal relays
+  exposing `window.api` and `window.events`), `theme.js`,
+  `shortcuts.js`, plus per-page modules in `pages/`.
+- `static/icons/` — inline-able Lucide-style SVGs.
+- `qss/` — `light.qss` and `dark.qss` mirroring the CSS tokens.
+
+**`new_project_class.py` + `QtNewProjectDialog.py`**
+- The new-project dialog stays native Qt — it's small, infrequent, and
+  benefits from native file pickers.
 
 **`worker_class.py` (Qt Threading Worker)**
-- Inherits from QRunnable for multithreading support
-- Processes long-running tasks without blocking UI:
-  - Recursive file scanning
-  - Metadata extraction
-  - Map/graph generation
-- Emits signals to update main GUI with progress
-
-**`qt_models.py` (Custom Qt Data Models)**
-- `VideoListModel` - Custom model for video file list view
-- `FileTreeModel` - Custom model for directory tree view
-- `MetadataTableModel` - Custom model for metadata display
-- Handles data presentation and filtering in GUI tables/lists
+- `QRunnable`-based worker that runs file scanning + metadata extraction
+  off the UI thread; emits progress / result / finished signals.
 
 ---
 
@@ -137,15 +152,19 @@ Contains business logic for data processing, analysis, and visualization.
 - **Output:** HTML files for maps and graphs
 
 **`generate_report.py` (HTML Report Generation)**
-- **Responsibility:** Create comprehensive investigation report
-- **Key Functions:**
-  - `generate_html_report()` - Create HTML report with all flagged videos
-  - `create_report_structure()` - Build HTML DOM with navigation
-  - `embed_video_data()` - Include video information, notes, hashes
-  - `embed_map_data()` - Embed interactive maps in report
-  - `create_javascript_navigation()` - Add interactive controls
-- **Output:** Standalone HTML report file with embedded maps and metadata
-- **Features:** Video thumbnails, notes, file hashes, flagging status
+- **Responsibility:** Render the standalone investigation report from
+  the same Jinja templates the in-app UI uses, so the report and the
+  app share one visual language.
+- **Public API:** `generate_report(project_object) -> Path`.
+- **Output:** Self-contained HTML file. CSS (tokens + base + components +
+  report) and SVG icons are inlined via `inline_css()` / `inline_svg()`.
+  Map and speed-graph HTMLs are referenced via iframes with relative
+  posix paths (`../Maps/foo.html`) so the report ships alongside the
+  project's standard sibling directories.
+- **Features:** flagged-only filter, sidebar list with hash preview,
+  per-video info card (Create date / Duration / Device), notes card,
+  iframe for GPS map, iframe for speed graph. `@media print` drops the
+  sidebar and shows every video pane in sequence.
 
 **`get_file_count.py` (File Counting Utility)**
 - **Responsibility:** Count files in directory (with caching for performance)
@@ -374,14 +393,15 @@ app.py (Main Thread)
   - Called via subprocess from `extract_metadata.py`
 
 ### Python Dependencies (see pyproject.toml):
-- **pyside2** (5.15.2) - Qt GUI framework
-- **pandas** - Data manipulation and analysis
-- **numpy** - Numerical computing
-- **gpxpy** - GPS data parsing
-- **folium** - Interactive mapping
-- **altair** - Data visualization
-- **filetype** - File type detection
-- **pyinstaller** - Executable generation
+- **PySide6** (>= 6.5) — Qt6 GUI framework, with QtWebEngine + QtWebChannel
+- **Jinja2** (>= 3.1) — HTML templating shared by the app and the report
+- **pandas** — Data manipulation and analysis
+- **numpy** — Numerical computing
+- **gpxpy** — GPS data parsing
+- **folium** — Interactive mapping
+- **altair** — Data visualization
+- **filetype** — File type detection
+- **pyinstaller** — Executable generation
 
 ---
 
@@ -399,11 +419,11 @@ app.py (Main Thread)
 
 ## Configuration Files
 
-- **pyproject.toml** - Dependency specifications and metadata
-- **poetry.lock** - Locked versions for reproducible builds
-- **log.conf** - Logging levels and output paths
-- **gpx.fmt** - ExifTool format string for GPS extraction
-- **.gitignore** - Standard Python project excludes
+- **pyproject.toml** — Dependency specifications and metadata
+- **uv.lock** — Locked versions for reproducible builds
+- **log.conf** — Logging levels and output paths
+- **gpx.fmt** — ExifTool format string for GPS extraction
+- **.gitignore** — Standard Python project excludes
 
 ---
 
@@ -427,3 +447,5 @@ For each analyzed video:
 - **Multi-user:** Collaborative investigation features
 - **Mobile UI:** Web-based interface for remote access
 - **Additional Formats:** Support for dash cam API integrations (Viofo, Thinkware, etc.)
+- **Recent projects:** Welcome-screen list of recently opened projects
+- **Single-file portable report:** Inline map/graph HTMLs into the report so it travels without sibling dirs

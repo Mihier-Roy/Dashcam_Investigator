@@ -57,6 +57,9 @@ function render() {
         th.classList.toggle("sorted", isSorted);
         const indicator = th.querySelector(".sort-indicator");
         if (indicator) indicator.textContent = isSorted ? (state.sortDir === "asc" ? "↑" : "↓") : "↕";
+        th.setAttribute("aria-sort", isSorted
+            ? (state.sortDir === "asc" ? "ascending" : "descending")
+            : "none");
     });
 }
 
@@ -85,16 +88,23 @@ window.apiReady.then((api) => {
         render();
     });
 
+    const onSort = (th) => {
+        const key = th.dataset.sort;
+        if (state.sortKey === key) {
+            state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        } else {
+            state.sortKey = key;
+            state.sortDir = "asc";
+        }
+        render();
+    };
     document.querySelectorAll("th.sortable").forEach((th) => {
-        th.addEventListener("click", () => {
-            const key = th.dataset.sort;
-            if (state.sortKey === key) {
-                state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-            } else {
-                state.sortKey = key;
-                state.sortDir = "asc";
+        th.addEventListener("click", () => onSort(th));
+        th.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSort(th);
             }
-            render();
         });
     });
 

@@ -8,8 +8,8 @@
             <p class="muted" id="notes-subtitle">Select a video from the sidebar to add notes.</p>
         </div>
         <div class="notes-actions">
-            <span id="notes-toast" class="toast" hidden></span>
-            <button id="btn-flag" class="btn btn-secondary" type="button" disabled>
+            <span id="notes-toast" class="toast" role="status" aria-live="polite" hidden></span>
+            <button id="btn-flag" class="btn btn-secondary" type="button" disabled aria-pressed="false">
                 {{ inline_svg('flag') }}
                 <span id="btn-flag-label">Flag video</span>
             </button>

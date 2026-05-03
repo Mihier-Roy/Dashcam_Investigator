@@ -1,116 +1,94 @@
+import json
 import logging
 import sys
 from pathlib import Path
 
 import pandas as pd
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
+from dashcam_investigator.gui.main_window import setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
-from dashcam_investigator.gui.qt_models import (
-    NavigationListModel,
-    PandasTableModel,
-    VideoListModel,
-)
-from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
+from dashcam_investigator.gui.theme import ThemeManager
+from dashcam_investigator.gui.web.bridge import Bridge
 from dashcam_investigator.gui.worker_class import Worker
 from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 from dashcam_investigator.project_manager.project_manager import ProjectManager
 from dashcam_investigator.utils.common import convert_to_seconds
+from dashcam_investigator.utils.custom_json_functions import ProjectEncoder
 
 logger = logging.getLogger(__name__)
-NAVIGATION_PAGES = ["Welcome", "Project"]
+
+ORG_NAME = "DashcamInvestigator"
+APP_NAME = "DashcamInvestigator"
 
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
-        super(MainWindow, self).__init__()
-        self.setupUi(self)
+        super().__init__()
         self.project_manager = ProjectManager()
         self.project_object = None
         self.current_video = None
 
-        # Intialise a thread pool to run background tasks
         self.threadpool = QtCore.QThreadPool()
         logger.debug(f"Multithreading with {self.threadpool.maxThreadCount()} threads")
 
-        # Move the application window to the center of the screen
-        logger.debug("Moving window to the center of the screen")
-        # Get current screen size
-        screen_size = QtGui.QScreen.availableGeometry(
-            QtWidgets.QApplication.primaryScreen()
-        )
-        # Compute the  coordinates for the center of the screen
-        x_coordinates = (screen_size.width() - self.width()) / 2
-        y_coordinates = (screen_size.height() - self.height()) / 2 - 20
-        self.move(x_coordinates, y_coordinates)
+        # The bridge must exist before setup_ui constructs WebPanels.
+        self.bridge = Bridge(self, parent=self)
+        self.theme_manager = ThemeManager(self.bridge, parent=self)
 
-        ######################################
-        # Navigation
-        ######################################
-        # Load the navigation list
-        navigation_model = NavigationListModel(NAVIGATION_PAGES)
-        self.navigation_tab.setModel(navigation_model)
-        self.navigation_tab.setStyleSheet("QListView::item { padding: 25px; }")
-        # Handle navigation
-        self.navigation_tab.clicked.connect(self.navigate)
+        setup_ui(self, self.bridge)
 
-        ######################################
-        # Project controls
-        ######################################
-        # Handle starting a new project
-        self.new_project_button.clicked.connect(self.start_new_project)
-        # Handle opening an existing project
-        self.existing_project_button.clicked.connect(self.open_existing_project)
+        self._wire_menu_actions()
+        self._wire_media_player()
 
-        ######################################
-        # Report generation
-        ######################################
+        self._restore_settings()
+        self.theme_manager.apply_initial()
+
+    # --- Setup helpers -------------------------------------------------
+    def _wire_menu_actions(self) -> None:
+        self.action_new_project.triggered.connect(self.start_new_project)
+        self.action_open_project.triggered.connect(self.open_existing_project)
         self.actionGenerate_Report.triggered.connect(self.create_report)
 
-        ######################################
-        # Video selection controls
-        ######################################
-        # Collect the currently selected item from the tree view
-        self.dir_tree_view.clicked.connect(self.on_selected)
-        # Collect the currently selected item from list view
-        self.video_list_view.clicked.connect(self.on_vid_selected)
-
-        # Define media player
-        logger.debug("Loading media player")
+    def _wire_media_player(self) -> None:
         self.mediaPlayer = QMediaPlayer(self)
-        # Set the video output from the QMediaPlayer to the QVideoWidget.
         self.mediaPlayer.setVideoOutput(self.video_player)
-
-        ######################################
-        # Video playback controls
-        ######################################
-        # Set the QPushButtons to play, pause and stop the video in the QVideoWidget.
         self.play_button.clicked.connect(self.play_video)
         self.pause_button.clicked.connect(self.pause_video)
         self.stop_button.clicked.connect(self.stop_video)
-        # Set the total range for the QSlider.
         self.mediaPlayer.durationChanged.connect(self.change_duration)
-        # Set the current value for the QSlider.
         self.mediaPlayer.positionChanged.connect(self.change_position)
-        # Set the video position in QMediaPlayer based on the QSlider position.
         self.horizontal_slider.sliderMoved.connect(self.video_position)
 
-        ######################################
-        # Save/flag video controls
-        ######################################
-        # Save note/flag status when button is clicked
-        self.note_status.setStyleSheet("QLabel { color : green; }")
-        self.save_note_button.clicked.connect(self.save_note)
-        self.flag_video_button.clicked.connect(self.flag_video)
+    # --- QSettings persistence ----------------------------------------
+    def _restore_settings(self) -> None:
+        s = QtCore.QSettings()
+        geometry = s.value("window/geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
+        h_state = s.value("window/h_splitter")
+        if h_state:
+            self.h_splitter.restoreState(h_state)
+        v_state = s.value("window/v_splitter")
+        if v_state:
+            self.v_splitter.restoreState(v_state)
 
-    ######################################
-    # Thread signal collectors
-    ######################################
+    def _save_settings(self) -> None:
+        s = QtCore.QSettings()
+        s.setValue("window/geometry", self.saveGeometry())
+        s.setValue("window/h_splitter", self.h_splitter.saveState())
+        s.setValue("window/v_splitter", self.v_splitter.saveState())
+
+    def closeEvent(self, event):  # noqa: N802 (Qt API)
+        self._save_settings()
+        super().closeEvent(event)
+
+    # --- Worker signal collectors -------------------------------------
     def update_progress_dialog(self, current):
         self.progress.setLabelText(f"Processing files... ({current}/{self.file_count})")
         self.progress.setValue(current)
@@ -119,7 +97,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.project_object = output
         self.project_manager.write_project_file(data=self.project_object)
         logger.debug("Processing completed!")
-        # Navigate to the project page
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
@@ -127,283 +104,291 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.progress.hide()
         logger.debug("Thread completed execution.")
 
-    ######################################
-    # Navigation controls
-    ######################################
-    def navigate(self, selected_index):
-        """
-        Set the current page of the stack widget to the index of the list view
-        """
-        self.stack_widget.setCurrentIndex(selected_index.row())
-
-    ######################################
-    # Video player controls
-    ######################################
+    # --- Video player controls ----------------------------------------
     def play_video(self):
-        """
-        Handles the clicked signal generated by playButton and plays the video in the mediaPlayer.
-        """
         self.mediaPlayer.play()
         duration = self.mediaPlayer.duration()
         sec, min = convert_to_seconds(int(duration))
         self.total_duration.setText(f"{min}:{sec}")
 
     def pause_video(self):
-        """
-        Handles the clicked signal generated by playButton and pauses video in the mediaPlayer.
-        """
         self.mediaPlayer.pause()
 
     def stop_video(self):
-        """
-        Handles the clicked signal generated by playButton and stops the video in the mediaPlayer.
-        """
         self.mediaPlayer.stop()
 
     def change_position(self, position):
-        """
-        Handles the positionChanged signal generated by the mediaPlayer.
-        Sets the current value of the QSlider to the current position of the video in the QMediaPlayer.
-        :param position: current position of the video in the QMediaPlayer.
-        """
         self.horizontal_slider.setValue(position)
         sec, min = convert_to_seconds(int(position))
         self.current_duration.setText(f"{min}:{sec}")
 
     def change_duration(self, duration):
-        """
-        Handles the durationChanged signal generated by the mediaPlayer.
-        Sets the range of the QSlider.
-        :param duration: Total duration of the video in the QMediaPlayer.
-        """
         self.horizontal_slider.setRange(0, duration)
 
     def video_position(self, position):
-        """
-        Handles the sliderMoved signal generated by the horizontalSlider.
-        Changes the position of the video in the QMediaPlayer on changing the value of the QSlider.
-        :param position: Current position value of the QSlider.
-        :return:
-        """
         self.mediaPlayer.setPosition(position)
 
-    ######################################
-    # New/Load project controls
-    ######################################
+    # --- Project lifecycle --------------------------------------------
     def open_existing_project(self):
-        """
-        Launches a QFileDialog which allows the user to select a .json file.
-        """
         file_name = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Open File", "C:", ("JSON (*.json)")
+            self, "Open project", "", "Dashcam Investigator (dashcam_investigator.json)"
         )
-        if file_name is not None:
-            # If project exists, load
-            logger.debug(f"Opening existing project file -> {file_name[0]}")
-            file_path = Path(file_name[0])
-            # If the file is a dashcam_investigator file, load the project from it
-            if file_path.name == "dashcam_investigator.json":
-                # Load project into object
-                self.project_object = self.project_manager.load_existing_project(
-                    file_path
-                )
-
-                # Load tree and video data
-                self.load_data()
-
-                # Navigate to the project page
-                self.stack_widget.setCurrentIndex(1)
+        if not file_name or not file_name[0]:
+            return
+        file_path = Path(file_name[0])
+        logger.debug(f"Opening existing project file -> {file_path}")
+        if file_path.name != "dashcam_investigator.json":
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Open project",
+                "Please select a dashcam_investigator.json file.",
+            )
+            return
+        self.project_object = self.project_manager.load_existing_project(file_path)
+        self.load_data()
+        self.stack_widget.setCurrentIndex(1)
 
     def start_new_project(self):
-        """
-        Launch the new project dialog and setup a new project.
-        """
         logger.debug("Starting a new project. Launched new project dialog.")
         dialog = NewProjectDialog(self)
         dialog.exec()
-        # If the user closes the dialog by clicking on 'Okay', then begin processing
-        if dialog.result() == QtWidgets.QDialog.Accepted:
-            logger.debug("Retreiving values entered into dialog.")
-            input_dir, output_dir, case_name, investigator_name = dialog.save()
+        if dialog.result() != QtWidgets.QDialog.Accepted:
+            return
 
-            # Create a new project manager object and begin processing data
-            logger.debug("Creating a new project with inputs provided.")
-            self.project_manager = ProjectManager(
-                input_dir=input_dir,
-                output_dir=output_dir,
-                case_name=case_name,
-                investigator_name=investigator_name,
-            )
-            self.project_object = self.project_manager.new_project()
+        logger.debug("Retreiving values entered into dialog.")
+        input_dir, output_dir, case_name, investigator_name = dialog.save()
 
-            # Get the total number of files in the directory
-            logger.debug("Counting files in directory")
-            self.file_count = get_file_count(input_dir)
+        logger.debug("Creating a new project with inputs provided.")
+        self.project_manager = ProjectManager(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            case_name=case_name,
+            investigator_name=investigator_name,
+        )
+        self.project_object = self.project_manager.new_project()
 
-            logger.debug(f"Processing {self.file_count} files from input directory")
-            # Initalise progress bar
-            self.progress = QtWidgets.QProgressDialog(
-                "Processing files...", None, 0, self.file_count, self
-            )
-            self.progress.setWindowModality(QtCore.Qt.WindowModal)
-            self.progress.setWindowTitle("Processing files...")
-            self.progress.setWindowFlags(
-                QtCore.Qt.Window
-                | QtCore.Qt.WindowTitleHint
-                | QtCore.Qt.CustomizeWindowHint
-            )
-            self.progress.show()
+        logger.debug("Counting files in directory")
+        self.file_count = get_file_count(input_dir)
 
-            # Iterate through the directory and categorise files
-            worker = Worker(process_files, input_dir, self.project_object)
-            worker.signals.result.connect(self.update_object)
-            worker.signals.finished.connect(self.thread_complete)
-            worker.signals.progress.connect(self.update_progress_dialog)
-            self.threadpool.start(worker)
+        logger.debug(f"Processing {self.file_count} files from input directory")
+        self.progress = QtWidgets.QProgressDialog(
+            "Processing files...", None, 0, self.file_count, self
+        )
+        self.progress.setWindowModality(QtCore.Qt.WindowModal)
+        self.progress.setWindowTitle("Processing files...")
+        self.progress.setWindowFlags(
+            QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
+        )
+        self.progress.show()
+
+        worker = Worker(process_files, input_dir, self.project_object)
+        worker.signals.result.connect(self.update_object)
+        worker.signals.finished.connect(self.thread_complete)
+        worker.signals.progress.connect(self.update_progress_dialog)
+        self.threadpool.start(worker)
 
     def load_data(self):
-        # Populate the video table view
-        self.list_model = VideoListModel(self.project_object.video_files)
-        self.video_list_view.setModel(self.list_model)
+        """Push the current project to every WebPanel listening on the bridge."""
+        if self.project_object is None:
+            return
+        logger.debug("Broadcasting project to web panels")
+        self.bridge.emit_project(self.project_object)
 
-        # Load current project directory to tree view
-        tree_path = Path(self.project_object.project_info.input_directory).resolve()
-        logger.debug(f"Loading selected input directory to the TreeView -> {tree_path}")
-        model = QtWidgets.QFileSystemModel()
-        model.setRootPath(str(tree_path))
-        self.dir_tree_view.setModel(model)
-        self.dir_tree_view.setRootIndex(model.index(str(tree_path)))
-
-        # Ensure that the tree view shows only the name columns
-        self.dir_tree_view.hideColumn(1)
-        self.dir_tree_view.hideColumn(2)
-        self.dir_tree_view.hideColumn(3)
-        self.dir_tree_view.show()
-
-    ######################################
-    # Generate a report
-    ######################################
+    # --- Report -------------------------------------------------------
     def create_report(self):
-        if self.project_object is not None:
-            report_path = generate_report(self.project_object)
-            self.project_object.project_info.report_path = str(report_path.resolve())
-            self.project_manager.write_project_file(data=self.project_object)
-            dlg = QtWidgets.QMessageBox(self)
-            dlg.setWindowTitle("Report generator")
-            dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
-            dlg.setIcon(QtWidgets.QMessageBox.Information)
-            dlg.setText(f"Report generated!\n View the report at : {report_path}")
-            dlg.exec()
-
-    ######################################
-    # Notes/flag controls
-    ######################################
-    def save_note(self):
-        """
-        Saves the text in the Notes textbox to the project object.
-        """
-        logger.debug(f"Saved note for -> {self.current_video.name}")
-        self.current_video.notes = self.notes_textbox.toPlainText()
+        if self.project_object is None:
+            return
+        report_path = generate_report(self.project_object)
+        self.project_object.project_info.report_path = str(report_path.resolve())
         self.project_manager.write_project_file(data=self.project_object)
-        self.note_status.setText("Note saved!")
+        dlg = QtWidgets.QMessageBox(self)
+        dlg.setWindowTitle("Report generator")
+        dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
+        dlg.setIcon(QtWidgets.QMessageBox.Information)
+        dlg.setText(f"Report generated!\n View the report at : {report_path}")
+        dlg.exec()
+        self.bridge.report_generated.emit(str(report_path.resolve()))
 
-    def flag_video(self):
-        """
-        Set flagged property to True and write to file.
-        """
-        index = self.video_list_view.selectedIndexes()
-        logger.debug(f"Flagged video -> {self.current_video.name}")
-        self.current_video.flagged = not self.current_video.flagged
-        if self.current_video.flagged:
-            self.note_status.setText("Video flagged!")
-        else:
-            self.note_status.setText("Video un-flagged!")
-        self.project_manager.write_project_file(data=self.project_object)
-        self.list_model.dataChanged.emit(index[0], index[0])
-
-    ######################################
-    # Actions when a video is selected from tree view or list
-    ######################################
-    def on_vid_selected(self, selected_index):
-        """
-        When a video is selected from the List View, get the file name and pass it to load_video_data
-        """
-        self.load_video_data(selected_index.data())
-
-    def on_selected(self, selected_index):
-        """
-        When a file is selected from the Tree view, get the file name and pass it to load_video_data
-        """
-        self.note_status.setText("")
-        # Get the path of the selected file
-        fs = QtWidgets.QFileSystemModel()
-
-        if not fs.isDir(selected_index):
-            file_name = fs.fileName(selected_index)
-            self.load_video_data(file_name)
-
+    # --- Video selection ---------------------------------------------
     def load_video_data(self, video_name):
         """
-        This function retrieves the information for the selected video.
-        The information is used to load the video into the player and load maps, metadata, graphs and notes.
+        Load the selected video into the native player and re-render the
+        map / graph WebPanels. Metadata + notes update via the bridge.
         """
-        # Get the attributes of the selected video
         self.current_video: FileAttributes = [
             video
             for video in self.project_object.video_files
             if video.name == video_name
         ][0]
-
         logger.debug(f"Loading video information for -> {self.current_video.name}")
 
         video_path = Path(self.current_video.file_path)
-        map_file = self.current_video.output_files[0]
-        graph_file = self.current_video.output_files[1]
-        metadata_file = self.current_video.meta_files[1]
 
-        ######################################
-        # Video player
-        ######################################
-        # Stop current video
         self.mediaPlayer.stop()
-        # Set the video source directly (PySide6 uses setSource instead of setPlaylist)
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
-
-        # Set currently playing label
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
 
-        ######################################
-        # Map tab
-        ######################################
-        with Path(map_file).open() as f:
-            html_str = f.read()
-        self.maps_web_view.setHtml(html_str)
+        self._render_output_panels(self.current_video)
 
-        ######################################
-        # Metadata tab
-        ######################################
-        metadata_df = pd.read_csv(metadata_file).T
-        metadata_df.rename(columns={0: "Value"}, inplace=True)
-        self.metadata_model = PandasTableModel(metadata_df)
-        self.metadata_table.setModel(self.metadata_model)
+    def _render_output_panels(self, video: FileAttributes) -> None:
+        """Re-render the map + graph panels around the given video's output files."""
+        map_html = self._read_output(video, index=0)
+        graph_html = self._read_output(video, index=1)
 
-        ######################################
-        # Speed Graph tab
-        ######################################
-        with Path(graph_file).open() as f:
-            graph_str = f.read()
-        self.graph_web_view.setHtml(graph_str)
+        self.map_panel.set_context(
+            {
+                "title": video.name,
+                "subtitle": "GPS track",
+                "inner_html": map_html,
+                "empty_icon": "map-pin",
+                "empty_title": "No map available",
+                "empty_body": "This video has no GPS data.",
+            }
+        )
+        self.graph_panel.set_context(
+            {
+                "title": video.name,
+                "subtitle": "Speed profile",
+                "inner_html": graph_html,
+                "empty_icon": "bar-chart",
+                "empty_title": "No speed profile",
+                "empty_body": "This video has no speed data.",
+            }
+        )
 
-        ######################################
-        # Notes tab
-        ######################################
-        self.notes_textbox.setText(str(self.current_video.notes))
+    @staticmethod
+    def _read_output(video: FileAttributes, index: int) -> str | None:
+        """Read an output file from a video (map=0, graph=1). None if missing."""
+        if not video.output_files or len(video.output_files) <= index:
+            return None
+        path = Path(video.output_files[index])
+        if not path.is_file():
+            logger.warning("Output file missing: %s", path)
+            return None
+        try:
+            return path.read_text()
+        except OSError as exc:
+            logger.warning("Failed to read %s: %s", path, exc)
+            return None
+
+    # --- BridgeController protocol -----------------------------------
+    def request_new_project(self) -> None:
+        self.start_new_project()
+
+    def request_open_project(self) -> None:
+        self.open_existing_project()
+
+    def select_video(self, name: str) -> None:
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("select_video: no video named %r in project", name)
+            return
+        self.load_video_data(name)
+        self.bridge.emit_video(self.current_video)
+
+    def set_flag(self, name: str, flagged: bool) -> None:
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("set_flag: no video named %r in project", name)
+            return
+        video = match[0]
+        video.flagged = bool(flagged)
+        if self.current_video and self.current_video.name == name:
+            self.current_video.flagged = video.flagged
+        self.project_manager.write_project_file(data=self.project_object)
+        logger.debug("Flag persisted -> %s = %s", name, video.flagged)
+        self.bridge.flag_changed.emit(name, video.flagged)
+
+    def save_notes(self, name: str, text: str) -> None:
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("save_notes: no video named %r in project", name)
+            return
+        video = match[0]
+        video.notes = text
+        if self.current_video and self.current_video.name == name:
+            self.current_video.notes = text
+        self.project_manager.write_project_file(data=self.project_object)
+        logger.debug("Notes persisted -> %s (%d chars)", name, len(text))
+        self.bridge.notes_saved.emit(name)
+
+    def generate_report(self) -> None:
+        self.create_report()
+
+    def set_theme(self, name: str) -> None:
+        self.theme_manager.set_mode(name)  # type: ignore[arg-type]
+
+    def get_project_json(self) -> str:
+        if self.project_object is None:
+            return "null"
+        return json.dumps(self.project_object, cls=ProjectEncoder)
+
+    # --- Keyboard shortcut entry points -------------------------------
+    def toggle_flag_current(self) -> None:
+        if self.current_video is None:
+            return
+        self.set_flag(self.current_video.name, not self.current_video.flagged)
+
+    def select_next_video(self) -> None:
+        self._cycle_video(1)
+
+    def select_previous_video(self) -> None:
+        self._cycle_video(-1)
+
+    def _cycle_video(self, step: int) -> None:
+        if self.project_object is None:
+            return
+        videos = self.project_object.video_files
+        if not videos:
+            return
+        current_name = self.current_video.name if self.current_video else None
+        try:
+            idx = next(i for i, v in enumerate(videos) if v.name == current_name)
+        except StopIteration:
+            idx = -1
+        new_idx = (idx + step) % len(videos)
+        self.select_video(videos[new_idx].name)
+
+    def get_metadata_json(self, name: str) -> str:
+        if self.project_object is None:
+            return "[]"
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            return "[]"
+        video = match[0]
+        if not video.meta_files or len(video.meta_files) < 2:
+            return "[]"
+        metadata_path = Path(video.meta_files[1])
+        if not metadata_path.is_file():
+            logger.warning("Metadata CSV missing: %s", metadata_path)
+            return "[]"
+        try:
+            df = pd.read_csv(metadata_path)
+        except Exception as exc:  # noqa: BLE001 — surface as empty table
+            logger.warning("Failed to read metadata CSV %s: %s", metadata_path, exc)
+            return "[]"
+        if df.empty:
+            return "[]"
+        row = df.iloc[0].to_dict()
+        rows = [
+            {"property": str(k), "value": "" if pd.isna(v) else str(v)}
+            for k, v in row.items()
+        ]
+        return json.dumps(rows)
 
 
 def run():
     logger.info("---Running Dashcam Investigator---")
     app = QtWidgets.QApplication([])
+    app.setOrganizationName(ORG_NAME)
+    app.setApplicationName(APP_NAME)
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
     window.show()

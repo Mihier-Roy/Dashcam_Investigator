@@ -218,30 +218,33 @@ class TestGenerateReport:
     def test_generate_report_includes_javascript(
         self, create_project_with_flagged_videos
     ):
-        """Test that report includes JavaScript for interactivity."""
+        """Report ships interactive JS that swaps panes when a row is clicked."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
 
-        with Path(output_file).open("r") as f:
-            content = f.read()
+        content = Path(output_file).read_text()
 
         assert "<script>" in content
-        assert "function openFiles" in content
-        assert "const notes" in content
-        assert "const hashes" in content
+        assert "data-index" in content
+        assert "report-pane" in content
+        assert "addEventListener" in content
 
     def test_generate_report_includes_styling(self, create_project_with_flagged_videos):
-        """Test that report includes CSS styling."""
+        """Report inlines its CSS so the file is self-contained."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
 
-        with Path(output_file).open("r") as f:
-            content = f.read()
+        content = Path(output_file).read_text()
 
         assert "<style>" in content
-        assert ".split" in content
-        assert ".left" in content
-        assert ".right" in content
+        # Tokens, components, and report-specific classes all inlined.
+        assert "--accent" in content
+        assert ".btn" in content
+        assert ".report-sidebar" in content
+        assert ".report-main" in content
+        # No external stylesheet refs that would break on a recipient machine.
+        assert 'href="dci://' not in content
+        assert 'rel="stylesheet"' not in content
 
     def test_generate_report_with_no_flagged_videos(self, temp_dir):
         """Test report generation with no flagged videos."""
@@ -287,25 +290,44 @@ class TestGenerateReport:
         assert output_file.exists()
 
     def test_generate_report_includes_iframes(self, create_project_with_flagged_videos):
-        """Test that report includes iframe elements for maps and graphs."""
+        """Report embeds the map + graph HTMLs as iframes per flagged video."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
 
-        with Path(output_file).open("r") as f:
-            content = f.read()
+        content = Path(output_file).read_text()
 
-        assert '<iframe id="map-iframe"' in content
-        assert '<iframe id="graph-iframe"' in content
+        # Map + graph iframes per flagged video (one of each here).
+        assert content.count("<iframe") >= 2
+        assert 'title="Map for video0.mp4"' in content
+        assert 'title="Speed graph for video0.mp4"' in content
+
+    def test_generate_report_iframe_srcs_are_relative(
+        self, create_project_with_flagged_videos
+    ):
+        """Iframe srcs must be relative so the report ships with its sibling dirs."""
+        project = create_project_with_flagged_videos(num_flagged=1)
+        output_file = generate_report(project)
+
+        content = Path(output_file).read_text()
+
+        # ../Maps/... and ../Graphs/... are produced because the report lives
+        # under Reports/ and the assets are siblings of Reports/.
+        assert "../Maps/video0_map.html" in content
+        assert "../Graphs/video0_speed_graph.html" in content
+        # And no absolute file paths leaking into the HTML.
+        assert "/tmp/" not in content
+        assert "C:\\" not in content
 
     def test_generate_report_video_links(self, create_project_with_flagged_videos):
-        """Test that video links are properly formatted."""
-        project = create_project_with_flagged_videos(num_flagged=1)
+        """Each flagged video gets a clickable row that selects its pane."""
+        project = create_project_with_flagged_videos(num_flagged=2)
         output_file = generate_report(project)
 
-        with Path(output_file).open("r") as f:
-            content = f.read()
+        content = Path(output_file).read_text()
 
-        # Should contain list items with links
-        assert "<li>" in content
-        assert "<a href=" in content
-        assert "onclick=" in content
+        # Two clickable rows + two corresponding panes.
+        assert content.count('class="report-row') >= 2
+        assert 'data-index="0"' in content
+        assert 'data-index="1"' in content
+        assert 'id="video-0"' in content
+        assert 'id="video-1"' in content

@@ -7,7 +7,14 @@ import logging.config
 import os
 from pathlib import Path
 
-from .gui import app
+# The dci:// URL scheme must be registered BEFORE QApplication is created,
+# which happens inside app.run(). Doing it here at import time keeps the
+# ordering correct regardless of how Qt modules get imported below.
+from .gui.web.scheme import register_scheme
+
+register_scheme()
+
+from .gui import app  # noqa: E402  (import after register_scheme on purpose)
 
 if __name__ == "__main__":
     # Create a logs directory in AppData\Local\DashcamInvestigator if it doesn't already exist

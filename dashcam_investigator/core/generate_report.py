@@ -1,156 +1,118 @@
-import json
+"""
+Render the standalone HTML investigation report.
+
+The report shares Jinja templates and CSS with the in-app UI so the two
+look like one product. CSS and SVG icons are inlined into the rendered
+HTML; map / speed-graph HTMLs stay as separate files referenced via
+relative iframe srcs (the user normally ships the whole project dir).
+
+Public surface — preserved across the rewrite:
+    generate_report(project_object: ProjectStructure) -> Path
+"""
+
+from __future__ import annotations
+
 import logging
+import os
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-from dashcam_investigator.project_manager.project_datatypes import ProjectStructure
+from dashcam_investigator.gui.web.renderer import render
+from dashcam_investigator.project_manager.project_datatypes import (
+    FileAttributes,
+    ProjectStructure,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def generate_report(project_object: ProjectStructure) -> str:
-    """
-    Creates a HTML report of the flagged videos along with all notes.
-    params: project_object
-    returns: Path to the HTML file
-    """
-    # Identify flagged videos
-    logger.debug("Beginning report generation.")
-    flagged_vids = [video for video in project_object.video_files if video.flagged]
-    case_name = project_object.project_info.case_name
-    investigator_name = project_object.project_info.investigator_name
+def generate_report(project_object: ProjectStructure) -> Path:
+    """Render an HTML report covering every flagged video and return its path."""
+    flagged = [v for v in project_object.video_files if v.flagged]
+    case = project_object.project_info
+
     output_file = Path(
-        project_object.project_info.project_directory,
+        case.project_directory,
         "Reports",
-        f"{case_name}_report.html",
+        f"{case.case_name}_report.html",
+    )
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    video_info = {v.name: _collect_info(v) for v in flagged}
+    video_iframes = {v.name: _collect_iframes(v, output_file.parent) for v in flagged}
+
+    logger.debug("Rendering report for %d flagged video(s)", len(flagged))
+    html = render(
+        "report.html",
+        case=case,
+        flagged=flagged,
+        video_info=video_info,
+        video_iframes=video_iframes,
+        generated_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        app=False,
     )
 
-    logger.debug("Generating HTML report")
-    list_of_links = ""
-    notes_dict = {}
-    hash_dict = {}
-    info_dict = {}
-    for video in flagged_vids:
-        dict_key = video.name[0:-4]
-        list_of_links += f'<li><a href="{video.output_files[0]}" onclick="openFiles(\'{Path(video.output_files[1]).as_posix()}\')">{dict_key}</a></li>'
-        notes_dict[dict_key] = video.notes
-        hash_dict[dict_key] = video.sha256_hash
-        video_meta = pd.read_csv(video.meta_files[1])
-        info_dict[dict_key] = (
-            f'Create Date : {video_meta["CreateDate"].values[0]} \r Video Duration: {video_meta["Duration"].values[0]} \r Device Information: {video_meta["Format"].values[0]} {video_meta["Information"].values[0]}'
-        )
-
-    # Convert notes dict to JSON
-    video_notes = json.dumps(notes_dict)
-    video_hash = json.dumps(hash_dict)
-    video_info = json.dumps(info_dict)
-
-    # Create a HTML report with the relevant data
-    html_report = f"""<html>
-<head>
-<title>Dashcam Investigator Case Report</title>
-</head>
-<style>
-    /* Split the screen */
-    .split {{
-        height: 100%;
-        position: fixed;
-        z-index: 1;
-        top: 0;
-        overflow-x: hidden;
-        padding-top: 20px;
-    }}
-
-    /* Control the left side */
-    .left {{
-        left: 0;
-        width: 20%;
-        color: white;
-        background-color: #111;
-    }}
-
-    .left a {{
-        color: white;
-    }}
-
-    /* Control the right side */
-    .right {{
-        width: 78%;
-        right: 0;
-    }}
-
-    /* Center contnet */
-    .centered {{
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-    }}
-
-    #noteContent {{
-        border-left: 6px solid #ccc !important;
-        color: #000 !important;
-        background-color: #ddffff !important;
-        border-color: #2196F3 !important;
-        padding: 1em 16px;
-        display: none;
-    }}
-</style>
-
-<script>
-    const notes = {video_notes}
-    const hashes = {video_hash}
-    const info = {video_info}
-    function openFiles(speed_graph_url) {{
-        event.preventDefault()
-        document.getElementById("map-iframe").src = event.target.href;
-        document.getElementById("graph-iframe").src = speed_graph_url;
-        document.getElementById("videoTitle").innerText = "Selected video : " + event.target.innerText;
-        document.getElementById("hashTitle").innerText = "SHA256 Hash : " + hashes[event.target.innerText];
-        document.getElementById("infoTitle").innerText = info[event.target.innerText];
-        document.getElementById("videoNotes").innerText = "Video Notes";
-        document.getElementById("noteContent").innerText = notes[event.target.innerText];
-        document.getElementById("noteContent").style.display = "block"
-        document.getElementById("placeholder").style.display = "none"
-    }}
-</script>
-
-<body>
-    <div class="split left">
-        <div class="centered">
-            <h2>Dashcam Investigator Case Report</h2>
-            <h3>Case Name : {case_name} </h3>
-            <h3>Investigator Name : {investigator_name} </h3>
-            <h4 style="float: left;">Flagged videos:</h4>
-            <ul>
-                {list_of_links}
-            </ul>
-        </div>
-    </div>
-
-    <div class="split right">
-        <div id="notes">
-            <h1 id="placeholder">Please select a video</h1>
-            <h3 id="videoTitle"></h3>
-            <h4 id="hashTitle"></h4>
-            <h5 id="infoTitle"></h4>
-            <h4 id="videoNotes"></h4>
-            <p id="noteContent" />
-        </div>
-        <iframe id="map-iframe" height="60%" width="90%"></iframe>
-        <iframe id="graph-iframe" height="60%" width="90%"></iframe>
-    </div>
-
-</body>
-</html>
-"""
-
-    # Write report to output file
-    logger.debug(f"Writing report to file -> {output_file}")
-    with output_file.open("w") as file:
-        file.write(html_report)
-    logger.debug("Completed report generation.")
-
+    logger.debug("Writing report -> %s", output_file)
+    output_file.write_text(html, encoding="utf-8")
+    logger.debug("Report generation complete")
     return output_file
+
+
+# --- helpers ---------------------------------------------------------
+def _collect_info(video: FileAttributes) -> dict[str, str]:
+    """Pull headline metadata fields out of the video's CSV, if present."""
+    if not video.meta_files or len(video.meta_files) < 2:
+        return {}
+    csv_path = Path(video.meta_files[1])
+    if not csv_path.is_file():
+        logger.debug("Metadata CSV missing for report: %s", csv_path)
+        return {}
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as exc:  # noqa: BLE001 — surface as empty info section
+        logger.warning("Failed to read metadata CSV %s: %s", csv_path, exc)
+        return {}
+    if df.empty:
+        return {}
+
+    row = df.iloc[0].to_dict()
+    info: dict[str, str] = {}
+    if "CreateDate" in row:
+        info["Create date"] = _fmt(row["CreateDate"])
+    if "Duration" in row:
+        info["Duration"] = _fmt(row["Duration"])
+    if "Format" in row or "Information" in row:
+        device = " ".join(
+            filter(None, (_fmt(row.get("Format")), _fmt(row.get("Information"))))
+        )
+        if device.strip():
+            info["Device"] = device.strip()
+    return info
+
+
+def _collect_iframes(video: FileAttributes, report_dir: Path) -> dict[str, str]:
+    """Compute relative iframe URLs for the map (output_files[0]) and graph ([1])."""
+    iframes: dict[str, str] = {}
+    if video.output_files and len(video.output_files) > 0:
+        iframes["map"] = _rel_url(video.output_files[0], report_dir)
+    if video.output_files and len(video.output_files) > 1:
+        iframes["graph"] = _rel_url(video.output_files[1], report_dir)
+    return iframes
+
+
+def _rel_url(target: str, base: Path) -> str:
+    """Return a Posix-style URL pointing at `target` relative to `base`."""
+    try:
+        rel = os.path.relpath(target, str(base))
+    except ValueError:
+        # Different drives on Windows — fall back to the absolute path.
+        return Path(target).as_posix()
+    return Path(rel).as_posix()
+
+
+def _fmt(value) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value)

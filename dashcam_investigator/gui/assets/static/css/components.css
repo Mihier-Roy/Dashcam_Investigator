@@ -1,0 +1,301 @@
+/* Component library. Every visual element used by the app and the
+   exported report should be expressible as a class from this file.
+   Tokens come from tokens.css. */
+
+/* Button --------------------------------------------------------------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn .icon { width: 16px; height: 16px; }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
+
+.btn-secondary {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--bg-hover); }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--bg-hover); }
+
+.btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--border);
+}
+.btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: var(--accent-fg);
+    border-color: var(--danger);
+}
+
+.btn-sm { padding: 4px 10px; font-size: 12.5px; }
+.btn-lg { padding: 12px 20px; font-size: 15px; }
+.btn-block { width: 100%; }
+
+/* Card ---------------------------------------------------------------- */
+.card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-5);
+}
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+.card-title { font-size: 16px; font-weight: 600; margin: 0; }
+.card-subtitle { color: var(--text-muted); font-size: 13px; margin: 0; }
+.card-body { color: var(--text); }
+.card-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+
+/* Input --------------------------------------------------------------- */
+.input,
+.textarea,
+.select {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.textarea { resize: vertical; min-height: 120px; font-family: var(--font-sans); }
+
+.input-group {
+    position: relative;
+}
+.input-group .input { padding-left: 36px; }
+.input-group .icon-prefix {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.label {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Badge --------------------------------------------------------------- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    border: 1px solid var(--border);
+}
+.badge-flag    { background: color-mix(in srgb, var(--flag) 18%, transparent); color: var(--flag); border-color: color-mix(in srgb, var(--flag) 35%, transparent); }
+.badge-accent  { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.badge-success { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+.badge-danger  { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+
+/* Table --------------------------------------------------------------- */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 10px 12px;
+    z-index: 1;
+}
+.table tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+}
+.table tbody tr:hover td { background: var(--bg-hover); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table th.sortable { cursor: pointer; user-select: none; }
+.table th.sortable:hover { color: var(--text); }
+.table th .sort-indicator { opacity: .35; margin-left: 4px; }
+.table th.sorted .sort-indicator { opacity: 1; color: var(--accent); }
+
+/* Tab strip ----------------------------------------------------------- */
+.tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.tab {
+    padding: 10px 14px;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .12s ease, border-color .12s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+/* List row ------------------------------------------------------------ */
+.list { padding: var(--space-1) 0; }
+.list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color .08s ease;
+}
+.list-row:hover { background: var(--bg-hover); }
+.list-row.selected { background: var(--bg-selected); }
+.list-row .icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    flex: 0 0 auto;
+}
+.list-row .title {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.list-row .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Empty state --------------------------------------------------------- */
+.empty {
+    padding: var(--space-6) var(--space-5);
+    text-align: center;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+}
+.empty .icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: var(--space-3);
+    opacity: .6;
+}
+.empty .empty-title {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: var(--space-2);
+}
+
+/* Toast --------------------------------------------------------------- */
+.toast {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 13px;
+    box-shadow: var(--shadow-sm);
+}
+.toast-success { border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
+.toast-flag    { border-color: color-mix(in srgb, var(--flag) 35%, transparent);    color: var(--flag); }
+.toast-danger  { border-color: color-mix(in srgb, var(--danger) 35%, transparent);  color: var(--danger); }
+
+/* Divider ------------------------------------------------------------- */
+.divider {
+    height: 1px;
+    background: var(--border);
+    margin: var(--space-3) 0;
+}
+.divider-vertical {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    margin: 0 var(--space-3);
+}
+
+/* Icon --------------------------------------------------------------- */
+.icon {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

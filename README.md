@@ -45,7 +45,8 @@ All Python dependencies are automatically resolved and installed by uv. Current 
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **PySide6** | 6.10.2 | Qt6 GUI framework |
+| **PySide6** | >= 6.5 | Qt6 GUI framework (with QtWebEngine + QtWebChannel) |
+| **Jinja2** | >= 3.1 | HTML templating for the web panels and exported report |
 | **Pandas** | 3.0.0 | Data manipulation and analysis |
 | **NumPy** | 2.4.2 | Numerical computing |
 | **gpxpy** | 1.6.2 | GPS data processing |
@@ -71,7 +72,7 @@ The application uses Python's built-in `logging` module configured via `log.conf
 
 #### Building Executables
 
-PyInstaller creates standalone Windows executables. The build includes ExifTool and supporting files:
+PyInstaller creates standalone Windows executables. The build includes ExifTool and the bundled HTML/CSS/JS assets used by the web panels:
 
 ```bash
 # Build with uv
@@ -81,8 +82,25 @@ uv run pyinstaller \
   --add-data "gpx.fmt;." \
   --add-data "log.conf;." \
   --add-binary "exiftool.exe;." \
+  --add-data "dashcam_investigator/gui/assets;dashcam_investigator/gui/assets" \
   --name DashcamInvestigator \
   dashcam_investigator/__main__.py
 ```
 
+The `gui/assets` data dir is required — it ships the Jinja templates,
+CSS tokens, JS bridge code and inline SVG icons that every WebPanel
+loads at runtime. Without it the app launches but every panel is empty.
+
 **Build Output:** `dist/DashcamInvestigator/` - Standalone application directory
+
+### Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+N` | New project |
+| `Ctrl+O` | Open project |
+| `Ctrl+S` | Save the current video's notes |
+| `Ctrl+Q` | Quit |
+| `/` | Focus the sidebar filter |
+| `f` | Toggle flag on the currently selected video |
+| `←` / `→` | Previous / next video |

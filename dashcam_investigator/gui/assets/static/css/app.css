@@ -1,0 +1,218 @@
+/* Screen-specific layouts. Component styles live in components.css. */
+
+/* Welcome ------------------------------------------------------------- */
+.welcome {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    gap: var(--space-6);
+}
+.welcome-hero {
+    text-align: center;
+    max-width: 640px;
+}
+.welcome-hero h1 {
+    font-size: 32px;
+    margin-bottom: var(--space-3);
+    letter-spacing: -.01em;
+}
+.welcome-hero p {
+    color: var(--text-muted);
+    font-size: 15px;
+}
+.welcome-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+    gap: var(--space-4);
+    width: 100%;
+    max-width: 760px;
+    justify-content: center;
+}
+.welcome-grid .card {
+    display: flex;
+    flex-direction: column;
+}
+.welcome-grid .card-body {
+    flex: 1 1 auto;
+    color: var(--text-muted);
+}
+
+/* Sidebar ------------------------------------------------------------- */
+body.sidebar-body-host { overflow: hidden; }
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+}
+.sidebar-header {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.sidebar-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sidebar-title strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sidebar-title small { font-size: 12px; color: var(--text-muted); }
+
+.sidebar-controls {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.sidebar-tabs { padding: 0; border: 0; background: transparent; }
+.sidebar-tabs .tab {
+    flex: 1 1 0;
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+
+.sidebar-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: var(--space-2);
+}
+
+.sidebar .list-row {
+    padding: 6px 8px;
+    gap: var(--space-2);
+}
+.sidebar .list-row .title { font-size: 13px; }
+
+/* Tree view */
+.tree-folder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 12.5px;
+    border-radius: var(--radius-sm);
+}
+.tree-folder:hover { color: var(--text); background: var(--bg-hover); }
+.tree-folder .chevron {
+    width: 12px;
+    height: 12px;
+    transition: transform .12s ease;
+    color: var(--text-muted);
+}
+.tree-folder.collapsed .chevron { transform: rotate(-90deg); }
+.tree-children.collapsed { display: none; }
+.tree-children .list-row { padding-left: 28px; }
+
+/* Metadata panel ----------------------------------------------------- */
+.metadata-panel {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+.metadata-controls {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.metadata-table-wrap {
+    flex: 1 1 auto;
+    overflow: auto;
+}
+.metadata-table-wrap .table {
+    width: 100%;
+}
+.metadata-table-wrap .table td.value {
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+.metadata-empty {
+    padding: var(--space-5);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Notes panel -------------------------------------------------------- */
+.notes-panel {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    gap: var(--space-3);
+    background: var(--bg);
+}
+.notes-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+.notes-header h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    word-break: break-all;
+}
+.notes-header p { margin: 0; }
+.notes-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    flex-wrap: nowrap;
+}
+.notes-panel textarea {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Output panels (map / graph) ---------------------------------------- */
+.frame-panel {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+.frame-header {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+.frame-header h3 {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    word-break: break-all;
+}
+.frame-header p { margin: 0; font-size: 12.5px; }
+.frame-body {
+    flex: 1 1 auto;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+}
+.frame-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: var(--bg);
+    display: block;
+}
+.frame-body .empty {
+    margin: var(--space-5);
+}
+

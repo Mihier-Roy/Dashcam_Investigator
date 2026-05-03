@@ -63,30 +63,36 @@ def test_report_template_does_not_load_external_assets() -> None:
     assert "qwebchannel.js" not in html
 
 
-# --- _rel_url helper -------------------------------------------------
-def test_rel_url_returns_posix_relative_to_base(tmp_path: Path) -> None:
-    base = tmp_path / "Reports"
-    base.mkdir()
-    target = tmp_path / "Maps" / "vid_map.html"
-    target.parent.mkdir()
-    target.write_text("<html/>")
+# --- _collect_inline_html helper -------------------------------------
+def test_collect_inline_html_reads_map_and_graph(tmp_path: Path) -> None:
+    from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 
-    rel = report_module._rel_url(str(target), base)
-    assert rel == "../Maps/vid_map.html"
-    assert "\\" not in rel
+    map_file = tmp_path / "vid_map.html"
+    graph_file = tmp_path / "vid_graph.html"
+    map_file.write_text("<html>Map</html>")
+    graph_file.write_text("<html>Graph</html>")
+
+    video_path = tmp_path / "v.mp4"
+    video_path.write_text("x")
+    video = FileAttributes(file_path=video_path)
+    video.output_files = [str(map_file), str(graph_file)]
+
+    result = report_module._collect_inline_html(video)
+    assert result["map"] == "<html>Map</html>"
+    assert result["graph"] == "<html>Graph</html>"
 
 
-def test_rel_url_handles_absolute_target_outside_tree(tmp_path: Path) -> None:
-    """Same-drive but elsewhere — still resolved to a posix relative path."""
-    base = tmp_path / "a" / "Reports"
-    base.mkdir(parents=True)
-    target = tmp_path / "b" / "x.html"
-    target.parent.mkdir()
+def test_collect_inline_html_skips_missing_files(tmp_path: Path) -> None:
+    from dashcam_investigator.project_manager.project_datatypes import FileAttributes
 
-    rel = report_module._rel_url(str(target), base)
-    # Cross-tree relative: should walk back up + over.
-    assert rel.startswith("../") or rel.startswith("..")
-    assert rel.endswith("x.html")
+    video_path = tmp_path / "v.mp4"
+    video_path.write_text("x")
+    video = FileAttributes(file_path=video_path)
+    video.output_files = [str(tmp_path / "missing_map.html"), str(tmp_path / "missing_graph.html")]
+
+    result = report_module._collect_inline_html(video)
+    assert "map" not in result
+    assert "graph" not in result
 
 
 # --- _collect_info ---------------------------------------------------

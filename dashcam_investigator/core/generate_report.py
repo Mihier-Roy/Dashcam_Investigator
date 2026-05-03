@@ -2,9 +2,9 @@
 Render the standalone HTML investigation report.
 
 The report shares Jinja templates and CSS with the in-app UI so the two
-look like one product. CSS and SVG icons are inlined into the rendered
-HTML; map / speed-graph HTMLs stay as separate files referenced via
-relative iframe srcs (the user normally ships the whole project dir).
+look like one product. CSS, SVG icons, and map/speed-graph HTMLs are all
+inlined into the rendered HTML so the exported file is fully self-contained
+— no sibling directories required.
 
 Public surface — preserved across the rewrite:
     generate_report(project_object: ProjectStructure) -> Path
@@ -13,7 +13,6 @@ Public surface — preserved across the rewrite:
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -41,7 +40,7 @@ def generate_report(project_object: ProjectStructure) -> Path:
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     video_info = {v.name: _collect_info(v) for v in flagged}
-    video_iframes = {v.name: _collect_iframes(v, output_file.parent) for v in flagged}
+    video_inline = {v.name: _collect_inline_html(v) for v in flagged}
 
     logger.debug("Rendering report for %d flagged video(s)", len(flagged))
     html = render(
@@ -49,7 +48,7 @@ def generate_report(project_object: ProjectStructure) -> Path:
         case=case,
         flagged=flagged,
         video_info=video_info,
-        video_iframes=video_iframes,
+        video_inline=video_inline,
         generated_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
         app=False,
     )
@@ -92,24 +91,19 @@ def _collect_info(video: FileAttributes) -> dict[str, str]:
     return info
 
 
-def _collect_iframes(video: FileAttributes, report_dir: Path) -> dict[str, str]:
-    """Compute relative iframe URLs for the map (output_files[0]) and graph ([1])."""
-    iframes: dict[str, str] = {}
-    if video.output_files and len(video.output_files) > 0:
-        iframes["map"] = _rel_url(video.output_files[0], report_dir)
-    if video.output_files and len(video.output_files) > 1:
-        iframes["graph"] = _rel_url(video.output_files[1], report_dir)
-    return iframes
-
-
-def _rel_url(target: str, base: Path) -> str:
-    """Return a Posix-style URL pointing at `target` relative to `base`."""
-    try:
-        rel = os.path.relpath(target, str(base))
-    except ValueError:
-        # Different drives on Windows — fall back to the absolute path.
-        return Path(target).as_posix()
-    return Path(rel).as_posix()
+def _collect_inline_html(video: FileAttributes) -> dict[str, str]:
+    """Read map (output_files[0]) and graph (output_files[1]) HTML and return contents."""
+    inline: dict[str, str] = {}
+    paths = {"map": 0, "graph": 1}
+    for key, idx in paths.items():
+        if video.output_files and len(video.output_files) > idx:
+            path = Path(video.output_files[idx])
+            if path.is_file():
+                try:
+                    inline[key] = path.read_text(encoding="utf-8")
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Could not read %s file %s: %s", key, path, exc)
+    return inline
 
 
 def _fmt(value) -> str:

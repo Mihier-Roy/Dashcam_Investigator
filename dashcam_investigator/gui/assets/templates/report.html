@@ -1,13 +1,12 @@
-{# Standalone HTML report. Self-contained: tokens, base, components and
-   report-specific CSS are all inlined; icons are inline SVGs. The iframe
-   srcs are file paths relative to the report file, so the report stays
-   portable as long as it ships alongside the project's Maps/Graphs dirs.
+{# Standalone HTML report. Fully self-contained: tokens, base, components,
+   report-specific CSS, icons, and map/graph HTML are all inlined. The
+   exported file needs no sibling directories to display correctly.
 
    Required context:
        case               — ProjectInfo (case_name, investigator_name, …)
        flagged            — list[FileAttributes]
        video_info         — dict[name, dict[label, value]]
-       video_iframes      — dict[name, {map: rel_path, graph: rel_path}]
+       video_inline       — dict[name, {map: html_str, graph: html_str}]
        generated_date     — formatted timestamp string
 #}
 <!doctype html>
@@ -82,17 +81,17 @@
                 <p>{{ video.notes if video.notes else '(no notes)' }}</p>
             </section>
 
-            {% set iframes = video_iframes.get(video.name, {}) %}
-            {% if iframes.map %}
+            {% set inline = video_inline.get(video.name, {}) %}
+            {% if inline.map %}
             <section class="report-frame">
                 <div class="report-frame-label">GPS track</div>
-                <iframe src="{{ iframes.map }}" loading="lazy" title="Map for {{ video.name }}"></iframe>
+                <iframe srcdoc="{{ inline.map }}" loading="lazy" title="Map for {{ video.name }}"></iframe>
             </section>
             {% endif %}
-            {% if iframes.graph %}
+            {% if inline.graph %}
             <section class="report-frame">
                 <div class="report-frame-label">Speed profile</div>
-                <iframe src="{{ iframes.graph }}" loading="lazy" title="Speed graph for {{ video.name }}"></iframe>
+                <iframe srcdoc="{{ inline.graph }}" loading="lazy" title="Speed graph for {{ video.name }}"></iframe>
             </section>
             {% endif %}
         </article>

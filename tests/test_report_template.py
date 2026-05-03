@@ -88,7 +88,10 @@ def test_collect_inline_html_skips_missing_files(tmp_path: Path) -> None:
     video_path = tmp_path / "v.mp4"
     video_path.write_text("x")
     video = FileAttributes(file_path=video_path)
-    video.output_files = [str(tmp_path / "missing_map.html"), str(tmp_path / "missing_graph.html")]
+    video.output_files = [
+        str(tmp_path / "missing_map.html"),
+        str(tmp_path / "missing_graph.html"),
+    ]
 
     result = report_module._collect_inline_html(video)
     assert "map" not in result

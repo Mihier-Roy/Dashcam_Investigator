@@ -12,10 +12,7 @@ from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
-from dashcam_investigator.gui.qt_models import (
-    NavigationListModel,
-    PandasTableModel,
-)
+from dashcam_investigator.gui.qt_models import NavigationListModel
 from dashcam_investigator.gui.QtMainWindow import Ui_MainWindow
 from dashcam_investigator.gui.theme import ThemeManager
 from dashcam_investigator.gui.web.bridge import Bridge
@@ -82,6 +79,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sidebar_panel.setGeometry(sidebar_geo)
         self.sidebar_panel.show()
 
+        # Replace the Metadata and Notes tab contents with WebPanels. Map +
+        # Speed Graph stay native here (Phase 6 converts those).
+        self.metadata_panel = self._mount_panel_in_tab(self.metadata_tab, "metadata.html")
+        self.notes_panel = self._mount_panel_in_tab(self.notes_tab, "notes.html")
+
         # Push the resolved theme to JS + apply matching QSS now that the
         # webview exists.
         self.theme_manager.apply_initial()
@@ -126,12 +128,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.horizontal_slider.sliderMoved.connect(self.video_position)
 
         ######################################
-        # Save/flag video controls
+        # Save/flag controls live in notes.html — the Bridge routes
+        # JS button clicks to set_flag / save_notes below.
         ######################################
-        # Save note/flag status when button is clicked
-        self.note_status.setStyleSheet("QLabel { color : green; }")
-        self.save_note_button.clicked.connect(self.save_note)
-        self.flag_video_button.clicked.connect(self.flag_video)
+
+    ######################################
+    # Tab content mounting
+    ######################################
+    def _mount_panel_in_tab(self, tab: QtWidgets.QWidget, template_name: str) -> WebPanel:
+        """Replace all children of `tab` with a WebPanel filling it via a layout."""
+        for child in list(tab.children()):
+            if isinstance(child, QtWidgets.QWidget):
+                child.hide()
+                child.deleteLater()
+        existing_layout = tab.layout()
+        if existing_layout is not None:
+            QtWidgets.QWidget().setLayout(existing_layout)  # detach + drop
+        layout = QtWidgets.QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        panel = WebPanel(template_name, self.bridge, parent=tab)
+        layout.addWidget(panel)
+        return panel
 
     ######################################
     # Thread signal collectors
@@ -308,40 +326,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             dlg.setText(f"Report generated!\n View the report at : {report_path}")
             dlg.exec()
 
-    ######################################
-    # Notes/flag controls
-    ######################################
-    def save_note(self):
-        """
-        Saves the text in the Notes textbox to the project object.
-        """
-        logger.debug(f"Saved note for -> {self.current_video.name}")
-        self.current_video.notes = self.notes_textbox.toPlainText()
-        self.project_manager.write_project_file(data=self.project_object)
-        self.note_status.setText("Note saved!")
-
-    def flag_video(self):
-        """
-        Toggle the flagged property on the current video and persist.
-        Notifies the sidebar via the bridge so its badge updates.
-        """
-        if self.current_video is None:
-            return
-        self.current_video.flagged = not self.current_video.flagged
-        logger.debug(
-            "Flag toggled -> %s = %s", self.current_video.name, self.current_video.flagged
-        )
-        if self.current_video.flagged:
-            self.note_status.setText("Video flagged!")
-        else:
-            self.note_status.setText("Video un-flagged!")
-        self.project_manager.write_project_file(data=self.project_object)
-        self.bridge.flag_changed.emit(self.current_video.name, self.current_video.flagged)
-
     def load_video_data(self, video_name):
         """
-        This function retrieves the information for the selected video.
-        The information is used to load the video into the player and load maps, metadata, graphs and notes.
+        Load the selected video into the native player and the map / graph
+        web views. Metadata + notes are now driven by the WebPanels via the
+        bridge (see select_video / get_metadata_json / video_changed).
         """
         # Get the attributes of the selected video
         self.current_video: FileAttributes = [
@@ -355,46 +344,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         video_path = Path(self.current_video.file_path)
         map_file = self.current_video.output_files[0]
         graph_file = self.current_video.output_files[1]
-        metadata_file = self.current_video.meta_files[1]
 
-        ######################################
-        # Video player
-        ######################################
-        # Stop current video
+        # Video player (Qt) ---------------------------------------------
         self.mediaPlayer.stop()
-        # Set the video source directly (PySide6 uses setSource instead of setPlaylist)
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
-
-        # Set currently playing label
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
 
-        ######################################
-        # Map tab
-        ######################################
+        # Map tab (Qt — Phase 6 converts) -------------------------------
         with Path(map_file).open() as f:
-            html_str = f.read()
-        self.maps_web_view.setHtml(html_str)
+            self.maps_web_view.setHtml(f.read())
 
-        ######################################
-        # Metadata tab
-        ######################################
-        metadata_df = pd.read_csv(metadata_file).T
-        metadata_df.rename(columns={0: "Value"}, inplace=True)
-        self.metadata_model = PandasTableModel(metadata_df)
-        self.metadata_table.setModel(self.metadata_model)
-
-        ######################################
-        # Speed Graph tab
-        ######################################
+        # Speed Graph tab (Qt — Phase 6 converts) -----------------------
         with Path(graph_file).open() as f:
-            graph_str = f.read()
-        self.graph_web_view.setHtml(graph_str)
-
-        ######################################
-        # Notes tab
-        ######################################
-        self.notes_textbox.setText(str(self.current_video.notes))
+            self.graph_web_view.setHtml(f.read())
 
 
     ######################################
@@ -418,10 +381,34 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.bridge.emit_video(self.current_video)
 
     def set_flag(self, name: str, flagged: bool) -> None:
-        logger.debug("set_flag stub: %s=%s (Phase 5)", name, flagged)
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("set_flag: no video named %r in project", name)
+            return
+        video = match[0]
+        video.flagged = bool(flagged)
+        if self.current_video and self.current_video.name == name:
+            self.current_video.flagged = video.flagged
+        self.project_manager.write_project_file(data=self.project_object)
+        logger.debug("Flag persisted -> %s = %s", name, video.flagged)
+        self.bridge.flag_changed.emit(name, video.flagged)
 
     def save_notes(self, name: str, text: str) -> None:
-        logger.debug("save_notes stub: %s (Phase 5)", name)
+        if self.project_object is None:
+            return
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            logger.warning("save_notes: no video named %r in project", name)
+            return
+        video = match[0]
+        video.notes = text
+        if self.current_video and self.current_video.name == name:
+            self.current_video.notes = text
+        self.project_manager.write_project_file(data=self.project_object)
+        logger.debug("Notes persisted -> %s (%d chars)", name, len(text))
+        self.bridge.notes_saved.emit(name)
 
     def generate_report(self) -> None:
         self.create_report()
@@ -435,8 +422,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         return json.dumps(self.project_object, cls=ProjectEncoder)
 
     def get_metadata_json(self, name: str) -> str:
-        logger.debug("get_metadata_json stub: %s (Phase 5)", name)
-        return "[]"
+        if self.project_object is None:
+            return "[]"
+        match = [v for v in self.project_object.video_files if v.name == name]
+        if not match:
+            return "[]"
+        video = match[0]
+        if not video.meta_files or len(video.meta_files) < 2:
+            return "[]"
+        metadata_path = Path(video.meta_files[1])
+        if not metadata_path.is_file():
+            logger.warning("Metadata CSV missing: %s", metadata_path)
+            return "[]"
+        try:
+            df = pd.read_csv(metadata_path)
+        except Exception as exc:  # noqa: BLE001 — surface as empty table
+            logger.warning("Failed to read metadata CSV %s: %s", metadata_path, exc)
+            return "[]"
+        if df.empty:
+            return "[]"
+        row = df.iloc[0].to_dict()
+        rows = [
+            {"property": str(k), "value": "" if pd.isna(v) else str(v)}
+            for k, v in row.items()
+        ]
+        return json.dumps(rows)
 
 
 def run():

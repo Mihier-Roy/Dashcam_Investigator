@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Metadata — Dashcam Investigator{% endblock %}
+{% block body %}
+<section class="metadata-panel">
+    <div class="metadata-controls">
+        <div class="input-group">
+            {{ inline_svg('search', cls='icon icon-prefix') }}
+            <input id="filter" class="input" type="search" placeholder="Filter properties or values…" autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+    <div class="metadata-table-wrap">
+        <table class="table" id="metadata-table">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="property" style="width: 35%;">
+                        Property <span class="sort-indicator">↕</span>
+                    </th>
+                    <th class="sortable" data-sort="value">
+                        Value <span class="sort-indicator">↕</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="metadata-tbody">
+                <tr><td colspan="2" class="metadata-empty">Select a video to view metadata.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+<script src="{{ static('js/pages/metadata.js') }}" defer></script>
+{% endblock %}

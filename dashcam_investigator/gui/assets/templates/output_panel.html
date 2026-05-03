@@ -1,0 +1,33 @@
+{# Generic frame for embedding pre-rendered HTML output (folium map,
+   Altair speed graph). Inner HTML is sandboxed inside an <iframe srcdoc>
+   so its own <html>/<head>/<style> never collides with our shell.
+
+   Required-ish context keys (all optional with sensible defaults):
+       title       — string shown in the header
+       subtitle    — string shown below the title
+       inner_html  — full HTML document to embed; falsy → empty state
+       empty_icon  — SVG name for the empty-state icon
+       empty_title — string shown when inner_html is empty
+       empty_body  — secondary description in the empty state
+#}
+{% extends "base.html" %}
+{% block title %}{{ title|default("Dashcam Investigator") }}{% endblock %}
+{% block body %}
+<section class="frame-panel">
+    <header class="frame-header">
+        <h3 id="frame-title">{{ title|default("No video selected") }}</h3>
+        <p class="muted" id="frame-subtitle">{{ subtitle|default("") }}</p>
+    </header>
+    <div class="frame-body">
+        {% if inner_html %}
+            <iframe class="frame-iframe" srcdoc="{{ inner_html }}" referrerpolicy="no-referrer"></iframe>
+        {% else %}
+            <div class="empty">
+                {{ inline_svg(empty_icon|default("video")) }}
+                <div class="empty-title">{{ empty_title|default("Nothing to show") }}</div>
+                <div>{{ empty_body|default("Select a video from the sidebar.") }}</div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

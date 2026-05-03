@@ -79,10 +79,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sidebar_panel.setGeometry(sidebar_geo)
         self.sidebar_panel.show()
 
-        # Replace the Metadata and Notes tab contents with WebPanels. Map +
-        # Speed Graph stay native here (Phase 6 converts those).
+        # Replace every data tab body with a WebPanel.
         self.metadata_panel = self._mount_panel_in_tab(self.metadata_tab, "metadata.html")
         self.notes_panel = self._mount_panel_in_tab(self.notes_tab, "notes.html")
+        self.map_panel = self._mount_panel_in_tab(
+            self.map_tab,
+            "output_panel.html",
+            context={
+                "subtitle": "GPS track",
+                "empty_icon": "map-pin",
+                "empty_title": "No map loaded",
+                "empty_body": "Select a video from the sidebar to view its GPS track.",
+            },
+        )
+        self.graph_panel = self._mount_panel_in_tab(
+            self.graph_tab,
+            "output_panel.html",
+            context={
+                "subtitle": "Speed profile",
+                "empty_icon": "bar-chart",
+                "empty_title": "No speed profile",
+                "empty_body": "Select a video from the sidebar to view its speed profile.",
+            },
+        )
 
         # Push the resolved theme to JS + apply matching QSS now that the
         # webview exists.
@@ -135,7 +154,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     ######################################
     # Tab content mounting
     ######################################
-    def _mount_panel_in_tab(self, tab: QtWidgets.QWidget, template_name: str) -> WebPanel:
+    def _mount_panel_in_tab(
+        self,
+        tab: QtWidgets.QWidget,
+        template_name: str,
+        context: dict | None = None,
+    ) -> WebPanel:
         """Replace all children of `tab` with a WebPanel filling it via a layout."""
         for child in list(tab.children()):
             if isinstance(child, QtWidgets.QWidget):
@@ -147,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         layout = QtWidgets.QVBoxLayout(tab)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        panel = WebPanel(template_name, self.bridge, parent=tab)
+        panel = WebPanel(template_name, self.bridge, parent=tab, context=context)
         layout.addWidget(panel)
         return panel
 
@@ -328,9 +352,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def load_video_data(self, video_name):
         """
-        Load the selected video into the native player and the map / graph
-        web views. Metadata + notes are now driven by the WebPanels via the
-        bridge (see select_video / get_metadata_json / video_changed).
+        Load the selected video into the native player and re-render the
+        map / graph WebPanels. Metadata + notes update via the bridge.
         """
         # Get the attributes of the selected video
         self.current_video: FileAttributes = [
@@ -342,8 +365,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         logger.debug(f"Loading video information for -> {self.current_video.name}")
 
         video_path = Path(self.current_video.file_path)
-        map_file = self.current_video.output_files[0]
-        graph_file = self.current_video.output_files[1]
 
         # Video player (Qt) ---------------------------------------------
         self.mediaPlayer.stop()
@@ -351,13 +372,45 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
         self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
 
-        # Map tab (Qt — Phase 6 converts) -------------------------------
-        with Path(map_file).open() as f:
-            self.maps_web_view.setHtml(f.read())
+        # Map + Speed Graph WebPanels -----------------------------------
+        self._render_output_panels(self.current_video)
 
-        # Speed Graph tab (Qt — Phase 6 converts) -----------------------
-        with Path(graph_file).open() as f:
-            self.graph_web_view.setHtml(f.read())
+    def _render_output_panels(self, video: FileAttributes) -> None:
+        """Re-render the map + graph panels around the given video's output files."""
+        map_html = self._read_output(video, index=0)
+        graph_html = self._read_output(video, index=1)
+
+        self.map_panel.set_context({
+            "title": video.name,
+            "subtitle": "GPS track",
+            "inner_html": map_html,
+            "empty_icon": "map-pin",
+            "empty_title": "No map available",
+            "empty_body": "This video has no GPS data.",
+        })
+        self.graph_panel.set_context({
+            "title": video.name,
+            "subtitle": "Speed profile",
+            "inner_html": graph_html,
+            "empty_icon": "bar-chart",
+            "empty_title": "No speed profile",
+            "empty_body": "This video has no speed data.",
+        })
+
+    @staticmethod
+    def _read_output(video: FileAttributes, index: int) -> str | None:
+        """Read an output file from a video (map=0, graph=1). Returns None if missing."""
+        if not video.output_files or len(video.output_files) <= index:
+            return None
+        path = Path(video.output_files[index])
+        if not path.is_file():
+            logger.warning("Output file missing: %s", path)
+            return None
+        try:
+            return path.read_text()
+        except OSError as exc:
+            logger.warning("Failed to read %s: %s", path, exc)
+            return None
 
 
     ######################################

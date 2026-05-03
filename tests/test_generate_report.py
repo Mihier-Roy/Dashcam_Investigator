@@ -290,7 +290,7 @@ class TestGenerateReport:
         assert output_file.exists()
 
     def test_generate_report_includes_iframes(self, create_project_with_flagged_videos):
-        """Report embeds the map + graph HTMLs as iframes per flagged video."""
+        """Report embeds the map + graph HTMLs as srcdoc iframes per flagged video."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
 
@@ -300,23 +300,26 @@ class TestGenerateReport:
         assert content.count("<iframe") >= 2
         assert 'title="Map for video0.mp4"' in content
         assert 'title="Speed graph for video0.mp4"' in content
+        # Iframes must use srcdoc (inline), not external src paths.
+        assert "srcdoc=" in content
+        assert 'src="../Maps/' not in content
+        assert 'src="../Graphs/' not in content
 
-    def test_generate_report_iframe_srcs_are_relative(
+    def test_generate_report_iframes_are_self_contained(
         self, create_project_with_flagged_videos
     ):
-        """Iframe srcs must be relative so the report ships with its sibling dirs."""
+        """Map and graph HTML are inlined via srcdoc so the report needs no sibling files."""
         project = create_project_with_flagged_videos(num_flagged=1)
         output_file = generate_report(project)
 
         content = Path(output_file).read_text()
 
-        # ../Maps/... and ../Graphs/... are produced because the report lives
-        # under Reports/ and the assets are siblings of Reports/.
-        assert "../Maps/video0_map.html" in content
-        assert "../Graphs/video0_speed_graph.html" in content
-        # And no absolute file paths leaking into the HTML.
-        assert "/tmp/" not in content
-        assert "C:\\" not in content
+        # The map file content ("<html>Map</html>") must appear HTML-escaped inside srcdoc.
+        assert "&lt;html&gt;Map&lt;/html&gt;" in content
+        assert "&lt;html&gt;Graph&lt;/html&gt;" in content
+        # No relative file-system paths in the output.
+        assert "../Maps/" not in content
+        assert "../Graphs/" not in content
 
     def test_generate_report_video_links(self, create_project_with_flagged_videos):
         """Each flagged video gets a clickable row that selects its pane."""

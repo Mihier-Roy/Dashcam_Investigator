@@ -177,9 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progress.setWindowModality(QtCore.Qt.WindowModal)
         self.progress.setWindowTitle("Processing files...")
         self.progress.setWindowFlags(
-            QtCore.Qt.Window
-            | QtCore.Qt.WindowTitleHint
-            | QtCore.Qt.CustomizeWindowHint
+            QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
         )
         self.progress.show()
 
@@ -238,22 +236,26 @@ class MainWindow(QtWidgets.QMainWindow):
         map_html = self._read_output(video, index=0)
         graph_html = self._read_output(video, index=1)
 
-        self.map_panel.set_context({
-            "title": video.name,
-            "subtitle": "GPS track",
-            "inner_html": map_html,
-            "empty_icon": "map-pin",
-            "empty_title": "No map available",
-            "empty_body": "This video has no GPS data.",
-        })
-        self.graph_panel.set_context({
-            "title": video.name,
-            "subtitle": "Speed profile",
-            "inner_html": graph_html,
-            "empty_icon": "bar-chart",
-            "empty_title": "No speed profile",
-            "empty_body": "This video has no speed data.",
-        })
+        self.map_panel.set_context(
+            {
+                "title": video.name,
+                "subtitle": "GPS track",
+                "inner_html": map_html,
+                "empty_icon": "map-pin",
+                "empty_title": "No map available",
+                "empty_body": "This video has no GPS data.",
+            }
+        )
+        self.graph_panel.set_context(
+            {
+                "title": video.name,
+                "subtitle": "Speed profile",
+                "inner_html": graph_html,
+                "empty_icon": "bar-chart",
+                "empty_title": "No speed profile",
+                "empty_body": "This video has no speed data.",
+            }
+        )
 
     @staticmethod
     def _read_output(video: FileAttributes, index: int) -> str | None:

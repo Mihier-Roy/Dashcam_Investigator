@@ -18,7 +18,7 @@ def test_empty_state_renders_when_no_inner_html() -> None:
         empty_title="No map loaded",
         empty_body="Pick a video.",
     )
-    assert '<iframe' not in html
+    assert "<iframe" not in html
     assert 'class="empty"' in html
     assert "No map loaded" in html
     assert "Pick a video." in html
@@ -33,7 +33,7 @@ def test_loaded_state_emits_iframe_srcdoc() -> None:
         inner_html=inner,
     )
     assert '<iframe class="frame-iframe" srcdoc="' in html
-    assert "class=\"empty\"" not in html
+    assert 'class="empty"' not in html
     assert "clip.mp4" in html
 
 

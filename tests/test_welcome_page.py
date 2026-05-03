@@ -68,7 +68,9 @@ def test_main_window_implements_bridge_controller_surface() -> None:
 
     expected = {
         name
-        for name, _ in inspect.getmembers(BridgeController, predicate=inspect.isfunction)
+        for name, _ in inspect.getmembers(
+            BridgeController, predicate=inspect.isfunction
+        )
         if not name.startswith("_")
     }
     actual = {name for name in dir(MainWindow) if not name.startswith("_")}

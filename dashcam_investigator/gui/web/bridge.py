@@ -32,6 +32,7 @@ class BridgeController(Protocol):
     def set_theme(self, name: str) -> None: ...
     def get_project_json(self) -> str: ...
     def get_metadata_json(self, name: str) -> str: ...
+
     # Phase 9: keyboard shortcut entry points.
     def toggle_flag_current(self) -> None: ...
     def select_next_video(self) -> None: ...
@@ -42,17 +43,19 @@ class Bridge(QObject):
     """Slots are JS→Python; signals are Python→JS."""
 
     # --- Python → JS ---------------------------------------------------
-    project_loaded = Signal(str)        # JSON-serialized ProjectStructure
-    video_changed = Signal(str)         # JSON-serialized FileAttributes
-    notes_saved = Signal(str)           # video name
-    flag_changed = Signal(str, bool)    # name, flagged
-    theme_changed = Signal(str)         # "light" | "dark"
-    progress = Signal(int, int)         # current, total
-    report_generated = Signal(str)      # path to report HTML
-    focus_search = Signal()             # sidebar should focus its filter input
-    save_requested = Signal()           # the active panel (notes) should save
+    project_loaded = Signal(str)  # JSON-serialized ProjectStructure
+    video_changed = Signal(str)  # JSON-serialized FileAttributes
+    notes_saved = Signal(str)  # video name
+    flag_changed = Signal(str, bool)  # name, flagged
+    theme_changed = Signal(str)  # "light" | "dark"
+    progress = Signal(int, int)  # current, total
+    report_generated = Signal(str)  # path to report HTML
+    focus_search = Signal()  # sidebar should focus its filter input
+    save_requested = Signal()  # the active panel (notes) should save
 
-    def __init__(self, controller: BridgeController, parent: QObject | None = None) -> None:
+    def __init__(
+        self, controller: BridgeController, parent: QObject | None = None
+    ) -> None:
         super().__init__(parent)
         self._controller = controller
 

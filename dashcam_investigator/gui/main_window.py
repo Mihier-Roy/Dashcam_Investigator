@@ -128,7 +128,9 @@ def _build_project_page(
     v_splitter.setStretchFactor(1, 1)
 
 
-def _build_player_area(window: QtWidgets.QMainWindow, parent: QtWidgets.QWidget) -> None:
+def _build_player_area(
+    window: QtWidgets.QMainWindow, parent: QtWidgets.QWidget
+) -> None:
     area = QtWidgets.QWidget(parent)
     layout = QtWidgets.QVBoxLayout(area)
     layout.setContentsMargins(8, 8, 8, 4)
@@ -154,7 +156,9 @@ def _build_player_area(window: QtWidgets.QMainWindow, parent: QtWidgets.QWidget)
     window.current_duration.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     controls_layout.addWidget(window.current_duration)
 
-    window.horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, controls)
+    window.horizontal_slider = QtWidgets.QSlider(
+        QtCore.Qt.Orientation.Horizontal, controls
+    )
     controls_layout.addWidget(window.horizontal_slider, 1)
 
     window.total_duration = QtWidgets.QLineEdit("0:00", controls)
@@ -185,7 +189,10 @@ def _build_data_tabs(
     window.data_tabs = tabs
 
     window.map_panel = _add_panel_tab(
-        tabs, bridge, "Map", "output_panel.html",
+        tabs,
+        bridge,
+        "Map",
+        "output_panel.html",
         context={
             "subtitle": "GPS track",
             "empty_icon": "map-pin",
@@ -194,10 +201,16 @@ def _build_data_tabs(
         },
     )
     window.metadata_panel = _add_panel_tab(
-        tabs, bridge, "Metadata", "metadata.html",
+        tabs,
+        bridge,
+        "Metadata",
+        "metadata.html",
     )
     window.graph_panel = _add_panel_tab(
-        tabs, bridge, "Speed Graph", "output_panel.html",
+        tabs,
+        bridge,
+        "Speed Graph",
+        "output_panel.html",
         context={
             "subtitle": "Speed profile",
             "empty_icon": "bar-chart",
@@ -206,7 +219,10 @@ def _build_data_tabs(
         },
     )
     window.notes_panel = _add_panel_tab(
-        tabs, bridge, "Notes", "notes.html",
+        tabs,
+        bridge,
+        "Notes",
+        "notes.html",
     )
 
 

@@ -41,9 +41,7 @@ def generate_report(project_object: ProjectStructure) -> Path:
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     video_info = {v.name: _collect_info(v) for v in flagged}
-    video_iframes = {
-        v.name: _collect_iframes(v, output_file.parent) for v in flagged
-    }
+    video_iframes = {v.name: _collect_iframes(v, output_file.parent) for v in flagged}
 
     logger.debug("Rendering report for %d flagged video(s)", len(flagged))
     html = render(
@@ -86,7 +84,9 @@ def _collect_info(video: FileAttributes) -> dict[str, str]:
     if "Duration" in row:
         info["Duration"] = _fmt(row["Duration"])
     if "Format" in row or "Information" in row:
-        device = " ".join(filter(None, (_fmt(row.get("Format")), _fmt(row.get("Information")))))
+        device = " ".join(
+            filter(None, (_fmt(row.get("Format")), _fmt(row.get("Information"))))
+        )
         if device.strip():
             info["Device"] = device.strip()
     return info

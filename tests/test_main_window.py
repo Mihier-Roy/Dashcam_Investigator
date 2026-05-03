@@ -97,6 +97,10 @@ def test_size_constants_are_sane() -> None:
     main_window = importlib.import_module("dashcam_investigator.gui.main_window")
     assert main_window.MIN_WINDOW_SIZE.width() >= 1000
     assert main_window.MIN_WINDOW_SIZE.height() >= 600
-    assert main_window.DEFAULT_WINDOW_SIZE.width() >= main_window.MIN_WINDOW_SIZE.width()
-    assert main_window.DEFAULT_WINDOW_SIZE.height() >= main_window.MIN_WINDOW_SIZE.height()
+    assert (
+        main_window.DEFAULT_WINDOW_SIZE.width() >= main_window.MIN_WINDOW_SIZE.width()
+    )
+    assert (
+        main_window.DEFAULT_WINDOW_SIZE.height() >= main_window.MIN_WINDOW_SIZE.height()
+    )
     assert main_window.SIDEBAR_MIN_WIDTH < main_window.SIDEBAR_DEFAULT_WIDTH

@@ -80,6 +80,7 @@ class FakeController:
     def __getattr__(self, name):
         def _record(*args):
             self.calls.append((name, args))
+
         return _record
 
 
@@ -116,7 +117,9 @@ def test_bridge_controller_protocol_includes_shortcut_methods() -> None:
 
     methods = {
         name
-        for name, _ in inspect.getmembers(BridgeController, predicate=inspect.isfunction)
+        for name, _ in inspect.getmembers(
+            BridgeController, predicate=inspect.isfunction
+        )
     }
     assert "toggle_flag_current" in methods
     assert "select_next_video" in methods
@@ -139,7 +142,7 @@ def test_metadata_table_headers_are_aria_sortable() -> None:
     html = renderer.render("metadata.html")
     # Both headers expose aria-sort and are keyboard-focusable.
     assert html.count('aria-sort="none"') == 2
-    assert html.count("tabindex=\"0\"") >= 2
+    assert html.count('tabindex="0"') >= 2
 
 
 def test_notes_toast_is_a_polite_live_region() -> None:

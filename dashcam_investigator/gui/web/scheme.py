@@ -73,7 +73,9 @@ def install_handler(profile: QWebEngineProfile) -> "DciSchemeHandler":
 class DciSchemeHandler(QWebEngineUrlSchemeHandler):
     """Resolves dci://app/<rel> to gui/assets/<rel>."""
 
-    def requestStarted(self, job: QWebEngineUrlRequestJob) -> None:  # noqa: N802 (Qt API)
+    def requestStarted(
+        self, job: QWebEngineUrlRequestJob
+    ) -> None:  # noqa: N802 (Qt API)
         url: QUrl = job.requestUrl()
         if url.host() != HOST:
             logger.warning("dci:// request rejected: bad host %r", url.host())

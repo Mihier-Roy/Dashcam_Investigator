@@ -1,0 +1,116 @@
+{# Standalone HTML report. Self-contained: tokens, base, components and
+   report-specific CSS are all inlined; icons are inline SVGs. The iframe
+   srcs are file paths relative to the report file, so the report stays
+   portable as long as it ships alongside the project's Maps/Graphs dirs.
+
+   Required context:
+       case               — ProjectInfo (case_name, investigator_name, …)
+       flagged            — list[FileAttributes]
+       video_info         — dict[name, dict[label, value]]
+       video_iframes      — dict[name, {map: rel_path, graph: rel_path}]
+       generated_date     — formatted timestamp string
+#}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ case.case_name }} — Dashcam Investigator Report</title>
+    <style>{{ inline_css('css/tokens.css') }}</style>
+    <style>{{ inline_css('css/base.css') }}</style>
+    <style>{{ inline_css('css/components.css') }}</style>
+    <style>{{ inline_css('css/report.css') }}</style>
+</head>
+<body>
+    <aside class="report-sidebar">
+        <header class="report-header">
+            <h1>{{ case.case_name }}</h1>
+            <p class="muted">Investigator: {{ case.investigator_name }}</p>
+            <p class="muted">Generated {{ generated_date }}</p>
+            <p class="muted">{{ flagged|length }} flagged video{{ "" if flagged|length == 1 else "s" }}</p>
+        </header>
+        <nav class="report-nav">
+            {% for video in flagged %}
+            <button class="report-row{% if loop.first %} selected{% endif %}" data-index="{{ loop.index0 }}" type="button">
+                {{ inline_svg('video') }}
+                <div class="fill">
+                    <div class="title" title="{{ video.name }}">{{ video.name }}</div>
+                    <div class="meta mono" title="{{ video.sha256_hash }}">
+                        {{ (video.sha256_hash or '')[:16] }}{% if video.sha256_hash %}…{% endif %}
+                    </div>
+                </div>
+                <span class="badge badge-flag">Flagged</span>
+            </button>
+            {% else %}
+            <div class="empty">
+                {{ inline_svg('flag') }}
+                <div class="empty-title">No flagged videos</div>
+                <div>This report has no entries.</div>
+            </div>
+            {% endfor %}
+        </nav>
+    </aside>
+
+    <main class="report-main">
+        {% if not flagged %}
+        <div class="report-empty">
+            {{ inline_svg('flag') }}
+            <h2>No flagged videos</h2>
+            <p>Flag videos in the app to populate the report.</p>
+        </div>
+        {% else %}
+        {% for video in flagged %}
+        <article id="video-{{ loop.index0 }}" class="report-pane"{% if not loop.first %} hidden{% endif %}>
+            <header class="report-pane-header">
+                <h2>{{ video.name }}</h2>
+                <p class="muted mono">SHA256: {{ video.sha256_hash or '—' }}</p>
+            </header>
+
+            {% set info = video_info.get(video.name, {}) %}
+            {% if info %}
+            <section class="report-info card">
+                <div class="info-grid">
+                    {% for label, value in info.items() %}
+                    <div><span class="muted">{{ label }}:</span> {{ value }}</div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="report-notes card">
+                <h3 class="card-title">Investigator notes</h3>
+                <p>{{ video.notes if video.notes else '(no notes)' }}</p>
+            </section>
+
+            {% set iframes = video_iframes.get(video.name, {}) %}
+            {% if iframes.map %}
+            <section class="report-frame">
+                <div class="report-frame-label">GPS track</div>
+                <iframe src="{{ iframes.map }}" loading="lazy" title="Map for {{ video.name }}"></iframe>
+            </section>
+            {% endif %}
+            {% if iframes.graph %}
+            <section class="report-frame">
+                <div class="report-frame-label">Speed profile</div>
+                <iframe src="{{ iframes.graph }}" loading="lazy" title="Speed graph for {{ video.name }}"></iframe>
+            </section>
+            {% endif %}
+        </article>
+        {% endfor %}
+        {% endif %}
+    </main>
+
+    <script>
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest(".report-row[data-index]");
+            if (!btn) return;
+            const idx = btn.dataset.index;
+            document.querySelectorAll(".report-row").forEach((r) => r.classList.remove("selected"));
+            btn.classList.add("selected");
+            document.querySelectorAll(".report-pane").forEach((p) => { p.hidden = true; });
+            const pane = document.getElementById("video-" + idx);
+            if (pane) pane.hidden = false;
+        });
+    </script>
+</body>
+</html>

@@ -87,6 +87,21 @@ def inline_svg(name: str, cls: str = "icon") -> Markup:
     return Markup(svg)
 
 
+@lru_cache(maxsize=16)
+def _read_static(rel: str) -> str:
+    """Read a file from gui/assets/static/. Cached: assets are small + reused."""
+    path = static_path() / rel
+    if not path.is_file():
+        logger.warning("Static asset missing: %s", path)
+        return ""
+    return path.read_text()
+
+
+def inline_css(rel: str) -> Markup:
+    """Return the contents of a CSS file from static/, ready for a <style> tag."""
+    return Markup(_read_static(rel))
+
+
 @lru_cache(maxsize=1)
 def _build_env() -> Environment:
     loader = ChoiceLoader([FileSystemLoader(str(templates_path()))])
@@ -99,6 +114,7 @@ def _build_env() -> Environment:
     )
     env.globals["static"] = static_url
     env.globals["inline_svg"] = inline_svg
+    env.globals["inline_css"] = inline_css
     env.globals["app"] = True  # overridden to False when rendering the report
     return env
 

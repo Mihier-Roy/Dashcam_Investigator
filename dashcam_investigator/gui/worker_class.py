@@ -11,13 +11,14 @@ logger = logging.getLogger(__name__)
 class WorkerSignals(QObject):
     """
     Defines the signals available from a running worker thread.
-    Supported signals are: finished, error, result, progress
+    Supported signals are: finished, error, result, progress, status
     """
 
     finished = Signal()
     error = Signal(tuple)
     result = Signal(object)
     progress = Signal(int)
+    status = Signal(str)
 
 
 # Adapted from https://www.pythonguis.com/tutorials/multithreading-pyside-applications-qthreadpool/
@@ -38,8 +39,8 @@ class Worker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-        # Add the callback to our kwargs
         self.kwargs["progress_callback"] = self.signals.progress
+        self.kwargs["status_callback"] = self.signals.status
 
     @Slot()
     def run(self):
@@ -55,6 +56,6 @@ class Worker(QRunnable):
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
         else:
-            self.signals.result.emit(result)  # Return the result of the processing
+            self.signals.result.emit(result)
         finally:
-            self.signals.finished.emit()  # Done
+            self.signals.finished.emit()

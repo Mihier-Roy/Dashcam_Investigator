@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from PySide6.QtMultimedia import QMediaPlayer
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
+from dashcam_investigator.exceptions import DashcamInvestigatorError
 from dashcam_investigator.gui.main_window import setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
 from dashcam_investigator.gui.theme import ThemeManager
@@ -90,8 +92,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # --- Worker signal collectors -------------------------------------
     def update_progress_dialog(self, current):
-        self.progress.setLabelText(f"Processing files... ({current}/{self.file_count})")
         self.progress.setValue(current)
+
+    def update_status_label(self, message: str):
+        self.progress.setLabelText(
+            f"({self._progress_current}/{self.file_count}) {message}"
+        )
+        self._progress_current = self.progress.value()
 
     def update_object(self, output):
         self.project_object = output
@@ -103,6 +110,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def thread_complete(self):
         self.progress.hide()
         logger.debug("Thread completed execution.")
+
+    def _on_worker_error(self, err_tuple: tuple):
+        exc_type, exc_value, _ = err_tuple
+        if issubclass(exc_type, DashcamInvestigatorError):
+            message = str(exc_value)
+        else:
+            message = f"An unexpected error occurred.\nSee the log file for details.\n\n{exc_value}"
+        logger.error("Worker error: %s: %s", exc_type.__name__, exc_value)
+        self.progress.hide()
+        QtWidgets.QMessageBox.critical(self, "Processing error", message)
 
     # --- Video player controls ----------------------------------------
     def play_video(self):
@@ -180,11 +197,14 @@ class MainWindow(QtWidgets.QMainWindow):
             QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
         )
         self.progress.show()
+        self._progress_current = 0
 
         worker = Worker(process_files, input_dir, self.project_object)
         worker.signals.result.connect(self.update_object)
         worker.signals.finished.connect(self.thread_complete)
         worker.signals.progress.connect(self.update_progress_dialog)
+        worker.signals.status.connect(self.update_status_label)
+        worker.signals.error.connect(self._on_worker_error)
         self.threadpool.start(worker)
 
     def load_data(self):
@@ -389,6 +409,18 @@ def run():
     app = QtWidgets.QApplication([])
     app.setOrganizationName(ORG_NAME)
     app.setApplicationName(APP_NAME)
+
+    if shutil.which("exiftool") is None:
+        QtWidgets.QMessageBox.critical(
+            None,
+            "ExifTool not found",
+            "ExifTool is required but was not found on your PATH.\n\n"
+            "Please install ExifTool and ensure it is accessible from the command line.\n"
+            "Download: https://exiftool.org",
+        )
+        logger.error("exiftool not found on PATH — aborting startup")
+        sys.exit(1)
+
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
     window.show()

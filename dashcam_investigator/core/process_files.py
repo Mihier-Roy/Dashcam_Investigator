@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_files(
-    input_path: Path, project_object, progress_callback
+    input_path: Path, project_object, progress_callback, status_callback=None
 ) -> ProjectStructure:
     """
     Identifies file types, extracts metadata, and builds maps for each video found.
@@ -34,8 +34,12 @@ def process_files(
             if file_type is not None:
                 if file_type.split("/")[0] == "video":
                     logger.debug(f"Video found : {item.name}")
+                    if status_callback is not None:
+                        status_callback.emit(f"Extracting metadata: {item.name}")
                     video = FileAttributes(item)
                     video = extract_meta(video, project_dir)
+                    if status_callback is not None:
+                        status_callback.emit(f"Generating map: {item.name}")
                     video = create_map(video, project_dir)
                     project_object.video_files.append(video)
 

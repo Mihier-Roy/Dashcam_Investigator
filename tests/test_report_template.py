@@ -114,7 +114,7 @@ def test_collect_info_returns_empty_when_csv_missing(tmp_path: Path) -> None:
     video_path = tmp_path / "v.mp4"
     video_path.write_text("x")
     video = FileAttributes(file_path=video_path)
-    video.meta_files = ["whatever.gpx", str(tmp_path / "missing.csv")]
+    video.meta_files = {"gpx": "whatever.gpx", "csv": str(tmp_path / "missing.csv")}
     assert report_module._collect_info(video) == {}
 
 
@@ -129,7 +129,7 @@ def test_collect_info_picks_known_fields(tmp_path: Path) -> None:
     video_path = tmp_path / "v.mp4"
     video_path.write_text("x")
     video = FileAttributes(file_path=video_path)
-    video.meta_files = ["unused.gpx", str(csv_path)]
+    video.meta_files = {"gpx": "unused.gpx", "csv": str(csv_path)}
 
     info = report_module._collect_info(video)
     assert info["Create date"] == "2024-01-15 14:30"

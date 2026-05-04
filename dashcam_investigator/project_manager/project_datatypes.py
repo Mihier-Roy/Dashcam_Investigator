@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+from dashcam_investigator.constants import TOOL_NAME
 from dashcam_investigator.utils.common import generate_file_hash
 
 
@@ -61,7 +62,7 @@ class FileAttributes:
         name=None,
         ftype=None,
         sha256_hash=None,
-        meta_files=None,
+        meta_files=None,  # dict with keys "gpx" and "csv"
         output_files=None,
         flagged=None,
         notes=None,
@@ -72,7 +73,7 @@ class FileAttributes:
         self.sha256_hash = (
             generate_file_hash(self.file_path) if sha256_hash is None else sha256_hash
         )
-        self.meta_files = [] if meta_files is None else meta_files
+        self.meta_files = {} if meta_files is None else meta_files
         self.output_files = [] if output_files is None else output_files
         self.flagged = False if flagged is None else flagged
         self.notes = "" if notes is None else notes
@@ -106,7 +107,7 @@ class ProjectStructure:
         video_files: list[FileAttributes],
         image_files: list[FileAttributes],
         other_files: list[FileAttributes],
-        tool_name: str = "Dascam Investigator",
+        tool_name: str = TOOL_NAME,
     ) -> None:
         self.tool_name: str = tool_name
         self.project_info: ProjectInfo = projectInfo

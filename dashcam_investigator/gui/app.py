@@ -363,9 +363,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if not match:
             return "[]"
         video = match[0]
-        if not video.meta_files or len(video.meta_files) < 2:
+        if not video.meta_files or "csv" not in video.meta_files:
             return "[]"
-        metadata_path = Path(video.meta_files[1])
+        metadata_path = Path(video.meta_files["csv"])
         if not metadata_path.is_file():
             logger.warning("Metadata CSV missing: %s", metadata_path)
             return "[]"

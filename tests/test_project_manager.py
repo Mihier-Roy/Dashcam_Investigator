@@ -174,7 +174,7 @@ class TestProjectManager:
         with project_file.open("r") as f:
             data = json.load(f)
 
-        assert data["tool_name"] == "Dascam Investigator"
+        assert data["tool_name"] == "Dashcam Investigator"
         assert data["project_info"]["case_name"] == "Write Test"
 
     def test_read_project_file(self, temp_dir):

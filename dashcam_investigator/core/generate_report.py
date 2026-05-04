@@ -62,9 +62,9 @@ def generate_report(project_object: ProjectStructure) -> Path:
 # --- helpers ---------------------------------------------------------
 def _collect_info(video: FileAttributes) -> dict[str, str]:
     """Pull headline metadata fields out of the video's CSV, if present."""
-    if not video.meta_files or len(video.meta_files) < 2:
+    if not video.meta_files or "csv" not in video.meta_files:
         return {}
-    csv_path = Path(video.meta_files[1])
+    csv_path = Path(video.meta_files["csv"])
     if not csv_path.is_file():
         logger.debug("Metadata CSV missing for report: %s", csv_path)
         return {}

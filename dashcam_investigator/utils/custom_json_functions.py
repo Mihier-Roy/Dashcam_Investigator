@@ -12,7 +12,7 @@ from dashcam_investigator.project_manager.project_datatypes import (
 class ProjectEncoder(json.JSONEncoder):
     """
     Define a JSON encoder which overrides the default implementation.
-    Checks for a JSON_object aatribute and calls the function to allow writing nested objects to JSON.
+    Checks for a JSON_object attribute and calls the function to allow writing nested objects to JSON.
     """
 
     def default(self, o):
@@ -20,6 +20,15 @@ class ProjectEncoder(json.JSONEncoder):
             return o.JSON_object()
 
         return json.JSONEncoder.default(self, o)
+
+
+def _migrate_meta_files(meta_files) -> dict:
+    """Upgrade old list-format meta_files [gpx, csv] to the current dict format."""
+    if isinstance(meta_files, dict):
+        return meta_files
+    if isinstance(meta_files, list) and len(meta_files) >= 2:
+        return {"gpx": meta_files[0], "csv": meta_files[1]}
+    return {}
 
 
 def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
@@ -84,7 +93,7 @@ def convert_to_file_attr(input_list: list) -> list:
                 name=item["name"],
                 ftype=item["type"],
                 sha256_hash=item["sha256_hash"],
-                meta_files=item["meta_files"],
+                meta_files=_migrate_meta_files(item["meta_files"]),
                 output_files=item["output_files"],
                 flagged=item["flagged"],
                 notes=item["notes"],

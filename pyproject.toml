@@ -18,6 +18,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
     "black>=24.1.0",
     "ruff>=0.8.0",
     "pyinstaller>=6.3.0",
@@ -47,3 +48,23 @@ ignore = [
 [tool.black]
 line-length = 88
 target-version = ["py310", "py311", "py312"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=dashcam_investigator --cov-report=term-missing --cov-fail-under=60"
+
+[tool.coverage.run]
+source = ["dashcam_investigator"]
+omit = [
+    "*/Qt*.py",
+    "dashcam_investigator/__main__.py",
+    "dashcam_investigator/gui/app.py",
+    "dashcam_investigator/gui/main_window.py",
+    "dashcam_investigator/gui/theme.py",
+    "dashcam_investigator/gui/new_project_class.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]

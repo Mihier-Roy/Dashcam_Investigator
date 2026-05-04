@@ -12,12 +12,12 @@ from dashcam_investigator.project_manager.project_datatypes import (
 class ProjectEncoder(json.JSONEncoder):
     """
     Define a JSON encoder which overrides the default implementation.
-    Checks for a JSON_object attribute and calls the function to allow writing nested objects to JSON.
+    Checks for a to_dict attribute and calls the function to allow writing nested objects to JSON.
     """
 
     def default(self, o):
-        if hasattr(o, "JSON_object"):
-            return o.JSON_object()
+        if hasattr(o, "to_dict"):
+            return o.to_dict()
 
         return json.JSONEncoder.default(self, o)
 

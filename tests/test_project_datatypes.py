@@ -73,7 +73,7 @@ class TestProjectInfo:
         project.num_images = 10
         project.num_other = 2
 
-        json_obj = project.JSON_object()
+        json_obj = project.to_dict()
 
         assert json_obj["input_directory"] == str(input_dir.resolve())
         assert json_obj["project_directory"] == str(output_dir.resolve())
@@ -143,7 +143,7 @@ class TestFileAttributes:
         file_attr.meta_files = {"gpx": "metadata.json"}
         file_attr.output_files = ["map.html"]
 
-        json_obj = file_attr.JSON_object()
+        json_obj = file_attr.to_dict()
 
         assert json_obj["file_path"] == str(test_file.resolve())
         assert json_obj["name"] == "test_video.mp4"
@@ -296,7 +296,7 @@ class TestProjectStructure:
             tool_name="Test Tool",
         )
 
-        json_obj = structure.JSON_object()
+        json_obj = structure.to_dict()
 
         assert json_obj["tool_name"] == "Test Tool"
         assert json_obj["project_info"] == project_info

@@ -103,7 +103,7 @@ class ProjectManager:
         # Write the JSON object into the file
         with self.project_file.open("w") as file:
             json.dump(
-                obj=data.JSON_object(),
+                obj=data.to_dict(),
                 fp=file,
                 cls=ProjectEncoder,
                 indent=4,

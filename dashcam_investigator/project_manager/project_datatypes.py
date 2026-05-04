@@ -7,7 +7,7 @@ from dashcam_investigator.utils.common import generate_file_hash
 
 class ProjectInfo:
     """
-    Objects of this class record the high level information of the project.
+    Records the high-level information of an investigation project.
     """
 
     def __init__(
@@ -31,12 +31,8 @@ class ProjectInfo:
         self.num_images = None
         self.num_other = None
 
-    def JSON_object(self) -> dict:
-        """
-        Converts the ProjectInfo object to a dictionary which can be written to JSON
-        params: self
-        returns: dict
-        """
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable representation of this object."""
         return {
             "input_directory": str(self.input_directory.resolve()),
             "project_directory": str(self.project_directory.resolve()),
@@ -52,8 +48,8 @@ class ProjectInfo:
 
 class FileAttributes:
     """
-    Objects of this class are used to record the details of files identified in an input directory
-    These files are saved to the project's JSON file for use throughout the application.
+    Records the details of a file identified in an input directory.
+    Saved to the project's JSON file for use throughout the application.
     """
 
     def __init__(
@@ -70,20 +66,25 @@ class FileAttributes:
         self.file_path = file_path
         self.name = self.file_path.name if name is None else name
         self.type = self.file_path.suffix if ftype is None else ftype
-        self.sha256_hash = (
-            generate_file_hash(self.file_path) if sha256_hash is None else sha256_hash
-        )
+        # Store the hash only if provided; compute lazily on first access.
+        self._sha256_hash: str | None = sha256_hash
         self.meta_files = {} if meta_files is None else meta_files
         self.output_files = [] if output_files is None else output_files
         self.flagged = False if flagged is None else flagged
         self.notes = "" if notes is None else notes
 
-    def JSON_object(self) -> dict:
-        """
-        Converts the FileAttributes object to a dictionary which can be written to JSON
-        params: self
-        returns: dict
-        """
+    @property
+    def sha256_hash(self) -> str:
+        if self._sha256_hash is None:
+            self._sha256_hash = generate_file_hash(self.file_path)
+        return self._sha256_hash
+
+    @sha256_hash.setter
+    def sha256_hash(self, value: str) -> None:
+        self._sha256_hash = value
+
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable representation of this object."""
         return {
             "file_path": str(self.file_path.resolve()),
             "name": self.name,
@@ -98,7 +99,7 @@ class FileAttributes:
 
 class ProjectStructure:
     """
-    This class describes the overall structure of 'dashcam_investigator.json'
+    Describes the overall structure of 'dashcam_investigator.json'.
     """
 
     def __init__(
@@ -115,12 +116,8 @@ class ProjectStructure:
         self.image_files: list[FileAttributes] = image_files
         self.other_files: list[FileAttributes] = other_files
 
-    def JSON_object(self) -> dict:
-        """
-        Converts the ProjectStructure object to a dictionary which can be written to JSON
-        params: self
-        returns: dict
-        """
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable representation of this object."""
         return {
             "tool_name": self.tool_name,
             "project_info": self.project_info,

@@ -21,6 +21,8 @@ dev = [
     "pytest-cov>=5.0.0",
     "black>=24.1.0",
     "ruff>=0.8.0",
+    "bandit>=1.7.0",
+    "pip-audit>=2.7.0",
     "pyinstaller>=6.3.0",
 ]
 

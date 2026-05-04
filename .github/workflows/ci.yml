@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --frozen --dev
 
       - name: Run ruff linter
         run: |
@@ -71,11 +71,40 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --frozen --dev
 
       - name: Run tests with pytest
         run: |
           uv run pytest -v
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen --dev
+
+      - name: Run bandit security linter
+        run: |
+          uv run bandit -r dashcam_investigator -ll
+
+      - name: Audit dependencies for known vulnerabilities
+        run: |
+          uv run pip-audit
 
   build:
     name: Build Check
@@ -97,7 +126,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --frozen
 
       - name: Verify package can be imported
         run: |
@@ -105,7 +134,7 @@ jobs:
 
   release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [lint-and-format, test, build]
     if: github.event_name == 'workflow_dispatch' && inputs.create_release == true
     permissions:
@@ -126,7 +155,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --frozen --dev
 
       - name: Build Windows executable
         run: |
@@ -134,6 +163,7 @@ jobs:
 
       - name: Determine release version
         id: version
+        shell: bash
         run: |
           if [ -n "${{ inputs.release_version }}" ]; then
             echo "version=${{ inputs.release_version }}" >> $GITHUB_OUTPUT
@@ -149,7 +179,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/*
+            dist/DashcamInvestigator.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

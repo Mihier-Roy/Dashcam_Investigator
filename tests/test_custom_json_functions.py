@@ -160,7 +160,7 @@ class TestProjectDecoder:
         result = project_decoder(json_data)
 
         assert isinstance(result, ProjectStructure)
-        assert result.tool_name == "Test Tool"
+        assert result.tool_name == "Dashcam Investigator"  # always normalized on load
         assert isinstance(result.project_info, ProjectInfo)
         assert result.project_info.case_name == "Test Case"
         assert result.project_info.investigator_name == "John Doe"
@@ -325,7 +325,7 @@ class TestConvertToFileAttr:
                 "name": "video.mp4",
                 "type": ".mp4",
                 "sha256_hash": "hash1",
-                "meta_files": ["meta1.json"],
+                "meta_files": {"gpx": "meta1.json"},
                 "output_files": [],
                 "flagged": True,
                 "notes": "Flagged video",
@@ -363,7 +363,7 @@ class TestConvertToFileAttr:
                 "name": "custom_name.txt",
                 "type": ".custom",
                 "sha256_hash": "custom_hash",
-                "meta_files": ["file1.json", "file2.json"],
+                "meta_files": {"gpx": "file1.json", "csv": "file2.json"},
                 "output_files": ["out1.html", "out2.html"],
                 "flagged": True,
                 "notes": "Important notes here",
@@ -376,10 +376,52 @@ class TestConvertToFileAttr:
         assert attr.name == "custom_name.txt"
         assert attr.type == ".custom"
         assert attr.sha256_hash == "custom_hash"
-        assert attr.meta_files == ["file1.json", "file2.json"]
+        assert attr.meta_files == {"gpx": "file1.json", "csv": "file2.json"}
         assert attr.output_files == ["out1.html", "out2.html"]
         assert attr.flagged is True
         assert attr.notes == "Important notes here"
+
+    def test_migrate_meta_files_old_list_format(self, temp_dir):
+        """Old projects stored meta_files as [gpx, csv]; the migration shim upgrades them."""
+        test_file = temp_dir / "legacy.mp4"
+        test_file.write_text("content")
+
+        input_list = [
+            {
+                "file_path": str(test_file),
+                "name": "legacy.mp4",
+                "type": ".mp4",
+                "sha256_hash": "oldhash",
+                "meta_files": ["/old/path.gpx", "/old/path.csv"],
+                "output_files": [],
+                "flagged": False,
+                "notes": "",
+            }
+        ]
+
+        result = convert_to_file_attr(input_list)
+        assert result[0].meta_files == {"gpx": "/old/path.gpx", "csv": "/old/path.csv"}
+
+    def test_migrate_meta_files_empty_list(self, temp_dir):
+        """An empty legacy meta_files list migrates to an empty dict."""
+        test_file = temp_dir / "empty.mp4"
+        test_file.write_text("content")
+
+        input_list = [
+            {
+                "file_path": str(test_file),
+                "name": "empty.mp4",
+                "type": ".mp4",
+                "sha256_hash": "h",
+                "meta_files": [],
+                "output_files": [],
+                "flagged": False,
+                "notes": "",
+            }
+        ]
+
+        result = convert_to_file_attr(input_list)
+        assert result[0].meta_files == {}
 
 
 class TestRoundTripSerialization:
@@ -424,7 +466,7 @@ class TestRoundTripSerialization:
 
         # Verify data is preserved
         assert isinstance(decoded, ProjectStructure)
-        assert decoded.tool_name == "Roundtrip Tool"
+        assert decoded.tool_name == "Dashcam Investigator"  # always normalized on load
         assert decoded.project_info.case_name == "Roundtrip Test"
         assert decoded.project_info.investigator_name == "Test User"
         assert decoded.project_info.num_videos == 5

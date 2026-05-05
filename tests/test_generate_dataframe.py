@@ -63,7 +63,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test_video", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test_video",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
 
         assert meta.video_name == "test_video"
@@ -77,7 +78,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
 
         expected_columns = ["Longitude", "Latitude", "Altitude", "DateTime", "Speed"]
@@ -89,7 +91,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
 
         # Should have 3 points
@@ -105,7 +108,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
 
         # Should have 5 points as tuples
@@ -124,7 +128,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
         meta.add_label_for_speed_chart()
 
@@ -159,7 +164,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("speed_test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_path), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_path), "csv": str(csv_file)},
         )
         meta.add_speed()
 
@@ -175,7 +181,8 @@ class TestMetaDataFrames:
         csv_file = create_csv_file("test_fileinfo.csv")
 
         meta = MetaDataFrames(
-            video_name="test", video_meta_files=[str(gpx_file), str(csv_file)]
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_file), "csv": str(csv_file)},
         )
 
         assert "Altitude" in meta.gps_df.columns
@@ -219,7 +226,8 @@ class TestMakeSpeedDataframe:
             csv_path.write_text(csv_content)
 
             meta = MetaDataFrames(
-                video_name="test", video_meta_files=[str(gpx_path), str(csv_path)]
+                video_name="test",
+                video_meta_files={"gpx": str(gpx_path), "csv": str(csv_path)},
             )
             meta.add_label_for_speed_chart()
             return meta

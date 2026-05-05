@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import sys
 from pathlib import Path
 
@@ -8,9 +9,15 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 
+from dashcam_investigator.constants import PROJECT_FILE_NAME
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
+from dashcam_investigator.exceptions import (
+    DashcamInvestigatorError,
+    ProjectLoadError,
+    ProjectSaveError,
+)
 from dashcam_investigator.gui.main_window import setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
 from dashcam_investigator.gui.theme import ThemeManager
@@ -90,12 +97,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # --- Worker signal collectors -------------------------------------
     def update_progress_dialog(self, current):
-        self.progress.setLabelText(f"Processing files... ({current}/{self.file_count})")
         self.progress.setValue(current)
+
+    def update_status_label(self, message: str):
+        self.progress.setLabelText(
+            f"({self.progress.value()}/{self.file_count}) {message}"
+        )
 
     def update_object(self, output):
         self.project_object = output
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Processing completed!")
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
@@ -103,6 +114,26 @@ class MainWindow(QtWidgets.QMainWindow):
     def thread_complete(self):
         self.progress.hide()
         logger.debug("Thread completed execution.")
+
+    def _persist_project(self) -> None:
+        """Write the current project to disk, showing an error dialog on failure."""
+        try:
+            self.project_manager.write_project_file(data=self.project_object)
+        except ProjectSaveError as exc:
+            logger.error("Failed to save project: %s", exc)
+            QtWidgets.QMessageBox.critical(
+                self, "Save error", f"Could not save the project file:\n\n{exc}"
+            )
+
+    def _on_worker_error(self, err_tuple: tuple):
+        exc_type, exc_value, _ = err_tuple
+        if issubclass(exc_type, DashcamInvestigatorError):
+            message = str(exc_value)
+        else:
+            message = f"An unexpected error occurred.\nSee the log file for details.\n\n{exc_value}"
+        logger.error("Worker error: %s: %s", exc_type.__name__, exc_value)
+        self.progress.hide()
+        QtWidgets.QMessageBox.critical(self, "Processing error", message)
 
     # --- Video player controls ----------------------------------------
     def play_video(self):
@@ -137,14 +168,21 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         file_path = Path(file_name[0])
         logger.debug(f"Opening existing project file -> {file_path}")
-        if file_path.name != "dashcam_investigator.json":
+        if file_path.name != PROJECT_FILE_NAME:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Open project",
                 "Please select a dashcam_investigator.json file.",
             )
             return
-        self.project_object = self.project_manager.load_existing_project(file_path)
+        try:
+            self.project_object = self.project_manager.load_existing_project(file_path)
+        except ProjectLoadError as exc:
+            logger.error("Failed to load project: %s", exc)
+            QtWidgets.QMessageBox.critical(
+                self, "Open error", f"Could not open the project file:\n\n{exc}"
+            )
+            return
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
@@ -185,6 +223,8 @@ class MainWindow(QtWidgets.QMainWindow):
         worker.signals.result.connect(self.update_object)
         worker.signals.finished.connect(self.thread_complete)
         worker.signals.progress.connect(self.update_progress_dialog)
+        worker.signals.status.connect(self.update_status_label)
+        worker.signals.error.connect(self._on_worker_error)
         self.threadpool.start(worker)
 
     def load_data(self):
@@ -200,7 +240,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         report_path = generate_report(self.project_object)
         self.project_object.project_info.report_path = str(report_path.resolve())
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         dlg = QtWidgets.QMessageBox(self)
         dlg.setWindowTitle("Report generator")
         dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
@@ -300,7 +340,7 @@ class MainWindow(QtWidgets.QMainWindow):
         video.flagged = bool(flagged)
         if self.current_video and self.current_video.name == name:
             self.current_video.flagged = video.flagged
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Flag persisted -> %s = %s", name, video.flagged)
         self.bridge.flag_changed.emit(name, video.flagged)
 
@@ -315,7 +355,7 @@ class MainWindow(QtWidgets.QMainWindow):
         video.notes = text
         if self.current_video and self.current_video.name == name:
             self.current_video.notes = text
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Notes persisted -> %s (%d chars)", name, len(text))
         self.bridge.notes_saved.emit(name)
 
@@ -363,9 +403,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if not match:
             return "[]"
         video = match[0]
-        if not video.meta_files or len(video.meta_files) < 2:
+        if not video.meta_files or "csv" not in video.meta_files:
             return "[]"
-        metadata_path = Path(video.meta_files[1])
+        metadata_path = Path(video.meta_files["csv"])
         if not metadata_path.is_file():
             logger.warning("Metadata CSV missing: %s", metadata_path)
             return "[]"
@@ -389,6 +429,18 @@ def run():
     app = QtWidgets.QApplication([])
     app.setOrganizationName(ORG_NAME)
     app.setApplicationName(APP_NAME)
+
+    if shutil.which("exiftool") is None:
+        QtWidgets.QMessageBox.critical(
+            None,
+            "ExifTool not found",
+            "ExifTool is required but was not found on your PATH.\n\n"
+            "Please install ExifTool and ensure it is accessible from the command line.\n"
+            "Download: https://exiftool.org",
+        )
+        logger.error("exiftool not found on PATH — aborting startup")
+        sys.exit(1)
+
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
     window.show()

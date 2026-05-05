@@ -4,40 +4,40 @@ from pathlib import Path
 import gpxpy
 from pandas import DataFrame, read_csv, to_datetime
 
+from dashcam_investigator.exceptions import GPSParseError
+
 logger = logging.getLogger(__name__)
 
 
 class MetaDataFrames:
     """
-    Manages GPS, temporal, and file information for a video file
-    Takes in a list of metadata output files containing one of each of the following file types:
-    - A GPS data file
-    - A temporal data file
-    - A file containing information about the original video file
-    Also takes in a list of ExclusionZone objects, and a temp directory for output files
+    Manages GPS, temporal, and file information for a video file.
+    Takes in a dict of metadata output files with keys "gpx" and "csv".
     """
 
-    def __init__(self, video_name: str, video_meta_files: list):
+    def __init__(self, video_name: str, video_meta_files: dict):
         self.video_name = video_name
-        self.file_info_df = read_csv(f"{video_meta_files[1]}")
-        self.gps_df, self.points = self.process_gpx_to_df(Path(video_meta_files[0]))
+        self.file_info_df = read_csv(video_meta_files["csv"])
+        self.gps_df, self.points = self.process_gpx_to_df(Path(video_meta_files["gpx"]))
 
     def process_gpx_to_df(self, file_name: Path):
         """
         Read the GPX file created and convert it into a dataframe.
         Also extract the route travelled in the video.
+        Raises GPSParseError if the file has no tracks or segments.
         """
         logger.debug(f"Creating dataframe from GPX file -> {file_name}")
         with file_name.open() as gpxfile:
             gpx = gpxpy.parse(gpxfile)
 
-        # Create a DataFrame
+        if not gpx.tracks or not gpx.tracks[0].segments:
+            raise GPSParseError(f"GPX file has no tracks or segments: {file_name.name}")
+
         track = gpx.tracks[0]
         segment = track.segments[0]
-        # Load the data into a Pandas dataframe (by way of a list)
         data = []
         for point_idx, point in enumerate(segment.points):
-            # get_speed returns m/s. Convert to km/h
+            # get_speed returns m/s; convert to km/h
             speed = (
                 segment.get_speed(point_idx) * 3.6
                 if segment.get_speed(point_idx) is not None
@@ -55,12 +55,10 @@ class MetaDataFrames:
         ]
         gpx_df = DataFrame(data, columns=columns)
 
-        # Create points tuple for lines
         points = []
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    points.append((point.latitude, point.longitude))
+        for segment in track.segments:
+            for point in segment.points:
+                points.append((point.latitude, point.longitude))
 
         logger.debug(
             f"Generated dataframe and points list for route lines -> {file_name}"
@@ -69,7 +67,7 @@ class MetaDataFrames:
 
     def convert_to_datetime(self):
         """
-        Converts the date and time columns in the dataframe to datetime objects, allowing them to be used for other functions
+        Converts the date and time columns in the dataframe to datetime objects.
         """
         logger.debug("Converting time formats to pandas datetime objects")
         try:
@@ -87,7 +85,7 @@ class MetaDataFrames:
 
     def add_label_for_speed_chart(self):
         """
-        Adds a column to the dataframe to identify the source of the data. This is done to make a legend for the speed chart.
+        Adds a column to the dataframe to identify the source of the data.
         """
         logger.debug("Adding datasource field to dataframe")
         self.gps_df["DataSource"] = len(self.gps_df.index) * [
@@ -96,7 +94,7 @@ class MetaDataFrames:
 
     def add_speed(self):
         """
-        Calculates the average speed for the video and adds it to the file info dataframe
+        Calculates the average speed for the video and adds it to the file info dataframe.
         """
         logger.debug("Adding average and max speed to file info dataframe")
         self.file_info_df["AverageSpeed"] = round(self.gps_df["Speed"].mean(), 2)
@@ -105,8 +103,7 @@ class MetaDataFrames:
 
 def make_speed_dataframe(video_meta_handler) -> DataFrame:
     """
-    Takes in a list of video data handlers - either ocr or metadata
-    returns a dataframe containing the speeds and datetimes in the list
+    Takes in a MetaDataFrames handler and returns a dataframe with speed and datetime.
     """
     logger.debug("Generating speed dataframe for speed graph")
     speed_data = video_meta_handler.gps_df[["Speed", "DateTime", "DataSource"]]
@@ -114,6 +111,6 @@ def make_speed_dataframe(video_meta_handler) -> DataFrame:
 
 
 def find_final_point_in_route(video_list: list) -> tuple:
-    """Takes in a list of video data handlers - either ocr or metadata, and returns the final available coordinate"""
+    """Takes in a list of MetaDataFrames handlers and returns the final coordinate."""
     final_point = video_list[-1].gps_df["Latitude, Longitude"].iloc[-1]
     return final_point

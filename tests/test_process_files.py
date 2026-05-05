@@ -62,9 +62,7 @@ class TestExtractMeta:
 
         result = extract_meta(video_attr, project_dir)
 
-        assert gpx_path in result.meta_files
-        assert csv_path in result.meta_files
-        assert len(result.meta_files) == 2
+        assert result.meta_files == {"gpx": gpx_path, "csv": csv_path}
 
     @patch("dashcam_investigator.core.process_files.process_file_meta")
     @patch("dashcam_investigator.core.process_files.process_gps_data")
@@ -108,7 +106,7 @@ class TestCreateMap:
         (project_dir / "Graphs").mkdir()
 
         video_attr = FileAttributes(file_path=video_file)
-        video_attr.meta_files = ["gps.gpx", "meta.csv"]
+        video_attr.meta_files = {"gpx": "gps.gpx", "csv": "meta.csv"}
 
         mock_instance = Mock()
         mock_generator_class.return_value = mock_instance
@@ -130,7 +128,7 @@ class TestCreateMap:
         (project_dir / "Graphs").mkdir()
 
         video_attr = FileAttributes(file_path=video_file)
-        video_attr.meta_files = ["gps.gpx", "meta.csv"]
+        video_attr.meta_files = {"gpx": "gps.gpx", "csv": "meta.csv"}
 
         mock_instance = Mock()
         mock_generator_class.return_value = mock_instance
@@ -153,7 +151,7 @@ class TestCreateMap:
         (project_dir / "Graphs").mkdir()
 
         video_attr = FileAttributes(file_path=video_file)
-        video_attr.meta_files = ["gps.gpx", "meta.csv"]
+        video_attr.meta_files = {"gpx": "gps.gpx", "csv": "meta.csv"}
 
         mock_instance = Mock()
         mock_generator_class.return_value = mock_instance
@@ -178,7 +176,7 @@ class TestCreateMap:
         (project_dir / "Graphs").mkdir()
 
         video_attr = FileAttributes(file_path=video_file)
-        video_attr.meta_files = ["gps.gpx", "meta.csv"]
+        video_attr.meta_files = {"gpx": "gps.gpx", "csv": "meta.csv"}
 
         mock_instance = Mock()
         mock_generator_class.return_value = mock_instance

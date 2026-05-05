@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Union
 
+from dashcam_investigator.constants import TOOL_NAME
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,
@@ -12,14 +13,23 @@ from dashcam_investigator.project_manager.project_datatypes import (
 class ProjectEncoder(json.JSONEncoder):
     """
     Define a JSON encoder which overrides the default implementation.
-    Checks for a JSON_object aatribute and calls the function to allow writing nested objects to JSON.
+    Checks for a to_dict attribute and calls the function to allow writing nested objects to JSON.
     """
 
     def default(self, o):
-        if hasattr(o, "JSON_object"):
-            return o.JSON_object()
+        if hasattr(o, "to_dict"):
+            return o.to_dict()
 
         return json.JSONEncoder.default(self, o)
+
+
+def _migrate_meta_files(meta_files) -> dict:
+    """Upgrade old list-format meta_files [gpx, csv] to the current dict format."""
+    if isinstance(meta_files, dict):
+        return meta_files
+    if isinstance(meta_files, list) and len(meta_files) >= 2:
+        return {"gpx": meta_files[0], "csv": meta_files[1]}
+    return {}
 
 
 def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
@@ -42,7 +52,7 @@ def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
             video_files=video_files,
             image_files=image_files,
             other_files=other_files,
-            tool_name=dictionary["tool_name"],
+            tool_name=TOOL_NAME,  # normalize: old files may have had a typo
         )
     # Else return the dictionary unchanged
     return dictionary
@@ -84,7 +94,7 @@ def convert_to_file_attr(input_list: list) -> list:
                 name=item["name"],
                 ftype=item["type"],
                 sha256_hash=item["sha256_hash"],
-                meta_files=item["meta_files"],
+                meta_files=_migrate_meta_files(item["meta_files"]),
                 output_files=item["output_files"],
                 flagged=item["flagged"],
                 notes=item["notes"],

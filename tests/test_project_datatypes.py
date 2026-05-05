@@ -73,7 +73,7 @@ class TestProjectInfo:
         project.num_images = 10
         project.num_other = 2
 
-        json_obj = project.JSON_object()
+        json_obj = project.to_dict()
 
         assert json_obj["input_directory"] == str(input_dir.resolve())
         assert json_obj["project_directory"] == str(output_dir.resolve())
@@ -101,7 +101,7 @@ class TestFileAttributes:
         assert file_attr.type == ".mp4"
         assert isinstance(file_attr.sha256_hash, str)
         assert len(file_attr.sha256_hash) == 64  # SHA256 hash length
-        assert file_attr.meta_files == []
+        assert file_attr.meta_files == {}
         assert file_attr.output_files == []
         assert file_attr.flagged is False
         assert file_attr.notes == ""
@@ -116,7 +116,7 @@ class TestFileAttributes:
             name="custom_name.mp4",
             ftype=".avi",
             sha256_hash="abc123",
-            meta_files=["meta1.json", "meta2.json"],
+            meta_files={"gpx": "meta1.json", "csv": "meta2.json"},
             output_files=["output1.html"],
             flagged=True,
             notes="Important video",
@@ -125,7 +125,7 @@ class TestFileAttributes:
         assert file_attr.name == "custom_name.mp4"
         assert file_attr.type == ".avi"
         assert file_attr.sha256_hash == "abc123"
-        assert file_attr.meta_files == ["meta1.json", "meta2.json"]
+        assert file_attr.meta_files == {"gpx": "meta1.json", "csv": "meta2.json"}
         assert file_attr.output_files == ["output1.html"]
         assert file_attr.flagged is True
         assert file_attr.notes == "Important video"
@@ -140,16 +140,16 @@ class TestFileAttributes:
             flagged=True,
             notes="Test note",
         )
-        file_attr.meta_files = ["metadata.json"]
+        file_attr.meta_files = {"gpx": "metadata.json"}
         file_attr.output_files = ["map.html"]
 
-        json_obj = file_attr.JSON_object()
+        json_obj = file_attr.to_dict()
 
         assert json_obj["file_path"] == str(test_file.resolve())
         assert json_obj["name"] == "test_video.mp4"
         assert json_obj["type"] == ".mp4"
         assert json_obj["sha256_hash"] == file_attr.sha256_hash
-        assert json_obj["meta_files"] == ["metadata.json"]
+        assert json_obj["meta_files"] == {"gpx": "metadata.json"}
         assert json_obj["output_files"] == ["map.html"]
         assert json_obj["flagged"] is True
         assert json_obj["notes"] == "Test note"
@@ -198,7 +198,7 @@ class TestProjectStructure:
             other_files=[],
         )
 
-        assert structure.tool_name == "Dascam Investigator"
+        assert structure.tool_name == "Dashcam Investigator"
         assert structure.project_info == project_info
         assert structure.video_files == []
         assert structure.image_files == []
@@ -296,7 +296,7 @@ class TestProjectStructure:
             tool_name="Test Tool",
         )
 
-        json_obj = structure.JSON_object()
+        json_obj = structure.to_dict()
 
         assert json_obj["tool_name"] == "Test Tool"
         assert json_obj["project_info"] == project_info

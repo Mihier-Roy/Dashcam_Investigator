@@ -35,6 +35,10 @@ def assets_path() -> Path:
         flat = bundle_root / ASSETS_DIRNAME
         if flat.is_dir():
             return flat
+        raise RuntimeError(
+            f"Assets directory not found in frozen bundle under {bundle_root}. "
+            "Ensure gui/assets is included in the PyInstaller spec."
+        )
 
     # Dev: this file lives at gui/web/renderer.py, assets at gui/assets.
     return (Path(__file__).resolve().parent.parent / "assets").resolve()
@@ -84,7 +88,7 @@ def inline_svg(name: str, cls: str = "icon") -> Markup:
         return Markup("")
     if 'class="icon"' in svg:
         svg = svg.replace('class="icon"', f'class="{cls}"', 1)
-    return Markup(svg)
+    return Markup(svg)  # nosec B704
 
 
 @lru_cache(maxsize=16)
@@ -99,7 +103,7 @@ def _read_static(rel: str) -> str:
 
 def inline_css(rel: str) -> Markup:
     """Return the contents of a CSS file from static/, ready for a <style> tag."""
-    return Markup(_read_static(rel))
+    return Markup(_read_static(rel))  # nosec B704
 
 
 @lru_cache(maxsize=1)

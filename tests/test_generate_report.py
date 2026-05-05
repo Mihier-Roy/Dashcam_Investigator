@@ -75,7 +75,7 @@ class TestGenerateReport:
                     flagged=True,
                     notes=f"Note for video {i}",
                 )
-                video_attr.meta_files = [str(gpx_path), str(csv_path)]
+                video_attr.meta_files = {"gpx": str(gpx_path), "csv": str(csv_path)}
                 video_attr.output_files = [str(map_path), str(graph_path)]
                 video_files.append(video_attr)
 

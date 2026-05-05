@@ -1,7 +1,10 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ProjectSubdir(StrEnum):
+class ProjectSubdir(str, Enum):
+    def __str__(self) -> str:
+        return self.value
+
     METADATA = "Metadata"
     MAPS = "Maps"
     GRAPHS = "Graphs"

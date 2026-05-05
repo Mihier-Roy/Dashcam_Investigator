@@ -4,7 +4,6 @@ from dashcam_investigator.exceptions import (
     DashcamInvestigatorError,
     ExifToolError,
     GPSParseError,
-    MetadataExtractionError,
     ProjectLoadError,
     ProjectSaveError,
 )
@@ -14,7 +13,6 @@ from dashcam_investigator.exceptions import (
     "exc_class",
     [
         ExifToolError,
-        MetadataExtractionError,
         GPSParseError,
         ProjectLoadError,
         ProjectSaveError,
@@ -29,7 +27,6 @@ def test_all_exceptions_inherit_from_base(exc_class):
     [
         DashcamInvestigatorError,
         ExifToolError,
-        MetadataExtractionError,
         GPSParseError,
         ProjectLoadError,
         ProjectSaveError,
@@ -46,7 +43,6 @@ def test_all_exceptions_inherit_from_builtin_exception(exc_class):
         (GPSParseError, "GPX file has no tracks"),
         (ProjectLoadError, "missing required field"),
         (ProjectSaveError, "disk full"),
-        (MetadataExtractionError, "empty output file"),
     ],
 )
 def test_exceptions_carry_message(exc_class, message):
@@ -57,7 +53,6 @@ def test_exceptions_carry_message(exc_class, message):
 def test_base_exception_is_catchable_for_all_subclasses():
     for exc_class in [
         ExifToolError,
-        MetadataExtractionError,
         GPSParseError,
         ProjectLoadError,
         ProjectSaveError,

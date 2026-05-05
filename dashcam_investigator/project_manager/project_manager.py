@@ -2,6 +2,8 @@ import json
 import logging
 from pathlib import Path
 
+from dashcam_investigator.constants import PROJECT_FILE_NAME
+from dashcam_investigator.exceptions import ProjectLoadError, ProjectSaveError
 from dashcam_investigator.project_manager.project_datatypes import (
     ProjectInfo,
     ProjectStructure,
@@ -13,7 +15,6 @@ from dashcam_investigator.utils.custom_json_functions import (
 
 logger = logging.getLogger(__name__)
 
-DASHCAM_INVESTIGATOR_PROJECT_FILENAME = "dashcam_investigator.json"
 DASHCAM_INVESTIGATOR_DIRECTORIES = [
     "Graphs",
     "Maps",
@@ -36,7 +37,7 @@ class ProjectManager:
         )
         self.project_directory = output_dir
         self.project_file = (
-            Path(self.project_directory, DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
+            Path(self.project_directory, PROJECT_FILE_NAME)
             if self.project_directory is not None
             else None
         )
@@ -65,7 +66,7 @@ class ProjectManager:
         # Create the json project file
         if not self.project_file.exists():
             logger.debug(f"Creating project file in -> {self.project_directory}")
-            self.project_directory.touch(DASHCAM_INVESTIGATOR_PROJECT_FILENAME)
+            self.project_directory.touch(PROJECT_FILE_NAME)
 
         # Initialise the ProjectStructure object that is to be written to the JSON file
         logger.debug("Intialising project file")
@@ -100,14 +101,18 @@ class ProjectManager:
         """
         This function initialises the base project file with minimal information declared in ProjectStructure
         """
-        # Write the JSON object into the file
-        with self.project_file.open("w") as file:
-            json.dump(
-                obj=data.to_dict(),
-                fp=file,
-                cls=ProjectEncoder,
-                indent=4,
-            )
+        try:
+            with self.project_file.open("w") as file:
+                json.dump(
+                    obj=data.to_dict(),
+                    fp=file,
+                    cls=ProjectEncoder,
+                    indent=4,
+                )
+        except OSError as exc:
+            raise ProjectSaveError(
+                f"Failed to write project file: {self.project_file}: {exc}"
+            ) from exc
         logger.debug(f"Wrote to project file at -> {self.project_file}")
 
     def read_project_file(self) -> ProjectStructure:
@@ -115,10 +120,14 @@ class ProjectManager:
         This function reads an existing dashcam_investigator.json project file.
         It loads the read data into a ProjectStrucutre object which can be used later on.
         """
-        # Load existing project structure
         logger.debug(f"Reading project file -> {self.project_file}")
-        with self.project_file.open("r") as file:
-            project_json: ProjectStructure = json.load(
-                fp=file, object_hook=project_decoder
-            )
+        try:
+            with self.project_file.open("r") as file:
+                project_json: ProjectStructure = json.load(
+                    fp=file, object_hook=project_decoder
+                )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ProjectLoadError(
+                f"Failed to load project file: {self.project_file}: {exc}"
+            ) from exc
         return project_json

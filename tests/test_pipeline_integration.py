@@ -234,12 +234,6 @@ class TestGPXToDataFramePipeline:
 
 class TestExifToolSubprocess:
 
-    def _make_run_result(self, returncode=0, stderr=b""):
-        r = MagicMock()
-        r.returncode = returncode
-        r.stderr = stderr
-        return r
-
     @patch("dashcam_investigator.core.extract_metadata.subprocess.run")
     @patch(
         "dashcam_investigator.core.extract_metadata.shutil.which",
@@ -250,12 +244,12 @@ class TestExifToolSubprocess:
         return_value="video/mp4",
     )
     def test_process_files_populates_meta_files_dict(
-        self, mock_filetype, mock_which, mock_run, tmp_path
+        self, mock_filetype, mock_which, mock_run, tmp_path, make_run_result
     ):
         """process_files populates meta_files as {"gpx": ..., "csv": ...}."""
         from dashcam_investigator.core.process_files import process_files
 
-        mock_run.return_value = self._make_run_result()
+        mock_run.return_value = make_run_result()
 
         input_dir, project = _make_project(tmp_path)
         video_file = input_dir / "clip.mp4"

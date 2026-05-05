@@ -6,10 +6,6 @@ class ExifToolError(DashcamInvestigatorError):
     """ExifTool execution failed (missing binary, non-zero exit, or timed out)."""
 
 
-class MetadataExtractionError(DashcamInvestigatorError):
-    """Metadata extraction produced unusable or incomplete output."""
-
-
 class GPSParseError(DashcamInvestigatorError):
     """GPX file is empty, malformed, or has no track segments."""
 

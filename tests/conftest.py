@@ -4,8 +4,32 @@ import json
 import tempfile
 from pathlib import Path
 from typing import Generator
+from unittest.mock import MagicMock
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _clear_exiftool_cache():
+    """Clear the cached _exiftool_path result before each test so mocks work."""
+    from dashcam_investigator.core.extract_metadata import _exiftool_path
+
+    _exiftool_path.cache_clear()
+    yield
+    _exiftool_path.cache_clear()
+
+
+@pytest.fixture
+def make_run_result():
+    """Factory for mock subprocess.run return values."""
+
+    def _factory(returncode=0, stderr=b""):
+        result = MagicMock()
+        result.returncode = returncode
+        result.stderr = stderr
+        return result
+
+    return _factory
 
 
 @pytest.fixture

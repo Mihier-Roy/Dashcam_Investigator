@@ -2,6 +2,7 @@
 
 import json
 
+from dashcam_investigator.constants import PROJECT_FILE_NAME
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,
@@ -9,7 +10,6 @@ from dashcam_investigator.project_manager.project_datatypes import (
 )
 from dashcam_investigator.project_manager.project_manager import (
     DASHCAM_INVESTIGATOR_DIRECTORIES,
-    DASHCAM_INVESTIGATOR_PROJECT_FILENAME,
     ProjectManager,
 )
 
@@ -34,9 +34,7 @@ class TestProjectManager:
         assert manager.project_directory == output_dir
         assert manager.project_info.case_name == "Test Case"
         assert manager.project_info.investigator_name == "John Doe"
-        assert (
-            manager.project_file == output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
-        )
+        assert manager.project_file == output_dir / PROJECT_FILE_NAME
 
     def test_init_with_none_output_dir(self):
         """Test ProjectManager initialization with None output directory."""
@@ -88,7 +86,7 @@ class TestProjectManager:
 
         manager.new_project()
 
-        project_file = output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        project_file = output_dir / PROJECT_FILE_NAME
         assert project_file.exists()
         assert project_file.is_file()
 
@@ -168,7 +166,7 @@ class TestProjectManager:
         manager.write_project_file(project_structure)
 
         # Verify file exists and contains data
-        project_file = output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        project_file = output_dir / PROJECT_FILE_NAME
         assert project_file.exists()
 
         with project_file.open("r") as f:
@@ -217,7 +215,7 @@ class TestProjectManager:
 
         # Load the existing project with a new manager
         manager2 = ProjectManager()
-        project_file = output_dir / DASHCAM_INVESTIGATOR_PROJECT_FILENAME
+        project_file = output_dir / PROJECT_FILE_NAME
         loaded_structure = manager2.load_existing_project(project_file)
 
         assert isinstance(loaded_structure, ProjectStructure)
@@ -327,4 +325,4 @@ class TestProjectManager:
 
     def test_project_filename_constant(self):
         """Test that project filename constant is correct."""
-        assert DASHCAM_INVESTIGATOR_PROJECT_FILENAME == "dashcam_investigator.json"
+        assert PROJECT_FILE_NAME == "dashcam_investigator.json"

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Union
 
+from dashcam_investigator.constants import TOOL_NAME
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,
@@ -51,7 +52,7 @@ def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
             video_files=video_files,
             image_files=image_files,
             other_files=other_files,
-            tool_name=dictionary["tool_name"],
+            tool_name=TOOL_NAME,  # normalize: old files may have had a typo
         )
     # Else return the dictionary unchanged
     return dictionary

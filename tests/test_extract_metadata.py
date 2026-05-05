@@ -1,7 +1,7 @@
 """Tests for metadata extraction functions."""
 
 import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -12,13 +12,6 @@ from dashcam_investigator.core.extract_metadata import (
 from dashcam_investigator.exceptions import ExifToolError
 
 
-def _make_run_result(returncode=0, stderr=b""):
-    result = MagicMock()
-    result.returncode = returncode
-    result.stderr = stderr
-    return result
-
-
 class TestProcessGpsData:
     """Test cases for process_gps_data function."""
 
@@ -27,9 +20,11 @@ class TestProcessGpsData:
         "dashcam_investigator.core.extract_metadata.shutil.which",
         return_value="/usr/bin/exiftool",
     )
-    def test_process_gps_data_creates_gpx_file(self, mock_which, mock_run, temp_dir):
+    def test_process_gps_data_creates_gpx_file(
+        self, mock_which, mock_run, temp_dir, make_run_result
+    ):
         """Test that GPS data extraction calls exiftool correctly."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "test_video.mp4"
         video_path.write_text("fake video content")
         output_dir = temp_dir / "output"
@@ -51,9 +46,11 @@ class TestProcessGpsData:
         "dashcam_investigator.core.extract_metadata.shutil.which",
         return_value="/usr/bin/exiftool",
     )
-    def test_process_gps_data_output_filename(self, mock_which, mock_run, temp_dir):
+    def test_process_gps_data_output_filename(
+        self, mock_which, mock_run, temp_dir, make_run_result
+    ):
         """Test that output filename is correctly derived from input using Path.stem."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "dashcam_2024_01_15.mp4"
         video_path.write_text("content")
         output_dir = temp_dir / "metadata"
@@ -70,10 +67,10 @@ class TestProcessGpsData:
     )
     @pytest.mark.parametrize("ext", [".mp4", ".avi", ".mov", ".mkv"])
     def test_process_gps_data_with_different_extensions(
-        self, mock_which, mock_run, ext, temp_dir
+        self, mock_which, mock_run, ext, temp_dir, make_run_result
     ):
         """Test GPS extraction with different video file extensions."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / f"video{ext}"
         video_path.write_text("content")
         output_dir = temp_dir / "output"
@@ -100,10 +97,10 @@ class TestProcessGpsData:
         return_value="/usr/bin/exiftool",
     )
     def test_process_gps_data_raises_on_nonzero_exit(
-        self, mock_which, mock_run, temp_dir
+        self, mock_which, mock_run, temp_dir, make_run_result
     ):
         """Non-zero exiftool exit code raises ExifToolError."""
-        mock_run.return_value = _make_run_result(returncode=1, stderr=b"No such file")
+        mock_run.return_value = make_run_result(returncode=1, stderr=b"No such file")
         video_path = temp_dir / "video.mp4"
         video_path.write_text("content")
         output_dir = temp_dir / "output"
@@ -137,9 +134,11 @@ class TestProcessFileMeta:
         "dashcam_investigator.core.extract_metadata.shutil.which",
         return_value="/usr/bin/exiftool",
     )
-    def test_process_file_meta_creates_csv(self, mock_which, mock_run, temp_dir):
+    def test_process_file_meta_creates_csv(
+        self, mock_which, mock_run, temp_dir, make_run_result
+    ):
         """Test that file metadata extraction calls exiftool correctly."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "test_video.mp4"
         video_path.write_text("fake video content")
         output_dir = temp_dir / "output"
@@ -160,9 +159,11 @@ class TestProcessFileMeta:
         "dashcam_investigator.core.extract_metadata.shutil.which",
         return_value="/usr/bin/exiftool",
     )
-    def test_process_file_meta_output_filename(self, mock_which, mock_run, temp_dir):
+    def test_process_file_meta_output_filename(
+        self, mock_which, mock_run, temp_dir, make_run_result
+    ):
         """Test that output CSV filename is correctly derived."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "incident_footage.mp4"
         video_path.write_text("content")
         output_dir = temp_dir / "metadata"
@@ -178,10 +179,10 @@ class TestProcessFileMeta:
         return_value="/usr/bin/exiftool",
     )
     def test_process_file_meta_includes_required_flags(
-        self, mock_which, mock_run, temp_dir
+        self, mock_which, mock_run, temp_dir, make_run_result
     ):
         """Test that exiftool command includes all required flags."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "video.mp4"
         video_path.write_text("content")
         output_dir = temp_dir / "output"
@@ -215,10 +216,10 @@ class TestProcessFileMeta:
         return_value="/usr/bin/exiftool",
     )
     def test_process_file_meta_raises_on_nonzero_exit(
-        self, mock_which, mock_run, temp_dir
+        self, mock_which, mock_run, temp_dir, make_run_result
     ):
         """Non-zero exiftool exit code raises ExifToolError."""
-        mock_run.return_value = _make_run_result(
+        mock_run.return_value = make_run_result(
             returncode=1, stderr=b"Permission denied"
         )
         video_path = temp_dir / "video.mp4"
@@ -238,9 +239,11 @@ class TestMetadataExtraction:
         "dashcam_investigator.core.extract_metadata.shutil.which",
         return_value="/usr/bin/exiftool",
     )
-    def test_both_extractions_with_same_video(self, mock_which, mock_run, temp_dir):
+    def test_both_extractions_with_same_video(
+        self, mock_which, mock_run, temp_dir, make_run_result
+    ):
         """Test that both GPS and file metadata can be extracted from same video."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "dashcam.mp4"
         video_path.write_text("video content")
         output_dir = temp_dir / "output"
@@ -260,10 +263,10 @@ class TestMetadataExtraction:
         return_value="/usr/bin/exiftool",
     )
     def test_extraction_with_special_characters_in_filename(
-        self, mock_which, mock_run, temp_dir
+        self, mock_which, mock_run, temp_dir, make_run_result
     ):
         """Test extraction with filenames containing special characters."""
-        mock_run.return_value = _make_run_result()
+        mock_run.return_value = make_run_result()
         video_path = temp_dir / "video_2024-01-15_14-30-00.mp4"
         video_path.write_text("content")
         output_dir = temp_dir / "output"

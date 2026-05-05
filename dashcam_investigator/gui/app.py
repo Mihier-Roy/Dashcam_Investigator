@@ -9,6 +9,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 
+from dashcam_investigator.constants import PROJECT_FILE_NAME
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
@@ -96,9 +97,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_status_label(self, message: str):
         self.progress.setLabelText(
-            f"({self._progress_current}/{self.file_count}) {message}"
+            f"({self.progress.value()}/{self.file_count}) {message}"
         )
-        self._progress_current = self.progress.value()
 
     def update_object(self, output):
         self.project_object = output
@@ -154,7 +154,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         file_path = Path(file_name[0])
         logger.debug(f"Opening existing project file -> {file_path}")
-        if file_path.name != "dashcam_investigator.json":
+        if file_path.name != PROJECT_FILE_NAME:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Open project",
@@ -197,7 +197,6 @@ class MainWindow(QtWidgets.QMainWindow):
             QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
         )
         self.progress.show()
-        self._progress_current = 0
 
         worker = Worker(process_files, input_dir, self.project_object)
         worker.signals.result.connect(self.update_object)

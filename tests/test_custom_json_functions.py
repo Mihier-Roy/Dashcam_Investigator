@@ -160,7 +160,7 @@ class TestProjectDecoder:
         result = project_decoder(json_data)
 
         assert isinstance(result, ProjectStructure)
-        assert result.tool_name == "Test Tool"
+        assert result.tool_name == "Dashcam Investigator"  # always normalized on load
         assert isinstance(result.project_info, ProjectInfo)
         assert result.project_info.case_name == "Test Case"
         assert result.project_info.investigator_name == "John Doe"
@@ -466,7 +466,7 @@ class TestRoundTripSerialization:
 
         # Verify data is preserved
         assert isinstance(decoded, ProjectStructure)
-        assert decoded.tool_name == "Roundtrip Tool"
+        assert decoded.tool_name == "Dashcam Investigator"  # always normalized on load
         assert decoded.project_info.case_name == "Roundtrip Test"
         assert decoded.project_info.investigator_name == "Test User"
         assert decoded.project_info.num_videos == 5

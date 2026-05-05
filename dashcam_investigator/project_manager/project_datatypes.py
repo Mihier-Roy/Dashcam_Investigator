@@ -79,10 +79,6 @@ class FileAttributes:
             self._sha256_hash = generate_file_hash(self.file_path)
         return self._sha256_hash
 
-    @sha256_hash.setter
-    def sha256_hash(self, value: str) -> None:
-        self._sha256_hash = value
-
     def to_dict(self) -> dict:
         """Return a JSON-serializable representation of this object."""
         return {

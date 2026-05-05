@@ -1,3 +1,4 @@
+import functools
 import logging
 import shutil
 import subprocess
@@ -9,6 +10,7 @@ from dashcam_investigator.exceptions import ExifToolError
 logger = logging.getLogger(__name__)
 
 
+@functools.cache
 def _exiftool_path() -> str:
     path = shutil.which("exiftool")
     if path is None:

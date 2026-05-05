@@ -56,10 +56,9 @@ class MetaDataFrames:
         gpx_df = DataFrame(data, columns=columns)
 
         points = []
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    points.append((point.latitude, point.longitude))
+        for segment in track.segments:
+            for point in segment.points:
+                points.append((point.latitude, point.longitude))
 
         logger.debug(
             f"Generated dataframe and points list for route lines -> {file_name}"

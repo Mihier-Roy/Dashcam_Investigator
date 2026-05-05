@@ -13,7 +13,11 @@ from dashcam_investigator.constants import PROJECT_FILE_NAME
 from dashcam_investigator.core.generate_report import generate_report
 from dashcam_investigator.core.get_file_count import get_file_count
 from dashcam_investigator.core.process_files import process_files
-from dashcam_investigator.exceptions import DashcamInvestigatorError
+from dashcam_investigator.exceptions import (
+    DashcamInvestigatorError,
+    ProjectLoadError,
+    ProjectSaveError,
+)
 from dashcam_investigator.gui.main_window import setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
 from dashcam_investigator.gui.theme import ThemeManager
@@ -102,7 +106,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_object(self, output):
         self.project_object = output
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Processing completed!")
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
@@ -110,6 +114,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def thread_complete(self):
         self.progress.hide()
         logger.debug("Thread completed execution.")
+
+    def _persist_project(self) -> None:
+        """Write the current project to disk, showing an error dialog on failure."""
+        try:
+            self.project_manager.write_project_file(data=self.project_object)
+        except ProjectSaveError as exc:
+            logger.error("Failed to save project: %s", exc)
+            QtWidgets.QMessageBox.critical(
+                self, "Save error", f"Could not save the project file:\n\n{exc}"
+            )
 
     def _on_worker_error(self, err_tuple: tuple):
         exc_type, exc_value, _ = err_tuple
@@ -161,7 +175,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 "Please select a dashcam_investigator.json file.",
             )
             return
-        self.project_object = self.project_manager.load_existing_project(file_path)
+        try:
+            self.project_object = self.project_manager.load_existing_project(file_path)
+        except ProjectLoadError as exc:
+            logger.error("Failed to load project: %s", exc)
+            QtWidgets.QMessageBox.critical(
+                self, "Open error", f"Could not open the project file:\n\n{exc}"
+            )
+            return
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
 
@@ -219,7 +240,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         report_path = generate_report(self.project_object)
         self.project_object.project_info.report_path = str(report_path.resolve())
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         dlg = QtWidgets.QMessageBox(self)
         dlg.setWindowTitle("Report generator")
         dlg.setStandardButtons(QtWidgets.QMessageBox.Close)
@@ -319,7 +340,7 @@ class MainWindow(QtWidgets.QMainWindow):
         video.flagged = bool(flagged)
         if self.current_video and self.current_video.name == name:
             self.current_video.flagged = video.flagged
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Flag persisted -> %s = %s", name, video.flagged)
         self.bridge.flag_changed.emit(name, video.flagged)
 
@@ -334,7 +355,7 @@ class MainWindow(QtWidgets.QMainWindow):
         video.notes = text
         if self.current_video and self.current_video.name == name:
             self.current_video.notes = text
-        self.project_manager.write_project_file(data=self.project_object)
+        self._persist_project()
         logger.debug("Notes persisted -> %s (%d chars)", name, len(text))
         self.bridge.notes_saved.emit(name)
 

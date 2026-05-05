@@ -9,12 +9,18 @@ from dashcam_investigator.core.extract_metadata import (
     process_gps_data,
 )
 from dashcam_investigator.core.output_generator import OutputGenerator
+from dashcam_investigator.exceptions import DashcamInvestigatorError
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectStructure,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _emit_status(callback, msg: str) -> None:
+    if callback is not None:
+        callback.emit(msg)
 
 
 def process_files(
@@ -34,13 +40,16 @@ def process_files(
             if file_type is not None:
                 if file_type.split("/")[0] == "video":
                     logger.debug(f"Video found : {item.name}")
-                    if status_callback is not None:
-                        status_callback.emit(f"Extracting metadata: {item.name}")
                     video = FileAttributes(item)
-                    video = extract_meta(video, project_dir)
-                    if status_callback is not None:
-                        status_callback.emit(f"Generating map: {item.name}")
-                    video = create_map(video, project_dir)
+                    try:
+                        _emit_status(
+                            status_callback, f"Extracting metadata: {item.name}"
+                        )
+                        video = extract_meta(video, project_dir)
+                        _emit_status(status_callback, f"Generating map: {item.name}")
+                        video = create_map(video, project_dir)
+                    except DashcamInvestigatorError as exc:
+                        logger.warning("Skipping %s: %s", item.name, exc)
                     project_object.video_files.append(video)
 
                 elif file_type.split("/")[0] == "image":

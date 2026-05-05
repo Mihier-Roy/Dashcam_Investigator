@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-from dashcam_investigator.constants import PROJECT_FILE_NAME
+from dashcam_investigator.constants import PROJECT_FILE_NAME, ProjectSubdir
 from dashcam_investigator.exceptions import ProjectLoadError, ProjectSaveError
 from dashcam_investigator.project_manager.project_datatypes import (
     ProjectInfo,
@@ -16,11 +16,10 @@ from dashcam_investigator.utils.custom_json_functions import (
 logger = logging.getLogger(__name__)
 
 DASHCAM_INVESTIGATOR_DIRECTORIES = [
-    "Graphs",
-    "Maps",
-    "Metadata",
-    "Reports",
-    "Timelines",
+    ProjectSubdir.GRAPHS,
+    ProjectSubdir.MAPS,
+    ProjectSubdir.METADATA,
+    ProjectSubdir.REPORTS,
 ]
 
 
@@ -66,7 +65,7 @@ class ProjectManager:
         # Create the json project file
         if not self.project_file.exists():
             logger.debug(f"Creating project file in -> {self.project_directory}")
-            self.project_directory.touch(PROJECT_FILE_NAME)
+            self.project_file.touch()
 
         # Initialise the ProjectStructure object that is to be written to the JSON file
         logger.debug("Intialising project file")

@@ -319,8 +319,15 @@ class TestProjectManager:
         assert loaded.video_files[0].notes == "Critical evidence"
 
     def test_project_directories_constant(self):
-        """Test that required directories constant is correct."""
-        expected = ["Graphs", "Maps", "Metadata", "Reports", "Timelines"]
+        """Test that required directories constant covers all project subdirectories."""
+        from dashcam_investigator.constants import ProjectSubdir
+
+        expected = [
+            ProjectSubdir.GRAPHS,
+            ProjectSubdir.MAPS,
+            ProjectSubdir.METADATA,
+            ProjectSubdir.REPORTS,
+        ]
         assert DASHCAM_INVESTIGATOR_DIRECTORIES == expected
 
     def test_project_filename_constant(self):

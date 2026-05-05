@@ -42,10 +42,12 @@ def process_gps_data(video_path: Path, output_dir: Path) -> Path:
                 check=False,
             )
     except subprocess.TimeoutExpired as exc:
+        output_gpx.unlink(missing_ok=True)
         raise ExifToolError(
             f"exiftool timed out after {EXIFTOOL_TIMEOUT_SECONDS}s for {video_path.name}"
         ) from exc
     if result.returncode != 0:
+        output_gpx.unlink(missing_ok=True)
         raise ExifToolError(
             f"exiftool failed for {video_path.name}: "
             f"{result.stderr.decode(errors='replace').strip()}"
@@ -85,10 +87,12 @@ def process_file_meta(video_path: Path, output_dir: Path) -> Path:
                 check=False,
             )
     except subprocess.TimeoutExpired as exc:
+        output_csv.unlink(missing_ok=True)
         raise ExifToolError(
             f"exiftool timed out after {EXIFTOOL_TIMEOUT_SECONDS}s for {video_path.name}"
         ) from exc
     if result.returncode != 0:
+        output_csv.unlink(missing_ok=True)
         raise ExifToolError(
             f"exiftool failed for {video_path.name}: "
             f"{result.stderr.decode(errors='replace').strip()}"

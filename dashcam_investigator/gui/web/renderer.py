@@ -35,6 +35,10 @@ def assets_path() -> Path:
         flat = bundle_root / ASSETS_DIRNAME
         if flat.is_dir():
             return flat
+        raise RuntimeError(
+            f"Assets directory not found in frozen bundle under {bundle_root}. "
+            "Ensure gui/assets is included in the PyInstaller spec."
+        )
 
     # Dev: this file lives at gui/web/renderer.py, assets at gui/assets.
     return (Path(__file__).resolve().parent.parent / "assets").resolve()

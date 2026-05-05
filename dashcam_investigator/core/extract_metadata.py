@@ -1,7 +1,7 @@
 import functools
 import logging
 import shutil
-import subprocess
+import subprocess  # nosec B404 — intentional, args are a fixed list with no shell
 from pathlib import Path
 
 from dashcam_investigator.constants import EXIFTOOL_TIMEOUT_SECONDS, GPX_FORMAT_FILE
@@ -34,7 +34,7 @@ def process_gps_data(video_path: Path, output_dir: Path) -> Path:
     ]
     try:
         with output_gpx.open("w") as fh:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 cmd,
                 stdout=fh,
                 stderr=subprocess.PIPE,
@@ -79,7 +79,7 @@ def process_file_meta(video_path: Path, output_dir: Path) -> Path:
     ]
     try:
         with output_csv.open("w") as fh:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 cmd,
                 stdout=fh,
                 stderr=subprocess.PIPE,

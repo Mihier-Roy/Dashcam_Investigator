@@ -172,14 +172,14 @@ jobs:
         run: |
           sudo apt-get update
           # ExifTool (Perl-based on Linux), GStreamer codecs for QMediaPlayer,
-          # and the FUSE runtime appimagetool needs to assemble the AppImage.
+          # and squashfs-tools to assemble the AppImage payload.
           sudo apt-get install -y --no-install-recommends \
             libimage-exiftool-perl \
             gstreamer1.0-libav \
             gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-ugly \
-            libfuse2 \
+            squashfs-tools \
             file
 
       - name: Build with PyInstaller
@@ -199,13 +199,7 @@ jobs:
 
       - name: Build Linux AppImage
         if: matrix.os == 'ubuntu-latest'
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
-          curl -L -o /tmp/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x /tmp/appimagetool
-          sudo install /tmp/appimagetool /usr/local/bin/appimagetool
           ./packaging/linux/build_appimage.sh
 
       - name: Upload artifacts

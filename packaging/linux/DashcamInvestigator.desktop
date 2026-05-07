@@ -6,6 +6,6 @@ Comment=Forensic investigation of evidence gathered from dashcam devices
 Exec=DashcamInvestigator
 Icon=DashcamInvestigator
 Terminal=false
-Categories=Office;Forensics;AudioVideo;Utility;
+Categories=Office;AudioVideo;Utility;X-Forensics;
 Keywords=forensics;dashcam;video;gps;investigation;
 StartupWMClass=DashcamInvestigator

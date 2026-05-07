@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
 # Wrap the PyInstaller onedir bundle in an AppImage.
 #
-# We assemble the AppImage manually rather than calling appimagetool, because
-# appimagetool ships as an AppImage itself and its runtime is unreliable on
-# GitHub Actions runners (no FUSE kernel module; AppArmor user-namespace
-# restrictions on Ubuntu 24.04 break extract-and-run mode too). Concatenating
-# a type-2 runtime with an mksquashfs-built filesystem is the same on-disk
-# format and has no runtime dependencies at build time.
-#
 # Prereqs:
 #   - PyInstaller has already produced dist/DashcamInvestigator/
-#   - mksquashfs is on PATH (apt: squashfs-tools)
-#   - curl is on PATH (used to fetch the type-2 runtime if RUNTIME is unset)
+#   - appimagetool is on PATH (download from
+#     https://github.com/AppImage/AppImageKit/releases)
 #   - Run from the repo root.
 #
-# Output: dist/DashcamInvestigator-<arch>.AppImage
+# Output: dist/DashcamInvestigator-x86_64.AppImage
 
 set -euo pipefail
 
@@ -29,18 +22,10 @@ if [[ ! -d "${ONEDIR}" ]]; then
   exit 1
 fi
 
-if ! command -v mksquashfs >/dev/null 2>&1; then
-  echo "error: mksquashfs not on PATH (install squashfs-tools)." >&2
+if ! command -v appimagetool >/dev/null 2>&1; then
+  echo "error: appimagetool not on PATH." >&2
+  echo "Install: https://github.com/AppImage/AppImageKit/releases" >&2
   exit 1
-fi
-
-ARCH="${ARCH:-$(uname -m)}"
-RUNTIME="${RUNTIME:-${DIST_DIR}/appimage-runtime-${ARCH}}"
-
-if [[ ! -s "${RUNTIME}" ]]; then
-  echo "Fetching AppImage type-2 runtime for ${ARCH}..."
-  curl -fSL -o "${RUNTIME}" \
-    "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-${ARCH}"
 fi
 
 rm -rf "${APPDIR}"
@@ -72,17 +57,9 @@ exec "${HERE}/usr/bin/DashcamInvestigator" "$@"
 EOF
 chmod +x "${APPDIR}/AppRun"
 
+ARCH="${ARCH:-$(uname -m)}"
 OUTPUT="${DIST_DIR}/DashcamInvestigator-${ARCH}.AppImage"
-SQUASHFS="${DIST_DIR}/DashcamInvestigator.squashfs"
 
-rm -f "${SQUASHFS}" "${OUTPUT}"
-# gzip is the safest compressor: every type-2 runtime build supports it,
-# regardless of whether libsquashfuse was compiled with zstd.
-mksquashfs "${APPDIR}" "${SQUASHFS}" \
-  -root-owned -noappend -mkfs-time 0 -comp gzip -no-progress -quiet
-
-cat "${RUNTIME}" "${SQUASHFS}" > "${OUTPUT}"
-chmod +x "${OUTPUT}"
-rm -f "${SQUASHFS}"
+ARCH="${ARCH}" appimagetool --no-appstream "${APPDIR}" "${OUTPUT}"
 
 echo "Built: ${OUTPUT}"

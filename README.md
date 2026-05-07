@@ -36,8 +36,26 @@ $ uv sync --dev
 
 The following software must be installed on the system where the application is executed:
 
-- **[ExifTool by Phil Harvey](https://exiftool.org/)** - Used to extract metadata (GPS data, timestamps, codecs) from video and image files. ExifTool must be available on the system PATH, or included with the application bundle.
-- **Video Codecs** - The application requires video codecs to support playback. Install the [K-Lite Codec Pack](https://www.codecguide.com/download_k-lite_codec_pack_basic.htm) for Windows or use your system's codec manager.
+- **[ExifTool by Phil Harvey](https://exiftool.org/)** - Used to extract metadata (GPS data, timestamps, codecs) from video and image files. ExifTool must be available on the system PATH.
+- **Video Codecs** - The application requires video codecs to support playback.
+
+**Windows:**
+
+- ExifTool: download `exiftool.exe` from [exiftool.org](https://exiftool.org/) and place it on `PATH`.
+- Codecs: install the [K-Lite Codec Pack](https://www.codecguide.com/download_k-lite_codec_pack_basic.htm).
+
+**Linux (Debian/Ubuntu):**
+
+```bash
+sudo apt install \
+  libimage-exiftool-perl \
+  gstreamer1.0-libav \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad \
+  gstreamer1.0-plugins-ugly
+```
+
+`QMediaPlayer` on Linux is backed by GStreamer, so the codec packages above are what makes typical dashcam streams (H.264 / H.265 / AAC) play. On Fedora the equivalent is `perl-Image-ExifTool` plus the `gstreamer1-plugin-*` family from RPM Fusion.
 
 #### Python Dependencies
 
@@ -66,32 +84,40 @@ See `pyproject.toml` for complete dependency specifications and `uv.lock` for pi
 The application uses Python's built-in `logging` module configured via `log.conf`. Logging behavior:
 
 - **Console Output** - DEBUG level and higher during development
-- **File Logs** - Written to `%LOCALAPPDATA%/DashcamInvestigator/Logs/`:
+- **File Logs** - Written to a per-user log directory:
+  - Windows: `%LOCALAPPDATA%/DashcamInvestigator/DashcamInvestigator/Logs/`
+  - Linux: `$XDG_STATE_HOME/DashcamInvestigator/log/` (typically `~/.local/state/DashcamInvestigator/log/`)
+  - macOS: `~/Library/Logs/DashcamInvestigator/`
+
+  Files in that directory:
   - `error.log` - ERROR and CRITICAL messages
   - `debug.log` - DEBUG and higher messages with module/line information
 
 #### Building Executables
 
-PyInstaller creates standalone Windows executables. The build includes ExifTool and the bundled HTML/CSS/JS assets used by the web panels:
+PyInstaller is driven by `DashcamInvestigator.spec`, which works on Windows, Linux, and macOS:
 
 ```bash
-# Build with uv
-uv run pyinstaller \
-  --clean \
-  --noconsole \
-  --add-data "gpx.fmt;." \
-  --add-data "log.conf;." \
-  --add-binary "exiftool.exe;." \
-  --add-data "dashcam_investigator/gui/assets;dashcam_investigator/gui/assets" \
-  --name DashcamInvestigator \
-  dashcam_investigator/__main__.py
+uv run pyinstaller --noconfirm --clean DashcamInvestigator.spec
 ```
 
-The `gui/assets` data dir is required — it ships the Jinja templates,
-CSS tokens, JS bridge code and inline SVG icons that every WebPanel
-loads at runtime. Without it the app launches but every panel is empty.
+The spec bundles `gpx.fmt`, `log.conf`, and the entire `gui/assets` tree (Jinja templates, CSS tokens, JS bridge, inline SVG icons — the web panels render empty without these). ExifTool is **not** bundled; users install it system-wide as described under System Requirements.
 
-**Build Output:** `dist/DashcamInvestigator/` - Standalone application directory
+**Build Output:** `dist/DashcamInvestigator/` — standalone application directory. Launch with `DashcamInvestigator.exe` (Windows) or `./DashcamInvestigator` (Linux/macOS).
+
+##### Linux: tar.gz and AppImage
+
+After running PyInstaller, package the result for distribution:
+
+```bash
+# Portable tar.gz (extract anywhere, run ./DashcamInvestigator)
+tar -czf dist/DashcamInvestigator-linux-x86_64.tar.gz -C dist DashcamInvestigator
+
+# Single-file AppImage (requires `appimagetool` on PATH)
+./packaging/linux/build_appimage.sh
+```
+
+`packaging/linux/build_appimage.sh` wraps the PyInstaller bundle in an AppDir with the `.desktop` entry and icon under `packaging/linux/`, then invokes `appimagetool` to produce `dist/DashcamInvestigator-x86_64.AppImage`. Get `appimagetool` from the [AppImageKit releases](https://github.com/AppImage/AppImageKit/releases).
 
 ### Keyboard shortcuts
 

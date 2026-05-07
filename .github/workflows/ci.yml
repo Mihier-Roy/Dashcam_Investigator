@@ -132,13 +132,23 @@ jobs:
         run: |
           uv run python -c "import dashcam_investigator; print('Package imported successfully')"
 
-  release:
-    name: Create Release
-    runs-on: windows-latest
+  package:
+    name: Package (${{ matrix.os }})
     needs: [lint-and-format, test, build]
     if: github.event_name == 'workflow_dispatch' && inputs.create_release == true
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: DashcamInvestigator-windows-x86_64
+            artifact_path: dist/DashcamInvestigator-windows-x86_64.zip
+          - os: ubuntu-latest
+            artifact_name: DashcamInvestigator-linux-x86_64
+            artifact_path: |
+              dist/DashcamInvestigator-linux-x86_64.tar.gz
+              dist/DashcamInvestigator-x86_64.AppImage
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -157,18 +167,72 @@ jobs:
         run: |
           uv sync --frozen --dev
 
-      - name: Build Windows executable
+      - name: Install Linux system packages
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          uv run pyinstaller --clean --onefile --windowed --name DashcamInvestigator dashcam_investigator/__main__.py
+          sudo apt-get update
+          # ExifTool (Perl-based on Linux), GStreamer codecs for QMediaPlayer,
+          # and the FUSE runtime appimagetool needs to assemble the AppImage.
+          sudo apt-get install -y --no-install-recommends \
+            libimage-exiftool-perl \
+            gstreamer1.0-libav \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly \
+            libfuse2 \
+            file
+
+      - name: Build with PyInstaller
+        run: |
+          uv run pyinstaller --noconfirm --clean DashcamInvestigator.spec
+
+      - name: Package Windows zip
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/DashcamInvestigator/* -DestinationPath dist/DashcamInvestigator-windows-x86_64.zip
+
+      - name: Package Linux tar.gz
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czf dist/DashcamInvestigator-linux-x86_64.tar.gz -C dist DashcamInvestigator
+
+      - name: Build Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          curl -L -o /tmp/appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool
+          sudo install /tmp/appimagetool /usr/local/bin/appimagetool
+          ./packaging/linux/build_appimage.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [package]
+    if: github.event_name == 'workflow_dispatch' && inputs.create_release == true
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
       - name: Determine release version
         id: version
-        shell: bash
         run: |
           if [ -n "${{ inputs.release_version }}" ]; then
             echo "version=${{ inputs.release_version }}" >> $GITHUB_OUTPUT
           else
-            echo "version=v$(date +'%Y.%m.%d-%H%M%S')" >> $GITHUB_OUTPUT
+            echo "version=v$(date -u +'%Y.%m.%d-%H%M%S')" >> $GITHUB_OUTPUT
           fi
 
       - name: Create Release
@@ -179,7 +243,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/DashcamInvestigator.exe
+            artifacts/DashcamInvestigator-windows-x86_64/DashcamInvestigator-windows-x86_64.zip
+            artifacts/DashcamInvestigator-linux-x86_64/DashcamInvestigator-linux-x86_64.tar.gz
+            artifacts/DashcamInvestigator-linux-x86_64/DashcamInvestigator-x86_64.AppImage
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

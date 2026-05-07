@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Dashcam Investigator
+GenericName=Forensic Dashcam Analyzer
+Comment=Forensic investigation of evidence gathered from dashcam devices
+Exec=DashcamInvestigator
+Icon=DashcamInvestigator
+Terminal=false
+Categories=Office;Forensics;AudioVideo;Utility;
+Keywords=forensics;dashcam;video;gps;investigation;
+StartupWMClass=DashcamInvestigator

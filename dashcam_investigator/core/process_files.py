@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import filetype
@@ -23,41 +24,59 @@ def _emit_status(callback, msg: str) -> None:
         callback.emit(msg)
 
 
+def _process_video_file(
+    item: Path, project_dir: Path, status_callback
+) -> FileAttributes:
+    video = FileAttributes(item)
+    try:
+        _emit_status(status_callback, f"Extracting metadata: {item.name}")
+        video = extract_meta(video, project_dir)
+        _emit_status(status_callback, f"Generating map: {item.name}")
+        video = create_map(video, project_dir)
+    except DashcamInvestigatorError as exc:
+        logger.warning("Skipping %s: %s", item.name, exc)
+    return video
+
+
 def process_files(
     input_path: Path, project_object, progress_callback, status_callback=None
 ) -> ProjectStructure:
     """
     Identifies file types, extracts metadata, and builds maps for each video found.
+    Video files are processed concurrently; other file types are classified inline.
     """
     project_dir = project_object.project_info.project_directory
     current_progress = 1
+    video_paths: list[Path] = []
+
     for item in Path(input_path).rglob("*"):
-        if item.is_file():
+        if not item.is_file():
+            continue
+        file_type = filetype.guess_mime(item.resolve())
+        if file_type is not None:
+            prefix = file_type.split("/")[0]
+            if prefix == "video":
+                logger.debug(f"Video found : {item.name}")
+                video_paths.append(item)
+                continue
+            elif prefix == "image":
+                logger.debug(f"Image found : {item.name}")
+                project_object.image_files.append(FileAttributes(item))
+        else:
+            logger.debug(f"Other file found: {item.name}")
+            project_object.other_files.append(FileAttributes(item))
+        progress_callback.emit(current_progress)
+        current_progress += 1
+
+    with ThreadPoolExecutor() as executor:
+        future_to_item = {
+            executor.submit(_process_video_file, item, project_dir, status_callback): item
+            for item in video_paths
+        }
+        for future in as_completed(future_to_item):
             progress_callback.emit(current_progress)
             current_progress += 1
-
-            file_type = filetype.guess_mime(item.resolve())
-            if file_type is not None:
-                if file_type.split("/")[0] == "video":
-                    logger.debug(f"Video found : {item.name}")
-                    video = FileAttributes(item)
-                    try:
-                        _emit_status(
-                            status_callback, f"Extracting metadata: {item.name}"
-                        )
-                        video = extract_meta(video, project_dir)
-                        _emit_status(status_callback, f"Generating map: {item.name}")
-                        video = create_map(video, project_dir)
-                    except DashcamInvestigatorError as exc:
-                        logger.warning("Skipping %s: %s", item.name, exc)
-                    project_object.video_files.append(video)
-
-                elif file_type.split("/")[0] == "image":
-                    logger.debug(f"Image found : {item.name}")
-                    project_object.image_files.append(FileAttributes(item))
-            else:
-                logger.debug(f"Other file found: {item.name}")
-                project_object.other_files.append(FileAttributes(item))
+            project_object.video_files.append(future.result())
 
     project_object.project_info.num_videos = len(project_object.video_files)
     project_object.project_info.num_images = len(project_object.image_files)
@@ -68,17 +87,19 @@ def process_files(
 
 def extract_meta(video: FileAttributes, project_dir: Path) -> FileAttributes:
     """
-    Extracts GPS and file metadata and stores the paths as a dict in the FileAttributes object.
+    Extracts GPS and file metadata concurrently and stores the paths in FileAttributes.
     """
     meta_dir = Path(project_dir, ProjectSubdir.METADATA)
-    gps_path = process_gps_data(
-        video_path=Path(video.file_path),
-        output_dir=meta_dir,
-    )
-    csv_path = process_file_meta(
-        video_path=Path(video.file_path),
-        output_dir=meta_dir,
-    )
+    video_path = Path(video.file_path)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        gps_future = executor.submit(
+            process_gps_data, video_path=video_path, output_dir=meta_dir
+        )
+        csv_future = executor.submit(
+            process_file_meta, video_path=video_path, output_dir=meta_dir
+        )
+        gps_path = gps_future.result()
+        csv_path = csv_future.result()
     video.meta_files = {"gpx": str(gps_path), "csv": str(csv_path)}
     return video
 

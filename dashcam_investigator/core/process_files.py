@@ -70,7 +70,9 @@ def process_files(
 
     with ThreadPoolExecutor() as executor:
         future_to_item = {
-            executor.submit(_process_video_file, item, project_dir, status_callback): item
+            executor.submit(
+                _process_video_file, item, project_dir, status_callback
+            ): item
             for item in video_paths
         }
         for future in as_completed(future_to_item):

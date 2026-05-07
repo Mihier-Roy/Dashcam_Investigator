@@ -125,21 +125,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --dev
 
-      - name: Install Linux system packages
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          # ExifTool (Perl-based on Linux), GStreamer codecs for QMediaPlayer,
-          # and the FUSE runtime appimagetool needs to assemble the AppImage.
-          sudo apt-get install -y --no-install-recommends \
-            libimage-exiftool-perl \
-            gstreamer1.0-libav \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly \
-            libfuse2 \
-            file
-
       - name: Cache appimagetool
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache@v4

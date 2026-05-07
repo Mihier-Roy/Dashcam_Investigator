@@ -4,8 +4,10 @@ This is the entrypoint of the application that configures logging and then execu
 
 import logging
 import logging.config
-import os
+import sys
 from pathlib import Path
+
+from platformdirs import user_log_path
 
 # The dci:// URL scheme must be registered BEFORE QApplication is created,
 # which happens inside app.run(). Doing it here at import time keeps the
@@ -16,17 +18,36 @@ register_scheme()
 
 from .gui import app  # noqa: E402  (import after register_scheme on purpose)
 
-if __name__ == "__main__":
-    # Create a logs directory in AppData\Local\DashcamInvestigator if it doesn't already exist
-    appdata_local = os.getenv("LOCALAPPDATA")
-    log_path = Path(appdata_local, "DashcamInvestigator", "Logs")
-    LOG_PATH = str(log_path).replace("\\", "/")
-    if not Path(LOG_PATH).exists():
-        Path(LOG_PATH).mkdir(parents=True, exist_ok=True)
 
-    # Setup logging based on log.conf
+def _resolve_log_dir() -> Path:
+    """Per-user log directory across platforms.
+
+    Windows -> %LOCALAPPDATA%/DashcamInvestigator/Logs
+    Linux   -> $XDG_STATE_HOME/DashcamInvestigator/log (typically ~/.local/state/...)
+    macOS   -> ~/Library/Logs/DashcamInvestigator
+    """
+    return user_log_path(
+        "DashcamInvestigator", "DashcamInvestigator", ensure_exists=True
+    )
+
+
+def _resolve_log_conf() -> Path:
+    """Locate log.conf in dev checkouts and PyInstaller-frozen bundles."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "log.conf"  # type: ignore[attr-defined]
+    return Path(__file__).resolve().parent.parent / "log.conf"
+
+
+if __name__ == "__main__":
+    log_dir = _resolve_log_dir()
+    # fileConfig substitutes %(logPath)s into the file handler args. Forward
+    # slashes work on every platform Python's logging module supports.
+    log_path_str = log_dir.as_posix()
+
     logging.config.fileConfig(
-        "log.conf", defaults={"logPath": LOG_PATH}, disable_existing_loggers=False
+        str(_resolve_log_conf()),
+        defaults={"logPath": log_path_str},
+        disable_existing_loggers=False,
     )
 
     logger = logging.getLogger(__name__)

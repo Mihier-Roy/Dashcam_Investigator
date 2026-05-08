@@ -51,7 +51,7 @@ def _make_gpx_content(num_points: int = 3) -> str:
 def _make_csv_content() -> str:
     return (
         "SourceFile,FileType,FileSize,MIMEType,CreateDate,Duration,Format,Information\n"
-        "/tmp/video.mp4,MP4,10485760,video/mp4,01-06-2024 12:00:00,00:03:00,MPEG-4,Test\n"
+        "/tmp/video.mp4,MP4,10485760,video/mp4,2024-06-01 12:00:00,00:03:00,MPEG-4,Test\n"
     )
 
 

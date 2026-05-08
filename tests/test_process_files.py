@@ -9,6 +9,7 @@ from dashcam_investigator.core.process_files import (
     extract_meta,
     process_files,
 )
+from dashcam_investigator.exceptions import ExifToolError
 from dashcam_investigator.project_manager.project_datatypes import (
     FileAttributes,
     ProjectInfo,
@@ -418,3 +419,28 @@ class TestProcessFiles:
 
         # Should process the file but not the directory
         assert result.project_info.num_other == 1
+
+    @patch("dashcam_investigator.core.process_files.extract_meta")
+    @patch("dashcam_investigator.core.process_files.filetype.guess_mime")
+    def test_processing_error_set_on_failure(
+        self, mock_filetype, mock_extract, create_project_structure
+    ):
+        """When pipeline raises DashcamInvestigatorError the video is still added
+        to video_files but carries a non-None processing_error string."""
+        input_dir, project = create_project_structure()
+
+        video_file = input_dir / "bad.mp4"
+        video_file.write_text("content")
+
+        mock_filetype.return_value = "video/mp4"
+        mock_extract.side_effect = ExifToolError("exiftool not found on PATH")
+
+        progress_callback = Mock()
+        progress_callback.emit = Mock()
+
+        result = process_files(input_dir, project, progress_callback)
+
+        assert len(result.video_files) == 1
+        video = result.video_files[0]
+        assert video.processing_error is not None
+        assert "exiftool" in video.processing_error

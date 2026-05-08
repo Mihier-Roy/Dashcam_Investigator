@@ -10,7 +10,6 @@ from folium import (
     Map,
     Marker,
     Popup,
-    TileLayer,
 )
 from folium.plugins import Draw, MeasureControl
 from folium.vector_layers import PolyLine
@@ -190,16 +189,10 @@ class StartMarkerPopup:
 
 
 class Mappy:
-    """Class which stores the folium map canvas, adds tilelayers, adds draw options, and adds featuregroups"""
+    """Class which stores the folium map canvas, adds draw options, and adds featuregroups"""
 
     def __init__(self, average_point):
         self.canvas = Map(location=average_point, zoom_start=12)
-
-    def add_tilelayers(self):
-        # Adds different map styles which can bee freely switched between by the user
-        TileLayer("OpenStreet Map").add_to(self.canvas)
-        TileLayer("Stamen Terrain").add_to(self.canvas)
-        TileLayer("Stamen Toner").add_to(self.canvas)
 
     def add_draw_options(self):
         # Adds draw options for the user

@@ -6,6 +6,7 @@ import gpxpy
 import pandas as pd
 import pytest
 
+import dashcam_investigator.core.generate_dataframe as _gen_df_module
 from dashcam_investigator.core.generate_dataframe import (
     MetaDataFrames,
     make_speed_dataframe,
@@ -50,7 +51,7 @@ class TestMetaDataFrames:
 
         def _create_csv(filename: str):
             csv_content = """SourceFile,FileType,FileSize,MIMEType,CreateDate,Duration,Format,Information
-/tmp/video.mp4,MP4,10485760,video/mp4,15-01-2024 14:30:00,00:05:30,MPEG-4,Test video"""
+/tmp/video.mp4,MP4,10485760,video/mp4,2024-01-15 14:30:00,00:05:30,MPEG-4,Test video"""
             csv_path = temp_dir / filename
             csv_path.write_text(csv_content)
             return csv_path
@@ -221,7 +222,7 @@ class TestMakeSpeedDataframe:
 
             # Create CSV file
             csv_content = """SourceFile,FileType,FileSize,MIMEType,CreateDate,Duration,Format,Information
-/tmp/video.mp4,MP4,10485760,video/mp4,15-01-2024 14:30:00,00:05:30,MPEG-4,Test"""
+/tmp/video.mp4,MP4,10485760,video/mp4,2024-01-15 14:30:00,00:05:30,MPEG-4,Test"""
             csv_path = temp_dir / "test_fileinfo.csv"
             csv_path.write_text(csv_content)
 
@@ -273,3 +274,61 @@ class TestMakeSpeedDataframe:
 
         # Should have same number of rows
         assert len(speed_df) == len(original_speeds)
+
+
+class TestConvertToDatetime:
+    """Tests for MetaDataFrames.convert_to_datetime."""
+
+    @pytest.fixture
+    def meta_with_iso_csv(self, temp_dir):
+        gpx = gpxpy.gpx.GPX()
+        track = gpxpy.gpx.GPXTrack()
+        gpx.tracks.append(track)
+        segment = gpxpy.gpx.GPXTrackSegment()
+        track.segments.append(segment)
+        for i in range(3):
+            segment.points.append(
+                gpxpy.gpx.GPXTrackPoint(
+                    latitude=51.5 + i * 0.001,
+                    longitude=-0.1 + i * 0.001,
+                    elevation=20.0,
+                    time=datetime(2024, 6, 1, 12, 0, i * 10),
+                )
+            )
+        gpx_path = temp_dir / "clip.gpx"
+        gpx_path.write_text(gpx.to_xml())
+
+        csv_content = (
+            "SourceFile,FileType,FileSize,MIMEType,CreateDate,Duration,Format,Information\n"
+            "/tmp/clip.mp4,MP4,1048576,video/mp4,2024-06-01 12:00:00,00:03:00,MPEG-4,Test\n"
+        )
+        csv_path = temp_dir / "clip_fileinfo.csv"
+        csv_path.write_text(csv_content)
+
+        return MetaDataFrames(
+            video_name="clip",
+            video_meta_files={"gpx": str(gpx_path), "csv": str(csv_path)},
+        )
+
+    def test_convert_to_datetime_gps_becomes_datetime(self, meta_with_iso_csv):
+        meta = meta_with_iso_csv
+        meta.convert_to_datetime()
+        assert pd.api.types.is_datetime64_any_dtype(meta.gps_df["DateTime"])
+
+    def test_convert_to_datetime_create_date_becomes_datetime(self, meta_with_iso_csv):
+        meta = meta_with_iso_csv
+        meta.convert_to_datetime()
+        assert pd.api.types.is_datetime64_any_dtype(meta.file_info_df["CreateDate"])
+
+    def test_convert_to_datetime_no_nat_values(self, meta_with_iso_csv):
+        meta = meta_with_iso_csv
+        meta.convert_to_datetime()
+        assert not meta.gps_df["DateTime"].isna().any()
+        assert not meta.file_info_df["CreateDate"].isna().any()
+
+
+class TestFindFinalPointRemoved:
+    """Ensure the broken find_final_point_in_route function has been deleted."""
+
+    def test_function_no_longer_exported(self):
+        assert not hasattr(_gen_df_module, "find_final_point_in_route")

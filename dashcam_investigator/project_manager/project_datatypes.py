@@ -62,6 +62,7 @@ class FileAttributes:
         output_files=None,
         flagged=None,
         notes=None,
+        processing_error=None,
     ) -> None:
         self.file_path = file_path
         self.name = self.file_path.name if name is None else name
@@ -72,6 +73,7 @@ class FileAttributes:
         self.output_files = [] if output_files is None else output_files
         self.flagged = False if flagged is None else flagged
         self.notes = "" if notes is None else notes
+        self.processing_error: str | None = processing_error
 
     @property
     def sha256_hash(self) -> str:
@@ -90,6 +92,7 @@ class FileAttributes:
             "output_files": self.output_files,
             "flagged": self.flagged,
             "notes": self.notes,
+            "processing_error": self.processing_error,
         }
 
 

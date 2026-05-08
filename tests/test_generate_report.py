@@ -56,7 +56,7 @@ class TestGenerateReport:
                 # Create metadata CSV
                 csv_path = metadata_dir / f"video{i}_fileinfo.csv"
                 csv_content = f"""SourceFile,FileType,FileSize,MIMEType,CreateDate,Duration,Format,Information
-/tmp/video{i}.mp4,MP4,1048576,video/mp4,15-01-2024 14:30:00,00:05:30,MPEG-4,Test Device"""
+/tmp/video{i}.mp4,MP4,1048576,video/mp4,2024-01-15 14:30:00,00:05:30,MPEG-4,Test Device"""
                 csv_path.write_text(csv_content)
 
                 # Create GPX file

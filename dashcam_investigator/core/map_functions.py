@@ -19,7 +19,6 @@ def initialise_map(video_metadata: DataFrame) -> Mappy:
     """
     logger.debug("Initialising map")
     mappy = Mappy(video_metadata)
-    mappy.add_tilelayers()
     mappy.add_draw_options()
     mappy.generate_feature_groups()
     mappy.add_layer_control()

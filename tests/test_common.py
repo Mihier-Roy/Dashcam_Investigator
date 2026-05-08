@@ -110,7 +110,7 @@ class TestConvertToSeconds:
         # 2 minutes and 30 seconds = 150000 ms
         seconds, minutes = convert_to_seconds(150000)
 
-        assert seconds == 30  # >= 10, returns int
+        assert seconds == "30"
         assert minutes == "02"
 
     def test_convert_with_zero_padding_seconds(self):
@@ -126,7 +126,7 @@ class TestConvertToSeconds:
         # 3 minutes and 15 seconds = 195000 ms
         seconds, minutes = convert_to_seconds(195000)
 
-        assert seconds == 15  # >= 10, returns int
+        assert seconds == "15"
         assert minutes == "03"
 
     def test_convert_no_zero_padding_double_digits(self):
@@ -134,15 +134,15 @@ class TestConvertToSeconds:
         # 12 minutes and 45 seconds = 765000 ms
         seconds, minutes = convert_to_seconds(765000)
 
-        assert seconds == 45  # >= 10, returns int
-        assert minutes == 12  # >= 10, returns int
+        assert seconds == "45"
+        assert minutes == "12"
 
     def test_convert_59_seconds(self):
         """Test conversion at boundary (59 seconds)."""
         # 59 seconds = 59000 ms
         seconds, minutes = convert_to_seconds(59000)
 
-        assert seconds == 59  # >= 10, returns int
+        assert seconds == "59"
         assert minutes == "00"
 
     def test_convert_59_minutes_59_seconds(self):
@@ -150,22 +150,20 @@ class TestConvertToSeconds:
         # 59 minutes 59 seconds = 3599000 ms
         seconds, minutes = convert_to_seconds(3599000)
 
-        assert seconds == 59  # >= 10, returns int
-        assert minutes == 59  # >= 10, returns int
+        assert seconds == "59"
+        assert minutes == "59"
 
     def test_convert_large_value(self):
-        """Test conversion of large values (hours not considered)."""
-        # 2 hours 30 minutes 45 seconds = 9045000 ms
-        # Should wrap at 60 minutes, showing only minutes % 60
+        """Test conversion of large values (>1 hour) does not wrap minutes."""
+        # 2 hours 30 minutes 45 seconds = 9045000 ms = 150 minutes 45 seconds
         seconds, minutes = convert_to_seconds(9045000)
 
-        assert seconds == 45  # >= 10, returns int
-        # 150 minutes % 60 = 30 minutes
-        assert minutes == 30  # >= 10, returns int
+        assert seconds == "45"
+        assert minutes == "150"
 
     def test_return_type(self):
-        """Test that function returns strings."""
-        seconds, minutes = convert_to_seconds(5000)
-
-        assert isinstance(seconds, str)
-        assert isinstance(minutes, str)
+        """Test that function always returns strings regardless of value size."""
+        for ms in (0, 5000, 150000, 765000, 9045000):
+            seconds, minutes = convert_to_seconds(ms)
+            assert isinstance(seconds, str), f"seconds is not str for {ms}ms"
+            assert isinstance(minutes, str), f"minutes is not str for {ms}ms"

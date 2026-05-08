@@ -17,16 +17,13 @@ def generate_file_hash(file_path: Path) -> str:
         return hash_function.hexdigest()
 
 
-def convert_to_seconds(milliseconds: int) -> Tuple[int, int]:
+def convert_to_seconds(milliseconds: int) -> Tuple[str, str]:
     """
     This function converts video duration from milliseconds to seconds and minutes.
     param: milliseconds -> video duration in milliseconds
-    returns: seconds, minutes
+    returns: (seconds_str, minutes_str) — both zero-padded to at least 2 digits
     """
-    seconds = int((milliseconds / 1000) % 60)
-    minutes = int((milliseconds / (1000 * 60)) % 60)
-    if seconds < 10:
-        seconds = "0" + str(seconds)
-    if minutes < 10:
-        minutes = "0" + str(minutes)
-    return seconds, minutes
+    total_seconds = int(milliseconds / 1000)
+    seconds = total_seconds % 60
+    minutes = total_seconds // 60
+    return f"{seconds:02d}", f"{minutes:02d}"

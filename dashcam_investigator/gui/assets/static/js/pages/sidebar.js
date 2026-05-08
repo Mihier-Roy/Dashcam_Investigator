@@ -38,6 +38,9 @@ function filterVideos(videos) {
 function videoRowHtml(video) {
     const sel = state.selected === video.name ? " selected" : "";
     const flag = video.flagged ? '<span class="badge badge-flag">Flagged</span>' : "";
+    const warn = video.processing_error
+        ? `<span class="badge badge-danger" title="${escapeHtml(video.processing_error)}">⚠ Error</span>`
+        : "";
     const hash = video.sha256_hash
         ? `<div class="meta mono truncate" title="${escapeHtml(video.sha256_hash)}">${escapeHtml(video.sha256_hash.slice(0, 16))}…</div>`
         : "";
@@ -48,7 +51,7 @@ function videoRowHtml(video) {
                 <div class="title truncate" title="${escapeHtml(video.name)}">${escapeHtml(video.name)}</div>
                 ${hash}
             </div>
-            ${flag}
+            ${warn}${flag}
         </div>
     `;
 }

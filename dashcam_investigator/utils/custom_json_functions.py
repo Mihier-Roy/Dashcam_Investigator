@@ -98,6 +98,7 @@ def convert_to_file_attr(input_list: list) -> list:
                 output_files=item["output_files"],
                 flagged=item["flagged"],
                 notes=item["notes"],
+                processing_error=item.get("processing_error"),
             )
         )
     return output_list

@@ -69,7 +69,7 @@ def process_file_meta(video_path: Path, output_dir: Path) -> Path:
         "-filesize",
         "-MIMEType",
         "-d",
-        "%d-%m-%Y %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
         "-createDate",
         "-Duration",
         "-Format",

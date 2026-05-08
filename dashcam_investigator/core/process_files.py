@@ -35,6 +35,7 @@ def _process_video_file(
         video = create_map(video, project_dir)
     except DashcamInvestigatorError as exc:
         logger.warning("Skipping %s: %s", item.name, exc)
+        video.processing_error = str(exc)
     return video
 
 

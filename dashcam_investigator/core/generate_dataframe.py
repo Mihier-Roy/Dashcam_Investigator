@@ -68,19 +68,17 @@ class MetaDataFrames:
     def convert_to_datetime(self):
         """
         Converts the date and time columns in the dataframe to datetime objects.
+        GPS datetimes from gpxpy are already Python datetime objects; CreateDate
+        strings from exiftool use ISO format (%Y-%m-%d %H:%M:%S).
         """
         logger.debug("Converting time formats to pandas datetime objects")
-        try:
-            self.gps_df["DateTime"] = to_datetime(
-                arg=self.gps_df["DateTime"], format="%d-%m-%Y %H:%M:%S"
-            )
-        except Exception:
-            self.gps_df["DateTime"] = to_datetime(
-                arg=self.gps_df["DateTime"], format="%y:%m:%d %H:%M:%S"
-            )
-
+        self.gps_df["DateTime"] = to_datetime(
+            arg=self.gps_df["DateTime"], utc=True, errors="coerce"
+        )
         self.file_info_df["CreateDate"] = to_datetime(
-            arg=self.file_info_df["CreateDate"], format="%d-%m-%Y %H:%M:%S"
+            arg=self.file_info_df["CreateDate"],
+            format="%Y-%m-%d %H:%M:%S",
+            errors="coerce",
         )
 
     def add_label_for_speed_chart(self):
@@ -108,9 +106,3 @@ def make_speed_dataframe(video_meta_handler) -> DataFrame:
     logger.debug("Generating speed dataframe for speed graph")
     speed_data = video_meta_handler.gps_df[["Speed", "DateTime", "DataSource"]]
     return speed_data
-
-
-def find_final_point_in_route(video_list: list) -> tuple:
-    """Takes in a list of MetaDataFrames handlers and returns the final coordinate."""
-    final_point = video_list[-1].gps_df["Latitude, Longitude"].iloc[-1]
-    return final_point

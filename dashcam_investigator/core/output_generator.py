@@ -33,12 +33,7 @@ class OutputGenerator:
 
         self.speed_data = make_speed_dataframe(video_meta_handler)
 
-        # Compute mean and median GPS coordinates
         mean_point = (
-            video_meta_handler.gps_df["Latitude"].mean(),
-            video_meta_handler.gps_df["Longitude"].mean(),
-        )
-        (
             video_meta_handler.gps_df["Latitude"].mean(),
             video_meta_handler.gps_df["Longitude"].mean(),
         )

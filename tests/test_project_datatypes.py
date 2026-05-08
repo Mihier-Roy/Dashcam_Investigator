@@ -105,6 +105,37 @@ class TestFileAttributes:
         assert file_attr.output_files == []
         assert file_attr.flagged is False
         assert file_attr.notes == ""
+        assert file_attr.processing_error is None
+
+    def test_processing_error_field(self, temp_dir):
+        """processing_error defaults to None and can be set to a string."""
+        test_file = temp_dir / "broken.mp4"
+        test_file.write_text("x")
+
+        fa = FileAttributes(file_path=test_file)
+        assert fa.processing_error is None
+
+        fa.processing_error = "exiftool timed out"
+        assert fa.processing_error == "exiftool timed out"
+
+    def test_processing_error_serialized(self, temp_dir):
+        """processing_error is included in to_dict() output."""
+        test_file = temp_dir / "broken.mp4"
+        test_file.write_text("x")
+
+        fa = FileAttributes(file_path=test_file, processing_error="some error")
+        d = fa.to_dict()
+        assert d["processing_error"] == "some error"
+
+    def test_processing_error_none_serialized(self, temp_dir):
+        """processing_error=None is also serialized (for round-trip fidelity)."""
+        test_file = temp_dir / "ok.mp4"
+        test_file.write_text("x")
+
+        fa = FileAttributes(file_path=test_file)
+        d = fa.to_dict()
+        assert "processing_error" in d
+        assert d["processing_error"] is None
 
     def test_init_with_custom_values(self, temp_dir):
         """Test FileAttributes initialization with custom values."""

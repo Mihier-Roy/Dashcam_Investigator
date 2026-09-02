@@ -23,11 +23,45 @@ Layout:
 
 from __future__ import annotations
 
+import logging
+
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtMultimediaWidgets import QVideoWidget
+from PySide6.QtSvg import QSvgRenderer
 
 from .web.bridge import Bridge
 from .web.panel import WebPanel
+from .web.renderer import static_path
+
+logger = logging.getLogger(__name__)
+
+_ICON_SIZE = 18
+
+
+def _icon(name: str, color: str) -> QtGui.QIcon:
+    """Render an SVG from gui/assets/static/icons/ to a QIcon tinted `color`.
+
+    The on-disk SVGs use stroke="currentColor"; QSvgRenderer doesn't resolve
+    CSS currentColor, so we recolor by substituting the literal string before
+    rendering. Missing/unreadable assets log a warning and return a null
+    QIcon rather than raising -- these are ship-time assets, a missing file
+    is a packaging bug, not something to crash the UI over.
+    """
+    path = static_path() / "icons" / f"{name}.svg"
+    try:
+        svg_text = path.read_text().replace("currentColor", color)
+    except OSError as exc:
+        logger.warning("Failed to load icon %r: %s", name, exc)
+        return QtGui.QIcon()
+
+    renderer = QSvgRenderer(svg_text.encode("utf-8"))
+    pixmap = QtGui.QPixmap(_ICON_SIZE, _ICON_SIZE)
+    pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+    painter = QtGui.QPainter(pixmap)
+    renderer.render(painter)
+    painter.end()
+    return QtGui.QIcon(pixmap)
+
 
 # Sane minimums — picked so the player + sidebar are still usable.
 MIN_WINDOW_SIZE = QtCore.QSize(1100, 700)
@@ -224,6 +258,14 @@ def _build_data_tabs(
         "Notes",
         "notes.html",
     )
+
+    muted_color = "#64748b"  # matches --text-muted in tokens.css (light); QSS
+    # theme switching doesn't currently re-tint native icons -- acceptable
+    # for this pass, see spec's "explicitly out of scope" on full theming.
+    tabs.setTabIcon(0, _icon("map-pin", muted_color))
+    tabs.setTabIcon(1, _icon("file", muted_color))
+    tabs.setTabIcon(2, _icon("bar-chart", muted_color))
+    tabs.setTabIcon(3, _icon("notebook", muted_color))
 
 
 def _add_panel_tab(

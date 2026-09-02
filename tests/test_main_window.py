@@ -14,6 +14,9 @@ from importlib import resources
 from pathlib import Path
 
 import pytest
+from PySide6 import QtGui, QtWidgets
+
+from dashcam_investigator.gui.main_window import _icon
 
 
 def _read(rel_path: str) -> str:
@@ -25,6 +28,10 @@ def _qt_widgets_or_skip():
         return importlib.import_module("PySide6.QtWidgets")
     except ImportError as exc:
         pytest.skip(f"PySide6.QtWidgets not loadable on this host: {exc}")
+
+
+def _app() -> QtWidgets.QApplication:
+    return QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
 # --- Source-text regression nets (run everywhere) ---------------------
@@ -104,3 +111,20 @@ def test_size_constants_are_sane() -> None:
         main_window.DEFAULT_WINDOW_SIZE.height() >= main_window.MIN_WINDOW_SIZE.height()
     )
     assert main_window.SIDEBAR_MIN_WIDTH < main_window.SIDEBAR_DEFAULT_WIDTH
+
+
+# --- _icon() SVG-to-QIcon helper ---------------------------------------
+def test_icon_returns_qicon_for_existing_asset():
+    _app()
+    icon = _icon("map-pin", "#000000")
+    assert isinstance(icon, QtGui.QIcon)
+    assert not icon.isNull()
+
+
+def test_icon_returns_empty_icon_for_missing_asset(caplog):
+    _app()
+    with caplog.at_level("WARNING"):
+        icon = _icon("does-not-exist", "#000000")
+    assert isinstance(icon, QtGui.QIcon)
+    assert icon.isNull()
+    assert "does-not-exist" in caplog.text

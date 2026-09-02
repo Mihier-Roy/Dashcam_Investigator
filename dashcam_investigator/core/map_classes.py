@@ -79,110 +79,52 @@ class StartMarkerPopup:
     """
 
     def __init__(self, file_info_df):
-        self.file_name = file_info_df["SourceFile"].iloc[0]
-        self.file_type = file_info_df["FileType"].iloc[0]
-        self.file_size = file_info_df["FileSize"].iloc[0]
-        self.MIMEType = file_info_df["MIMEType"].iloc[0]
-        self.duration = file_info_df["Duration"].iloc[0]
-        self.average_speed = f'{file_info_df["AverageSpeed"].iloc[0]}'
-        self.max_speed = f'{file_info_df["MaxSpeed"].iloc[0]}'
-        self.file_create_date = file_info_df["CreateDate"].iloc[0]
+        self.file_name = str(file_info_df["SourceFile"].iloc[0])
+        self.file_type = str(file_info_df["FileType"].iloc[0])
+        self.file_size = str(file_info_df["FileSize"].iloc[0])
+        self.MIMEType = str(file_info_df["MIMEType"].iloc[0])
+        self.duration = str(file_info_df["Duration"].iloc[0])
+        self.average_speed = str(file_info_df["AverageSpeed"].iloc[0])
+        self.max_speed = str(file_info_df["MaxSpeed"].iloc[0])
+        self.file_create_date = str(file_info_df["CreateDate"].iloc[0])
 
     def start_marker_popup_html(self) -> Popup:
         # Defines the HTML file details table
-        self.popup_html = (
-            """<html  lang="en">
-			<head>
-			<meta  charset="UTF-8">
-	<style>
-	table {
-		font-family:  arial,  sans-serif;
-		border-collapse:  collapse;
-		width:  100%;
-	}
-
-	td,  th  {
-		border:  1px  solid  #dddddd;
-		text-align:  left;
-		padding:  8px;
-	}
-
-
-
-	tr:nth-child(even) {
-		background-color:  #dddddd;
-	}
-	</style>
-
-			</head>
-			<body>
-
-
-			<h1>File Information</h1>
-			<table style ="width:100%">
-				<tr>
-					<th> File  Attribute(s)</th>
-					<th> Value(s)</th>
-				</tr>
-				<tr>
-					<td>	Name:  </td>
-					<td> """
-            + self.file_name
-            + """ </td>
-				</tr>
-				<tr>
-					<td>	File Type  </td>
-					<td> """
-            + self.file_type
-            + """	 </td>
-				</tr>
-				<tr>
-					<td>	File Size  </td>
-					<td>	"""
-            + self.file_size
-            + """  </td>
-				</tr>
-				<tr>
-					<td>	MIME Type  </td>
-					<td>	"""
-            + self.MIMEType
-            + """   </td>
-				</tr>
-				<tr>
-					<td>	Video Length  </td>
-					<td>	"""
-            + self.duration
-            + """  </td>
-				</tr>
-				</tr>
-				<tr>
-					<td>	Average  Speed:	</td>
-					<td>	"""
-            + str(self.average_speed)
-            + """  </td>
-				</tr>
-				<tr>
-					<td>	Highest  Speed:	</td>
-					<td>	"""
-            + str(self.max_speed)
-            + """  </td>
-				</tr>
-				<tr>
-					<td>  File Create Date and Time:	</td>
-					<td>  """
-            + str(self.file_create_date)
-            + """  </td>
-				</tr>
-			</tr>
-
-		</table>
-
-
-		</body>
-		</html>
-
-		"""
-        )
+        self.popup_html = f"""<html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <style>
+        table {{
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }}
+        td, th {{
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }}
+        tr:nth-child(even) {{
+            background-color: #dddddd;
+        }}
+        </style>
+        </head>
+        <body>
+        <h1>File Information</h1>
+        <table style="width:100%">
+            <tr><th>File Attribute(s)</th><th>Value(s)</th></tr>
+            <tr><td>Name:</td><td>{self.file_name}</td></tr>
+            <tr><td>File Type</td><td>{self.file_type}</td></tr>
+            <tr><td>File Size</td><td>{self.file_size}</td></tr>
+            <tr><td>MIME Type</td><td>{self.MIMEType}</td></tr>
+            <tr><td>Video Length</td><td>{self.duration}</td></tr>
+            <tr><td>Average Speed:</td><td>{self.average_speed}</td></tr>
+            <tr><td>Highest Speed:</td><td>{self.max_speed}</td></tr>
+            <tr><td>File Create Date and Time:</td><td>{self.file_create_date}</td></tr>
+        </table>
+        </body>
+        </html>
+        """
         iframe = IFrame(html=self.popup_html, width=500, height=300)
         popup = Popup(iframe, max_width=2650)
 
@@ -196,10 +138,16 @@ class Mappy:
         self.canvas = Map(location=average_point, zoom_start=12)
 
     def add_tilelayers(self):
-        # Adds different map styles which can bee freely switched between by the user
-        TileLayer("OpenStreet Map").add_to(self.canvas)
-        TileLayer("Stamen Terrain").add_to(self.canvas)
-        TileLayer("Stamen Toner").add_to(self.canvas)
+        # Adds different map styles which can be freely switched between by
+        # the user. CartoDB Positron/Voyager now require a Carto API key
+        # in production (they still return HTTP 200, but the tile image
+        # itself is a watermark reading "API key required") -- verified by
+        # fetching sample tiles directly. Esri and OpenStreetMap.HOT are
+        # confirmed key-less alternatives (xyzservices requires_token=False
+        # plus a manual fetch check of real tile bytes).
+        TileLayer("OpenStreetMap").add_to(self.canvas)
+        TileLayer("OpenStreetMap.HOT").add_to(self.canvas)
+        TileLayer("Esri.WorldTopoMap").add_to(self.canvas)
 
     def add_draw_options(self):
         # Adds draw options for the user
@@ -223,13 +171,6 @@ class Mappy:
         self.start_markers = FeatureGroup(
             name="Start markers for each video", show=True
         ).add_to(self.canvas)
-        # self.speed_chart_marker = FeatureGroup(
-        #     name="Speed chart marker", show=True
-        # ).add_to(self.canvas)
-        # self.timeline_marker = FeatureGroup(name="Timeline marker", show=True).add_to(
-        #     self.canvas
-        # )
-        # self.exclusion_zone_feature_group=FeatureGroup(name="Exclusion zone group", show=True).add_to(self.canvas)
 
     def add_layer_control(self):
         # adds the ability to hide and show featuregroups/tilelayers

@@ -82,8 +82,12 @@ __pypackages__/
 env/
 venv/
 ENV/
+.direnv/
 env.bak/
 venv.bak/
+
+# Downloaded test-fixture videos (large binaries, fetch on demand)
+tests/fixtures/sample_videos/
 
 # mkdocs documentation
 /site

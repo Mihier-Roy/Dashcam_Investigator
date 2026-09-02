@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from typing import Union
 
 from dashcam_investigator.constants import TOOL_NAME
@@ -21,15 +20,6 @@ class ProjectEncoder(json.JSONEncoder):
             return o.to_dict()
 
         return json.JSONEncoder.default(self, o)
-
-
-def _migrate_meta_files(meta_files) -> dict:
-    """Upgrade old list-format meta_files [gpx, csv] to the current dict format."""
-    if isinstance(meta_files, dict):
-        return meta_files
-    if isinstance(meta_files, list) and len(meta_files) >= 2:
-        return {"gpx": meta_files[0], "csv": meta_files[1]}
-    return {}
 
 
 def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
@@ -58,46 +48,19 @@ def project_decoder(dictionary: dict) -> Union[dict, ProjectStructure]:
     return dictionary
 
 
-def convert_to_project_info(proj_info: list) -> ProjectInfo:
+def convert_to_project_info(proj_info: dict) -> ProjectInfo:
     """
-    Converts a JSON object into a ProjectInfo object
-    params: proj_info -> list
+    Converts a JSON object into a ProjectInfo object.
+    params: proj_info -> dict
     returns: ProjectInfo
     """
-    project = ProjectInfo(
-        input_dir=Path(proj_info["input_directory"]),
-        output_dir=Path(proj_info["project_directory"]),
-        date_created=proj_info["date_created"],
-        case_name=proj_info["case_name"],
-        investigator_name=proj_info["investigator_name"],
-        report_path=proj_info["report_path"],
-    )
-    # Restore count fields if present
-    project.num_videos = proj_info.get("num_videos")
-    project.num_images = proj_info.get("num_images")
-    project.num_other = proj_info.get("num_other")
-    return project
+    return ProjectInfo.from_dict(proj_info)
 
 
 def convert_to_file_attr(input_list: list) -> list:
     """
-    Converts a list of JSON objects into a FileAttributes object.
+    Converts a list of JSON objects into FileAttributes objects.
     params: input_list -> list
     returns: output_list -> list of file attribute objects
     """
-    output_list = []
-
-    for item in input_list:
-        output_list.append(
-            FileAttributes(
-                file_path=Path(item["file_path"]),
-                name=item["name"],
-                ftype=item["type"],
-                sha256_hash=item["sha256_hash"],
-                meta_files=_migrate_meta_files(item["meta_files"]),
-                output_files=item["output_files"],
-                flagged=item["flagged"],
-                notes=item["notes"],
-            )
-        )
-    return output_list
+    return [FileAttributes.from_dict(item) for item in input_list]

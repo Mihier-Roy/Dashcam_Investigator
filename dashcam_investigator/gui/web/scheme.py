@@ -52,10 +52,15 @@ def register_scheme() -> None:
     scheme.setDefaultPort(QWebEngineUrlScheme.SpecialPort.PortUnspecified.value)
     scheme.setFlags(
         QWebEngineUrlScheme.Flag.SecureScheme
-        | QWebEngineUrlScheme.Flag.LocalScheme
         | QWebEngineUrlScheme.Flag.LocalAccessAllowed
         | QWebEngineUrlScheme.Flag.CorsEnabled
     )
+    # Deliberately NOT QWebEngineUrlScheme.Flag.LocalScheme: that flag
+    # mirrors file://'s cross-origin restrictions, which blocks the
+    # embedded folium/Altair output (loaded via <iframe srcdoc> on a
+    # dci:// page) from fetching its CDN-hosted JS (Leaflet, jQuery,
+    # Vega) -- the map/speed-graph panels render blank with
+    # "X is not defined" console errors otherwise.
     QWebEngineUrlScheme.registerScheme(scheme)
     _registered = True
     logger.debug("Registered dci:// URL scheme")

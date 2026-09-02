@@ -33,12 +33,8 @@ class OutputGenerator:
 
         self.speed_data = make_speed_dataframe(video_meta_handler)
 
-        # Compute mean and median GPS coordinates
+        # Compute mean GPS coordinates to centre the map
         mean_point = (
-            video_meta_handler.gps_df["Latitude"].mean(),
-            video_meta_handler.gps_df["Longitude"].mean(),
-        )
-        (
             video_meta_handler.gps_df["Latitude"].mean(),
             video_meta_handler.gps_df["Longitude"].mean(),
         )
@@ -70,3 +66,4 @@ class OutputGenerator:
             .interactive()
         )
         speed_chart.save(output_path)
+        return speed_chart

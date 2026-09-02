@@ -24,6 +24,20 @@ def test_register_scheme_is_idempotent() -> None:
     scheme.register_scheme()  # second call must not raise
     assert scheme._registered is True
 
+def test_registered_scheme_allows_cross_origin_fetches() -> None:
+    """Regression: QWebEngineUrlScheme.Flag.LocalScheme mirrors file://'s
+    cross-origin restrictions, which silently blocked the embedded
+    folium/Altair output (loaded via <iframe srcdoc> on a dci:// page)
+    from fetching its CDN-hosted JS (Leaflet, jQuery, Vega) -- the map
+    and speed-graph panels rendered blank with "X is not defined"
+    console errors. The scheme must stay off that flag.
+    """
+    scheme.register_scheme()
+    registered = QtWebEngineCore.QWebEngineUrlScheme.schemeByName(scheme.SCHEME_NAME)
+    assert not (
+        registered.flags() & QtWebEngineCore.QWebEngineUrlScheme.Flag.LocalScheme
+    )
+
 
 def test_guess_mime_uses_overrides(tmp_path) -> None:
     js_file = tmp_path / "x.js"

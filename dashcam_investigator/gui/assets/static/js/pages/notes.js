@@ -7,8 +7,6 @@ const state = {
     lastSavedText: "",    // baseline used for blur-driven dirty check
 };
 
-const $ = (id) => document.getElementById(id);
-
 function showToast(text, kind = "success", timeoutMs = 1600) {
     const el = $("notes-toast");
     el.className = `toast toast-${kind}`;

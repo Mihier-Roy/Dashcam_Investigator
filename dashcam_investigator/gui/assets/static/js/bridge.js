@@ -11,6 +11,14 @@
 //         window.events.addEventListener("video", (e) => render(e.detail));
 //     });
 
+// Shared DOM helpers every page script uses. Defined here (not per-page)
+// since bridge.js is the one script every template always loads first.
+window.$ = (id) => document.getElementById(id);
+
+window.escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+}[c]));
+
 (function () {
     const shim = () => new Proxy({}, { get: () => () => undefined });
 

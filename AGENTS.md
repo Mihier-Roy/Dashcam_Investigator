@@ -424,6 +424,95 @@ app.py (Main Thread)
 - **log.conf** — Logging levels and output paths
 - **gpx.fmt** — ExifTool format string for GPS extraction
 - **.gitignore** — Standard Python project excludes
+- **flake.nix** / **.envrc** — Nix + direnv dev shell: `python3.12`, `uv`,
+  `exiftool`, and the system libraries PySide6/QtWebEngine dlopen at
+  runtime (Chromium/X11/Mesa stack). `direnv allow` once per checkout;
+  `uv sync` inside the shell to get the project venv.
+
+---
+
+## Running Headless & Scripted Interaction
+
+`__main__.py` accepts CLI flags for non-interactive runs, sharing the
+same code path as normal GUI use (`MainWindow.open_project_path`) —
+no separate "headless mode" to drift out of sync:
+
+```
+uv run python -m dashcam_investigator --project path/to/project \
+    --screenshot out.png --screenshot-delay 2.0
+```
+
+- `--project PATH` — opens a project on startup (a
+  `dashcam_investigator.json` file, or its containing directory)
+  instead of showing the welcome screen. Load failures exit 1 with a
+  logged error instead of a blocking dialog whenever `--screenshot` is
+  also set, since a headless run has nobody to dismiss one.
+- `--screenshot PATH` — grabs the main window shortly after startup
+  and exits. Combine with `QT_QPA_PLATFORM=offscreen` (a built-in Qt
+  platform plugin, no display server needed) for CI/headless
+  verification:
+  ```
+  QT_QPA_PLATFORM=offscreen uv run python -m dashcam_investigator \
+      --project test_project --screenshot out.png
+  ```
+- `--screenshot-delay SECONDS` (default 2.0) — WebEngine panels
+  (map/graph/notes) render asynchronously; bump this if a screenshot
+  captures before they've finished painting.
+
+**JS console → Python log:** every `WebPanel` uses a
+`QWebEnginePage` subclass (`gui/web/panel.py::_LoggingWebEnginePage`)
+that routes `console.log/warn/error` to the Python logger as
+`JS console [source:line] message`. There's no devtools to open on a
+headless run, so this is the only way page-side JS errors (a broken
+CDN load, a bridge signal race, a template bug) surface at all —
+check the log first whenever a panel renders blank.
+
+**Driving the app without a real display/input device:** there's no
+"click at coordinates" API — instead, construct `MainWindow` in a
+script and call its public methods directly, then let the Qt event
+loop process a `QTimer` before grabbing:
+
+```python
+import sys
+from pathlib import Path
+from PySide6 import QtCore, QtWidgets
+from dashcam_investigator.gui.web.scheme import register_scheme
+register_scheme()  # must run before QApplication
+from dashcam_investigator.gui.app import MainWindow
+
+app = QtWidgets.QApplication([])
+window = MainWindow()
+window.open_project_path(Path("test_project"), interactive=False)
+window.show()
+
+def select_and_capture():
+    window.select_video("some_video.mp4")          # sidebar row click
+    QtCore.QTimer.singleShot(2000, lambda: (
+        window.grab().save("out.png"), app.quit()
+    ))
+
+QtCore.QTimer.singleShot(1500, select_and_capture)  # let panels finish loading first
+sys.exit(app.exec())
+```
+
+Run this from the repo root (so `dashcam_investigator` is importable)
+with `QT_QPA_PLATFORM=offscreen uv run python script.py`. Other
+`BridgeController` methods (`set_flag`, `save_notes`,
+`toggle_flag_current`, `select_next_video`, …) work the same way —
+call them directly on `window` instead of simulating a click.
+
+**Common pitfalls this setup avoids/exposes:**
+- `Bridge.project_loaded`/`video_changed` are fire-once signals with
+  no replay; a panel whose QWebChannel handshake finishes late (e.g.
+  a project opened immediately at startup) would silently show stale
+  empty state forever. `sidebar.js` pulls current state via
+  `api.getProjectJson()` on ready in addition to listening for pushes
+  — follow that pattern for any new panel that needs current state.
+- `--project` before `window.show()` used to lose the initial
+  broadcast; call order alone isn't a reliable fix (WebEngineViews
+  finish loading asynchronously regardless), which is why the pull-on-
+  ready fix above is the real guard, not a `show()`-then-open
+  reordering.
 
 ---
 

@@ -14,7 +14,7 @@ from typing import Any
 
 from PySide6.QtCore import QUrl
 from PySide6.QtWebChannel import QWebChannel
-from PySide6.QtWebEngineCore import QWebEngineProfile
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QWidget
 
@@ -25,6 +25,27 @@ from .scheme import HOST, install_handler
 logger = logging.getLogger(__name__)
 
 _BASE_URL = QUrl(f"dci://{HOST}/")
+
+_CONSOLE_LEVELS = {
+    QWebEnginePage.JavaScriptConsoleMessageLevel.InfoMessageLevel: logging.DEBUG,
+    QWebEnginePage.JavaScriptConsoleMessageLevel.WarningMessageLevel: logging.WARNING,
+    QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel: logging.ERROR,
+}
+
+
+class _LoggingWebEnginePage(QWebEnginePage):
+    """Routes JS console.log/warn/error to the Python logger.
+
+    There's no devtools to open on a headless/offscreen run (or when a
+    user reports a blank panel), so page-side errors would otherwise be
+    silently swallowed by Chromium.
+    """
+
+    def javaScriptConsoleMessage(self, level, message, line_number, source_id):
+        logger.log(
+            _CONSOLE_LEVELS.get(level, logging.INFO),
+            f"JS console [{source_id}:{line_number}] {message}",
+        )
 
 
 class WebPanel(QWebEngineView):
@@ -46,6 +67,7 @@ class WebPanel(QWebEngineView):
 
         used_profile = profile or QWebEngineProfile.defaultProfile()
         install_handler(used_profile)
+        self.setPage(_LoggingWebEnginePage(used_profile, self))
 
         channel = QWebChannel(self.page())
         channel.registerObject("bridge", bridge)

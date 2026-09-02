@@ -35,17 +35,32 @@ class MetaDataFrames:
 
         track = gpx.tracks[0]
         segment = track.segments[0]
-        data = []
-        for point_idx, point in enumerate(segment.points):
-            # get_speed returns m/s; convert to km/h
-            speed = (
-                segment.get_speed(point_idx) * 3.6
-                if segment.get_speed(point_idx) is not None
-                else None
-            )
-            data.append(
-                [point.longitude, point.latitude, point.elevation, point.time, speed]
-            )
+        points_list = segment.points
+
+        # Dashcam/GPMF GPX tracks stamp a timestamp on only a fraction of
+        # points (e.g. once per second at 18Hz sampling), so gpxpy's
+        # per-point get_speed() -- which needs both neighbours timed --
+        # returns None almost everywhere. Compute speed once per interval
+        # between consecutive *timed* points and apply it to every point
+        # in that interval instead.
+        speeds: list[float | None] = [None] * len(points_list)
+        timed_indices = [i for i, p in enumerate(points_list) if p.time is not None]
+        for start_idx, end_idx in zip(timed_indices, timed_indices[1:]):
+            start_point, end_point = points_list[start_idx], points_list[end_idx]
+            elapsed_seconds = (end_point.time - start_point.time).total_seconds()
+            distance_metres = start_point.distance_3d(end_point)
+            if distance_metres is None:
+                distance_metres = start_point.distance_2d(end_point)
+            if elapsed_seconds <= 0 or distance_metres is None:
+                continue
+            speed_kmh = (distance_metres / elapsed_seconds) * 3.6
+            for i in range(start_idx, end_idx):
+                speeds[i] = speed_kmh
+
+        data = [
+            [point.longitude, point.latitude, point.elevation, point.time, speed]
+            for point, speed in zip(points_list, speeds)
+        ]
         columns = [
             "Longitude",
             "Latitude",
@@ -108,9 +123,3 @@ def make_speed_dataframe(video_meta_handler) -> DataFrame:
     logger.debug("Generating speed dataframe for speed graph")
     speed_data = video_meta_handler.gps_df[["Speed", "DateTime", "DataSource"]]
     return speed_data
-
-
-def find_final_point_in_route(video_list: list) -> tuple:
-    """Takes in a list of MetaDataFrames handlers and returns the final coordinate."""
-    final_point = video_list[-1].gps_df["Latitude, Longitude"].iloc[-1]
-    return final_point

@@ -30,31 +30,29 @@ class NewProjectDialog(QtWidgets.QDialog, Ui_Dialog):
         """
         Sets the input directory path
         """
-        dir = QtWidgets.QFileDialog.getExistingDirectory(
-            self,
-            "Open Directory",
-            "C:",
-            QtWidgets.QFileDialog.ShowDirsOnly
-            | QtWidgets.QFileDialog.DontResolveSymlinks,
-        )
-
-        if dir is not None:
-            self.input_edit.setText(dir)
+        self._pick_dir(self.input_edit)
 
     def get_output_dir(self):
         """
         Sets the output directory path
         """
-        dir = QtWidgets.QFileDialog.getExistingDirectory(
+        self._pick_dir(self.output_edit)
+
+    def _pick_dir(self, line_edit: QtWidgets.QTextEdit) -> None:
+        """Prompt for a directory and write it into `line_edit`.
+
+        `getExistingDirectory` returns "" (never None) on cancel, so a
+        truthy check is required to make cancelling a no-op.
+        """
+        directory = QtWidgets.QFileDialog.getExistingDirectory(
             self,
             "Open Directory",
             "C:",
             QtWidgets.QFileDialog.ShowDirsOnly
             | QtWidgets.QFileDialog.DontResolveSymlinks,
         )
-
-        if dir is not None:
-            self.output_edit.setText(dir)
+        if directory:
+            line_edit.setText(directory)
 
     def save(self):
         self.case_name = self.case_edit.toPlainText()

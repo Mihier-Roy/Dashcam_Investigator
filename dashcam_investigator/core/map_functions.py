@@ -36,41 +36,6 @@ def generate_speed_colour_map(speed: DataFrame) -> linear:
     return colour_map
 
 
-def add_routeline_to_map(
-    gps_df: DataFrame,
-    points,
-    routeline_group: FeatureGroup,
-    start_marker_group: FeatureGroup,
-    colour_line_group: FeatureGroup,
-) -> RouteLineMaker:
-    """
-    Takes in a dataframe containing GPS and temporal data, as well as featuregroups for a routeline, start marker, and speed line.
-    Uses this data to generate an instance of the RouteLineMaker class, and returns the instance
-    """
-    routeliner = RouteLineMaker(
-        gps_df, points, routeline_group, start_marker_group, colour_line_group
-    )
-    return routeliner
-
-
-def add_start_marker_to_map(file_info_df: DataFrame, routeliner: RouteLineMaker):
-    """
-    Takes in a dataframe containing file information for a video and an instance of the RouteLineMaker class associated with that file.
-    Uses the file information dataframe to make a popup for a start marker. Calls the make_start_marker() method for the RouteLineMaker instance to add
-    the popup to a start marker
-    """
-    marker_popup = StartMarkerPopup(file_info_df).start_marker_popup_html()
-    routeliner.make_start_marker(marker_popup)
-
-
-def add_speedline_to_map(routeliner: RouteLineMaker, colour_map: linear):
-    """
-    Takes in an instance of the RouteLineMaker class and a linear branca colormap.
-    Calls a method for the RouteLineMaker instance which uses the colour map to add a speed line to the map.
-    """
-    routeliner.make_routeline_with_speed_colouring(colour_map)
-
-
 def add_data_to_map(
     video,
     routelines: FeatureGroup,
@@ -80,12 +45,13 @@ def add_data_to_map(
     colour_map: linear,
 ):
     """
-    Takes in either a list of Video (video.py) or MetaDataFrames (dataframer.py) instances, three folium FeatureGroups, and a linear branca colour map.
-    Makes a RouteLineMaker (mapper_classes.py) instance for each video in the video list, and uses these instances to add routelines, start markers, and speed lines to a folium Map
+    Takes a MetaDataFrames instance, three folium FeatureGroups, and a
+    linear branca colour map. Builds a RouteLineMaker for the video and
+    uses it to add a routeline, start marker, and speed-coloured line to
+    the map.
     """
     logger.debug("Adding routlines, start markers to the map")
-    # for video in video_list:
-    routeliner = add_routeline_to_map(
+    routeliner = RouteLineMaker(
         gps_df=video.gps_df,
         points=video.points,
         routeline_group=routelines,
@@ -93,5 +59,6 @@ def add_data_to_map(
         colour_line_group=speed_lines,
     )
     routeliner.make_routeline(routeline_colour)
-    add_start_marker_to_map(video.file_info_df, routeliner)
-    add_speedline_to_map(routeliner, colour_map)
+    marker_popup = StartMarkerPopup(video.file_info_df).start_marker_popup_html()
+    routeliner.make_start_marker(marker_popup)
+    routeliner.make_routeline_with_speed_colouring(colour_map)

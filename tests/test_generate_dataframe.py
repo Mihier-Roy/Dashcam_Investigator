@@ -191,6 +191,46 @@ class TestMetaDataFrames:
         assert abs(meta.gps_df.iloc[1]["Altitude"] - 11.0) < 0.1
         assert abs(meta.gps_df.iloc[2]["Altitude"] - 12.0) < 0.1
 
+    def test_process_gpx_to_df_sparse_timestamps(self, create_csv_file, temp_dir):
+        """Dashcam/GPMF GPX tracks stamp a timestamp on only a fraction of
+        points. Speed must be interpolated from the nearest bracketing
+        timed points rather than left as all-NaN (regression: previously
+        this fed a min/max NaN colour scale into branca, raising
+        "Thresholds are not sorted").
+        """
+        gpx = gpxpy.gpx.GPX()
+        track = gpxpy.gpx.GPXTrack()
+        gpx.tracks.append(track)
+        segment = gpxpy.gpx.GPXTrackSegment()
+        track.segments.append(segment)
+
+        # 5 points 1 metre apart northward; only the first and last carry
+        # a timestamp (10 seconds apart), like real GPMF/dashcam output.
+        for i in range(5):
+            point = gpxpy.gpx.GPXTrackPoint(
+                latitude=37.7749 + i * 0.00001,
+                longitude=-122.4194,
+                elevation=10.0,
+                time=datetime(2024, 1, 15, 14, 30, i * 10) if i in (0, 4) else None,
+            )
+            segment.points.append(point)
+
+        gpx_path = temp_dir / "sparse.gpx"
+        gpx_path.write_text(gpx.to_xml())
+        csv_file = create_csv_file("sparse_fileinfo.csv")
+
+        meta = MetaDataFrames(
+            video_name="test",
+            video_meta_files={"gpx": str(gpx_path), "csv": str(csv_file)},
+        )
+
+        # Every point except the last (no trailing timed point to bracket
+        # it) must get an interpolated, finite, positive speed.
+        speeds = meta.gps_df["Speed"]
+        assert speeds.iloc[:4].notna().all()
+        assert (speeds.iloc[:4] > 0).all()
+        assert speeds.iloc[:4].nunique() == 1  # same interval -> same speed
+
 
 class TestMakeSpeedDataframe:
     """Test cases for make_speed_dataframe function."""

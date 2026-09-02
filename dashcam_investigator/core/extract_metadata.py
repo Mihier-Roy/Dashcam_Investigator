@@ -18,6 +18,35 @@ def _exiftool_path() -> str:
     return path
 
 
+def _run_exiftool(cmd: list[str], output_path: Path, video_path: Path) -> Path:
+    """Run an exiftool command, writing stdout to `output_path`.
+
+    Raises ExifToolError (and deletes `output_path`) if exiftool times out
+    or exits non-zero.
+    """
+    try:
+        with output_path.open("w") as fh:
+            result = subprocess.run(  # nosec B603
+                cmd,
+                stdout=fh,
+                stderr=subprocess.PIPE,
+                timeout=EXIFTOOL_TIMEOUT_SECONDS,
+                check=False,
+            )
+    except subprocess.TimeoutExpired as exc:
+        output_path.unlink(missing_ok=True)
+        raise ExifToolError(
+            f"exiftool timed out after {EXIFTOOL_TIMEOUT_SECONDS}s for {video_path.name}"
+        ) from exc
+    if result.returncode != 0:
+        output_path.unlink(missing_ok=True)
+        raise ExifToolError(
+            f"exiftool failed for {video_path.name}: "
+            f"{result.stderr.decode(errors='replace').strip()}"
+        )
+    return output_path
+
+
 def process_gps_data(video_path: Path, output_dir: Path) -> Path:
     """
     Extracts GPS metadata from a video file and returns the Path to the resulting GPX file.
@@ -32,27 +61,7 @@ def process_gps_data(video_path: Path, output_dir: Path) -> Path:
         "-ee3",
         str(video_path.resolve()),
     ]
-    try:
-        with output_gpx.open("w") as fh:
-            result = subprocess.run(  # nosec B603
-                cmd,
-                stdout=fh,
-                stderr=subprocess.PIPE,
-                timeout=EXIFTOOL_TIMEOUT_SECONDS,
-                check=False,
-            )
-    except subprocess.TimeoutExpired as exc:
-        output_gpx.unlink(missing_ok=True)
-        raise ExifToolError(
-            f"exiftool timed out after {EXIFTOOL_TIMEOUT_SECONDS}s for {video_path.name}"
-        ) from exc
-    if result.returncode != 0:
-        output_gpx.unlink(missing_ok=True)
-        raise ExifToolError(
-            f"exiftool failed for {video_path.name}: "
-            f"{result.stderr.decode(errors='replace').strip()}"
-        )
-    return output_gpx
+    return _run_exiftool(cmd, output_gpx, video_path)
 
 
 def process_file_meta(video_path: Path, output_dir: Path) -> Path:
@@ -77,24 +86,4 @@ def process_file_meta(video_path: Path, output_dir: Path) -> Path:
         "-csv",
         str(video_path.resolve()),
     ]
-    try:
-        with output_csv.open("w") as fh:
-            result = subprocess.run(  # nosec B603
-                cmd,
-                stdout=fh,
-                stderr=subprocess.PIPE,
-                timeout=EXIFTOOL_TIMEOUT_SECONDS,
-                check=False,
-            )
-    except subprocess.TimeoutExpired as exc:
-        output_csv.unlink(missing_ok=True)
-        raise ExifToolError(
-            f"exiftool timed out after {EXIFTOOL_TIMEOUT_SECONDS}s for {video_path.name}"
-        ) from exc
-    if result.returncode != 0:
-        output_csv.unlink(missing_ok=True)
-        raise ExifToolError(
-            f"exiftool failed for {video_path.name}: "
-            f"{result.stderr.decode(errors='replace').strip()}"
-        )
-    return output_csv
+    return _run_exiftool(cmd, output_csv, video_path)

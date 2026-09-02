@@ -14,17 +14,10 @@ const state = {
     collapsedFolders: new Set(),
 };
 
-const $ = (id) => document.getElementById(id);
 const body = $("sidebar-body");
 const filterInput = $("filter");
 const caseName = $("case-name");
 const caseMeta = $("case-meta");
-
-function escapeHtml(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-}
 
 function filterVideos(videos) {
     const q = state.filterText.toLowerCase().trim();
@@ -150,11 +143,27 @@ function updateHeader() {
 }
 
 window.apiReady.then((api) => {
-    window.events.addEventListener("project", (e) => {
-        state.project = e.detail;
+    const applyProject = (project) => {
+        state.project = project;
         state.collapsedFolders.clear();
         updateHeader();
         render();
+    };
+
+    window.events.addEventListener("project", (e) => applyProject(e.detail));
+
+    // The bridge's project_loaded signal fires once and isn't replayed, so
+    // a panel whose QWebChannel handshake finishes after that emission
+    // (e.g. a project opened at startup, before this page is fully wired
+    // up) would otherwise show "No project loaded" forever. Pull the
+    // current state once as well as listening for future pushes.
+    api.getProjectJson((json) => {
+        try {
+            const project = JSON.parse(json);
+            if (project) applyProject(project);
+        } catch (_) {
+            /* no project yet */
+        }
     });
 
     window.events.addEventListener("flag-changed", (e) => {

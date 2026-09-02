@@ -9,15 +9,8 @@ const state = {
     currentName: null,
 };
 
-const $ = (id) => document.getElementById(id);
 const tbody = $("metadata-tbody");
 const filterInput = $("filter");
-
-function escapeHtml(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-}
 
 function applyFilterAndSort() {
     const q = state.filter.trim().toLowerCase();

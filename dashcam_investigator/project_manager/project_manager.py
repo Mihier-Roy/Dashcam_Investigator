@@ -26,8 +26,8 @@ DASHCAM_INVESTIGATOR_DIRECTORIES = [
 class ProjectManager:
     def __init__(
         self,
-        input_dir: Path = None,
-        output_dir: Path = None,
+        input_dir: Path | None = None,
+        output_dir: Path | None = None,
         case_name: str = "",
         investigator_name: str = "",
     ) -> None:
@@ -47,20 +47,25 @@ class ProjectManager:
         It creates the required directories and the project file.
         """
         logger.debug(f"Creating a new project in -> {self.project_directory}")
-        # Create the output directory if it does not exist
-        if not self.project_directory.exists():
-            logger.debug(
-                f"Target project directory does not exist. Creating directory -> {self.project_directory}"
-            )
-            self.project_directory.mkdir()
+        try:
+            # Create the output directory if it does not exist
+            if not self.project_directory.exists():
+                logger.debug(
+                    f"Target project directory does not exist. Creating directory -> {self.project_directory}"
+                )
+                self.project_directory.mkdir()
 
-        # Create maps, timelines, metadata and reports folders within the project directory
-        logger.debug(
-            f"Creating Maps, Metdata, Reports and Timelines directories in -> {self.project_directory}"
-        )
-        for dir in DASHCAM_INVESTIGATOR_DIRECTORIES:
-            Path(self.project_directory, dir).mkdir(exist_ok=True)
-            logger.debug(f"Created {dir}")
+            # Create maps, timelines, metadata and reports folders within the project directory
+            logger.debug(
+                f"Creating Maps, Metdata, Reports and Timelines directories in -> {self.project_directory}"
+            )
+            for subdir in DASHCAM_INVESTIGATOR_DIRECTORIES:
+                Path(self.project_directory, subdir).mkdir(exist_ok=True)
+                logger.debug(f"Created {subdir}")
+        except OSError as exc:
+            raise ProjectSaveError(
+                f"Failed to create project directories under {self.project_directory}: {exc}"
+            ) from exc
 
         # Create the json project file
         if not self.project_file.exists():

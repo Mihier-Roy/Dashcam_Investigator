@@ -166,25 +166,38 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         if not file_name or not file_name[0]:
             return
-        file_path = Path(file_name[0])
+        self.open_project_path(Path(file_name[0]))
+
+    def open_project_path(self, path: Path, interactive: bool = True) -> bool:
+        """Load a project from `path` (its json file, or the directory containing it).
+
+        Shared by the "Open project" dialog and the `--project` CLI flag.
+        `interactive=False` (used for the CLI flag) logs errors instead of
+        popping a blocking message box, so headless/`--screenshot` runs
+        can't hang waiting for input nobody can provide.
+        Returns True on success, False otherwise.
+        """
+        file_path = path / PROJECT_FILE_NAME if path.is_dir() else path
         logger.debug(f"Opening existing project file -> {file_path}")
         if file_path.name != PROJECT_FILE_NAME:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Open project",
-                "Please select a dashcam_investigator.json file.",
-            )
-            return
+            message = "Please select a dashcam_investigator.json file."
+            if interactive:
+                QtWidgets.QMessageBox.warning(self, "Open project", message)
+            else:
+                logger.error(message)
+            return False
         try:
             self.project_object = self.project_manager.load_existing_project(file_path)
         except ProjectLoadError as exc:
             logger.error("Failed to load project: %s", exc)
-            QtWidgets.QMessageBox.critical(
-                self, "Open error", f"Could not open the project file:\n\n{exc}"
-            )
-            return
+            if interactive:
+                QtWidgets.QMessageBox.critical(
+                    self, "Open error", f"Could not open the project file:\n\n{exc}"
+                )
+            return False
         self.load_data()
         self.stack_widget.setCurrentIndex(1)
+        return True
 
     def start_new_project(self):
         logger.debug("Starting a new project. Launched new project dialog.")
@@ -209,15 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_count = get_file_count(input_dir)
 
         logger.debug(f"Processing {self.file_count} files from input directory")
-        self.progress = QtWidgets.QProgressDialog(
-            "Processing files...", None, 0, self.file_count, self
-        )
-        self.progress.setWindowModality(QtCore.Qt.WindowModal)
-        self.progress.setWindowTitle("Processing files...")
-        self.progress.setWindowFlags(
-            QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
-        )
-        self.progress.show()
+        self.progress = self._make_progress_dialog(self.file_count)
 
         worker = Worker(process_files, input_dir, self.project_object)
         worker.signals.result.connect(self.update_object)
@@ -226,6 +231,17 @@ class MainWindow(QtWidgets.QMainWindow):
         worker.signals.status.connect(self.update_status_label)
         worker.signals.error.connect(self._on_worker_error)
         self.threadpool.start(worker)
+
+    def _make_progress_dialog(self, total: int) -> QtWidgets.QProgressDialog:
+        """Build and show the modal 'Processing files...' progress dialog."""
+        progress = QtWidgets.QProgressDialog("Processing files...", None, 0, total, self)
+        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.setWindowTitle("Processing files...")
+        progress.setWindowFlags(
+            QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint
+        )
+        progress.show()
+        return progress
 
     def load_data(self):
         """Push the current project to every WebPanel listening on the bridge."""
@@ -255,11 +271,10 @@ class MainWindow(QtWidgets.QMainWindow):
         Load the selected video into the native player and re-render the
         map / graph WebPanels. Metadata + notes update via the bridge.
         """
-        self.current_video: FileAttributes = [
-            video
-            for video in self.project_object.video_files
-            if video.name == video_name
-        ][0]
+        video = self._find_video(video_name)
+        if video is None:
+            return
+        self.current_video: FileAttributes = video
         logger.debug(f"Loading video information for -> {self.current_video.name}")
 
         video_path = Path(self.current_video.file_path)
@@ -312,6 +327,20 @@ class MainWindow(QtWidgets.QMainWindow):
             logger.warning("Failed to read %s: %s", path, exc)
             return None
 
+    def _find_video(self, name: str) -> FileAttributes | None:
+        """Look up a video by name in the current project.
+
+        Returns None silently if no project is loaded, or with a logged
+        warning if the project has no video by that name.
+        """
+        if self.project_object is None:
+            return None
+        for video in self.project_object.video_files:
+            if video.name == name:
+                return video
+        logger.warning("No video named %r in project", name)
+        return None
+
     # --- BridgeController protocol -----------------------------------
     def request_new_project(self) -> None:
         self.start_new_project()
@@ -320,23 +349,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.open_existing_project()
 
     def select_video(self, name: str) -> None:
-        if self.project_object is None:
-            return
-        match = [v for v in self.project_object.video_files if v.name == name]
-        if not match:
-            logger.warning("select_video: no video named %r in project", name)
+        video = self._find_video(name)
+        if video is None:
             return
         self.load_video_data(name)
         self.bridge.emit_video(self.current_video)
 
     def set_flag(self, name: str, flagged: bool) -> None:
-        if self.project_object is None:
+        video = self._find_video(name)
+        if video is None:
             return
-        match = [v for v in self.project_object.video_files if v.name == name]
-        if not match:
-            logger.warning("set_flag: no video named %r in project", name)
-            return
-        video = match[0]
         video.flagged = bool(flagged)
         if self.current_video and self.current_video.name == name:
             self.current_video.flagged = video.flagged
@@ -345,13 +367,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.bridge.flag_changed.emit(name, video.flagged)
 
     def save_notes(self, name: str, text: str) -> None:
-        if self.project_object is None:
+        video = self._find_video(name)
+        if video is None:
             return
-        match = [v for v in self.project_object.video_files if v.name == name]
-        if not match:
-            logger.warning("save_notes: no video named %r in project", name)
-            return
-        video = match[0]
         video.notes = text
         if self.current_video and self.current_video.name == name:
             self.current_video.notes = text
@@ -397,12 +415,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.select_video(videos[new_idx].name)
 
     def get_metadata_json(self, name: str) -> str:
-        if self.project_object is None:
+        video = self._find_video(name)
+        if video is None:
             return "[]"
-        match = [v for v in self.project_object.video_files if v.name == name]
-        if not match:
-            return "[]"
-        video = match[0]
         if not video.meta_files or "csv" not in video.meta_files:
             return "[]"
         metadata_path = Path(video.meta_files["csv"])
@@ -424,7 +439,11 @@ class MainWindow(QtWidgets.QMainWindow):
         return json.dumps(rows)
 
 
-def run():
+def run(
+    project_path: Path | None = None,
+    screenshot_path: Path | None = None,
+    screenshot_delay: float = 2.0,
+) -> None:
     logger.info("---Running Dashcam Investigator---")
     app = QtWidgets.QApplication([])
     app.setOrganizationName(ORG_NAME)
@@ -443,5 +462,29 @@ def run():
 
     logger.debug("Initialising and displaying main window")
     window = MainWindow()
+
+    if project_path is not None:
+        # Non-interactive whenever a screenshot is also requested: a
+        # headless/offscreen run has nobody to dismiss a blocking dialog.
+        loaded = window.open_project_path(
+            project_path, interactive=screenshot_path is None
+        )
+        if not loaded:
+            logger.error(f"Could not open project at startup -> {project_path}")
+            sys.exit(1)
+
     window.show()
+
+    if screenshot_path is not None:
+
+        def _capture_and_quit() -> None:
+            window.grab().save(str(screenshot_path))
+            logger.info(f"Saved screenshot -> {screenshot_path}")
+            app.quit()
+
+        # WebEngine panels (map/graph/notes) render asynchronously; give
+        # them a moment to paint before grabbing. Flaky under software
+        # rendering, hence the tunable delay rather than a fixed sleep.
+        QtCore.QTimer.singleShot(int(screenshot_delay * 1000), _capture_and_quit)
+
     sys.exit(app.exec())

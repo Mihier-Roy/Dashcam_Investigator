@@ -5,6 +5,15 @@ from dashcam_investigator.constants import TOOL_NAME
 from dashcam_investigator.utils.common import generate_file_hash
 
 
+def _migrate_meta_files(meta_files) -> dict:
+    """Upgrade old list-format meta_files [gpx, csv] to the current dict format."""
+    if isinstance(meta_files, dict):
+        return meta_files
+    if isinstance(meta_files, list) and len(meta_files) >= 2:
+        return {"gpx": meta_files[0], "csv": meta_files[1]}
+    return {}
+
+
 class ProjectInfo:
     """
     Records the high-level information of an investigation project.
@@ -44,6 +53,23 @@ class ProjectInfo:
             "num_images": self.num_images,
             "num_other": self.num_other,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ProjectInfo":
+        """Reconstruct a ProjectInfo from its to_dict() representation."""
+        project = cls(
+            input_dir=Path(data["input_directory"]),
+            output_dir=Path(data["project_directory"]),
+            case_name=data["case_name"],
+            investigator_name=data["investigator_name"],
+            report_path=data["report_path"],
+            date_created=data["date_created"],
+        )
+        # Restore count fields if present
+        project.num_videos = data.get("num_videos")
+        project.num_images = data.get("num_images")
+        project.num_other = data.get("num_other")
+        return project
 
 
 class FileAttributes:
@@ -91,6 +117,20 @@ class FileAttributes:
             "flagged": self.flagged,
             "notes": self.notes,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "FileAttributes":
+        """Reconstruct a FileAttributes from its to_dict() representation."""
+        return cls(
+            file_path=Path(data["file_path"]),
+            name=data["name"],
+            ftype=data["type"],
+            sha256_hash=data["sha256_hash"],
+            meta_files=_migrate_meta_files(data["meta_files"]),
+            output_files=data["output_files"],
+            flagged=data["flagged"],
+            notes=data["notes"],
+        )
 
 
 class ProjectStructure:

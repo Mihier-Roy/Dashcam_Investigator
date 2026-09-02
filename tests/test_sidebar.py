@@ -59,6 +59,10 @@ def test_sidebar_js_has_arrow_key_navigation() -> None:
     assert "selectByName" in js
     assert "ArrowDown" in js
     assert "ArrowUp" in js
+    # Regression: keyboard focus must be re-queried on the freshly-rendered
+    # DOM after selectByName()/render() replaces body.innerHTML, not applied
+    # to the stale (now-detached) row element captured before the re-render.
+    assert "CSS.escape" in js
 
 
 def test_app_css_defines_sidebar_layout() -> None:

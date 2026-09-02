@@ -217,9 +217,12 @@ window.apiReady.then((api) => {
         const nextIndex = currentIndex === -1
             ? 0
             : (currentIndex + delta + rows.length) % rows.length;
-        const nextRow = rows[nextIndex];
-        selectByName(nextRow.dataset.name);
-        nextRow.focus();
+        const nextName = rows[nextIndex].dataset.name;
+        selectByName(nextName);
+        // render() just rebuilt the DOM (body.innerHTML = ...), so the old
+        // `rows[nextIndex]` element is now detached -- re-query for the
+        // freshly-rendered node with this name instead of reusing it.
+        body.querySelector(`.list-row[data-name="${CSS.escape(nextName)}"]`)?.focus();
     });
 
     filterInput.addEventListener("input", (e) => {

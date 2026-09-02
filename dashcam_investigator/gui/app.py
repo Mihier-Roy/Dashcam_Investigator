@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
 
@@ -135,6 +135,27 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.critical(self, "Processing error", message)
 
     # --- Video player controls ----------------------------------------
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:  # noqa: N802 (Qt API)
+        focus_widget = QtWidgets.QApplication.focusWidget()
+        typing_widgets = (QtWidgets.QLineEdit, QtWidgets.QTextEdit, QtWidgets.QPlainTextEdit)
+        if isinstance(focus_widget, typing_widgets):
+            super().keyPressEvent(event)
+            return
+
+        if event.key() == QtCore.Qt.Key.Key_Space and self.current_video is not None:
+            self.play_pause_button.toggle()
+            event.accept()
+            return
+        if event.key() == QtCore.Qt.Key.Key_Right and self.current_video is not None:
+            self.mediaPlayer.setPosition(self.mediaPlayer.position() + 5000)
+            event.accept()
+            return
+        if event.key() == QtCore.Qt.Key.Key_Left and self.current_video is not None:
+            self.mediaPlayer.setPosition(max(0, self.mediaPlayer.position() - 5000))
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
     def _on_play_pause_toggled(self, checked: bool) -> None:
         icon_color = "#0f172a"
         if checked:

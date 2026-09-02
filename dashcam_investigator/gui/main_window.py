@@ -177,6 +177,7 @@ def _build_player_area(
 
     window.video_player = QVideoWidget(video_container)
     window.video_player.setStyleSheet("background-color: #000;")
+    window.video_player.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
     window.player_stack.addWidget(window.video_player)
 
     window.player_idle_overlay = _build_player_idle_overlay(video_container)

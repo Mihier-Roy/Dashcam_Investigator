@@ -377,9 +377,11 @@ def test_icon_returns_qicon_for_existing_asset():
 
 def test_icon_returns_empty_icon_for_missing_asset(caplog):
     _app()
-    icon = _icon("does-not-exist", "#000000")
+    with caplog.at_level("WARNING"):
+        icon = _icon("does-not-exist", "#000000")
     assert isinstance(icon, QtGui.QIcon)
     assert icon.isNull()
+    assert "does-not-exist" in caplog.text
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -490,7 +492,7 @@ git commit -m "feat: add tab icons via new _icon() SVG-to-QIcon helper"
 - [ ] **Step 1: Write the failing test**
 
 ```python
-def test_build_player_area_creates_expected_widgets(qtbot=None):
+def test_build_player_area_creates_expected_widgets():
     from PySide6 import QtWidgets
     from dashcam_investigator.gui.main_window import _build_player_area
 

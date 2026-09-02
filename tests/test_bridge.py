@@ -7,6 +7,7 @@ controller method was called and that signals carry the expected payloads.
 
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from typing import Any
@@ -144,3 +145,12 @@ def test_signal_surface_is_complete(
         "report_generated",
     ):
         assert hasattr(bridge, name), f"Bridge is missing signal {name!r}"
+
+
+def test_bridge_exposes_request_shortcuts_help_slot() -> None:
+    from dashcam_investigator.gui.web.bridge import Bridge, BridgeController
+
+    assert hasattr(Bridge, "requestShortcutsHelp")
+    assert "request_shortcuts_help" in {
+        name for name, _ in inspect.getmembers(BridgeController, predicate=inspect.isfunction)
+    }

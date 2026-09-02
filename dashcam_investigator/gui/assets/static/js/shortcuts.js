@@ -6,6 +6,7 @@
 //   f          toggle flag on the currently selected video
 //   ←/→        previous / next video
 //   Ctrl+S     save the notes panel's current text
+//   ?          show the keyboard shortcuts overlay
 
 (function () {
     function isTyping(target) {
@@ -55,6 +56,10 @@
             case "ArrowLeft":
                 event.preventDefault();
                 call("selectPreviousVideo");
+                break;
+            case "?":
+                event.preventDefault();
+                call("requestShortcutsHelp");
                 break;
             default:
                 break;

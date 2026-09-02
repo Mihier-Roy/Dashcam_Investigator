@@ -426,6 +426,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def select_previous_video(self) -> None:
         self._cycle_video(-1)
 
+    def request_shortcuts_help(self) -> None:
+        QtWidgets.QMessageBox.information(
+            self,
+            "Keyboard shortcuts",
+            "/          Focus the sidebar filter\n"
+            "F          Flag / un-flag the current video\n"
+            "← / →      Previous / next video (sidebar focused)\n"
+            "Space      Play / pause (player focused)\n"
+            "← / →      Seek ±5s (player focused)\n"
+            "Ctrl+S     Save notes\n"
+            "?          Show this help",
+        )
+
     def _cycle_video(self, step: int) -> None:
         if self.project_object is None:
             return

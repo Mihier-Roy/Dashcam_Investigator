@@ -74,9 +74,11 @@ Hybrid: a thin Qt shell (`QMainWindow` + native video player + dialogs) hosting 
 - `static/icons/` — inline-able Lucide-style SVGs.
 - `qss/` — `light.qss` and `dark.qss` mirroring the CSS tokens.
 
-**`new_project_class.py` + `QtNewProjectDialog.py`**
+**`new_project_class.py`**
 - The new-project dialog stays native Qt — it's small, infrequent, and
-  benefits from native file pickers.
+  benefits from native file pickers. Hand-coded `QFormLayout`/`QVBoxLayout`
+  (not a Designer-generated `.ui` file), matching `main_window.py`'s
+  approach.
 
 **`worker_class.py` (Qt Threading Worker)**
 - `QRunnable`-based worker that runs file scanning + metadata extraction

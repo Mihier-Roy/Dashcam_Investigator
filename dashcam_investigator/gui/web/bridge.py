@@ -37,6 +37,7 @@ class BridgeController(Protocol):
     def toggle_flag_current(self) -> None: ...
     def select_next_video(self) -> None: ...
     def select_previous_video(self) -> None: ...
+    def request_shortcuts_help(self) -> None: ...
 
 
 class Bridge(QObject):
@@ -113,6 +114,11 @@ class Bridge(QObject):
     def requestSaveNotes(self) -> None:  # noqa: N802
         logger.debug("bridge: requestSaveNotes")
         self.save_requested.emit()
+
+    @Slot()
+    def requestShortcutsHelp(self) -> None:  # noqa: N802
+        logger.debug("bridge: requestShortcutsHelp")
+        self._controller.request_shortcuts_help()
 
     @Slot()
     def toggleFlagCurrent(self) -> None:  # noqa: N802

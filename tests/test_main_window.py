@@ -128,3 +128,22 @@ def test_icon_returns_empty_icon_for_missing_asset(caplog):
     assert isinstance(icon, QtGui.QIcon)
     assert icon.isNull()
     assert "does-not-exist" in caplog.text
+
+
+def test_build_player_area_creates_expected_widgets():
+    from PySide6 import QtWidgets
+    from dashcam_investigator.gui.main_window import _build_player_area
+
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    window = QtWidgets.QMainWindow()
+    parent = QtWidgets.QSplitter()
+    _build_player_area(window, parent)
+
+    assert isinstance(window.play_pause_button, QtWidgets.QPushButton)
+    assert window.play_pause_button.isCheckable()
+    assert isinstance(window.stop_button, QtWidgets.QPushButton)
+    assert isinstance(window.current_duration, QtWidgets.QLabel)
+    assert not isinstance(window.current_duration, QtWidgets.QLineEdit)
+    assert isinstance(window.total_duration, QtWidgets.QLabel)
+    assert isinstance(window.player_idle_overlay, QtWidgets.QWidget)
+    assert isinstance(window.player_stack, QtWidgets.QStackedLayout)

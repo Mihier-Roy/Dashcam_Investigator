@@ -170,10 +170,20 @@ def _build_player_area(
     layout.setContentsMargins(8, 8, 8, 4)
     layout.setSpacing(6)
 
-    window.video_player = QVideoWidget(area)
-    window.video_player.setMinimumHeight(PLAYER_MIN_HEIGHT)
+    video_container = QtWidgets.QWidget(area)
+    video_container.setMinimumHeight(PLAYER_MIN_HEIGHT)
+    window.player_stack = QtWidgets.QStackedLayout(video_container)
+    window.player_stack.setContentsMargins(0, 0, 0, 0)
+
+    window.video_player = QVideoWidget(video_container)
     window.video_player.setStyleSheet("background-color: #000;")
-    layout.addWidget(window.video_player, 1)
+    window.player_stack.addWidget(window.video_player)
+
+    window.player_idle_overlay = _build_player_idle_overlay(video_container)
+    window.player_stack.addWidget(window.player_idle_overlay)
+    window.player_stack.setCurrentWidget(window.player_idle_overlay)
+
+    layout.addWidget(video_container, 1)
 
     window.video_title = QtWidgets.QLabel("No video loaded", area)
     window.video_title.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -184,32 +194,67 @@ def _build_player_area(
     controls_layout.setContentsMargins(0, 0, 0, 0)
     controls_layout.setSpacing(8)
 
-    window.current_duration = QtWidgets.QLineEdit("0:00", controls)
-    window.current_duration.setReadOnly(True)
-    window.current_duration.setMaximumWidth(64)
+    window.current_duration = QtWidgets.QLabel("0:00", controls)
+    window.current_duration.setMinimumWidth(40)
     window.current_duration.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     controls_layout.addWidget(window.current_duration)
 
     window.horizontal_slider = QtWidgets.QSlider(
         QtCore.Qt.Orientation.Horizontal, controls
     )
+    window.horizontal_slider.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
     controls_layout.addWidget(window.horizontal_slider, 1)
 
-    window.total_duration = QtWidgets.QLineEdit("0:00", controls)
-    window.total_duration.setReadOnly(True)
-    window.total_duration.setMaximumWidth(64)
+    window.total_duration = QtWidgets.QLabel("0:00", controls)
+    window.total_duration.setMinimumWidth(40)
     window.total_duration.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     controls_layout.addWidget(window.total_duration)
 
-    window.play_button = QtWidgets.QPushButton("Play", controls)
-    window.pause_button = QtWidgets.QPushButton("Pause", controls)
-    window.stop_button = QtWidgets.QPushButton("Stop", controls)
-    for btn in (window.play_button, window.pause_button, window.stop_button):
-        controls_layout.addWidget(btn)
+    text_color = "#0f172a"  # matches tokens.css --text (light); native icons
+    # don't re-tint on theme change, same limitation noted in Task 4.
+    window.play_pause_button = QtWidgets.QPushButton(controls)
+    window.play_pause_button.setCheckable(True)
+    window.play_pause_button.setIcon(_icon("play", text_color))
+    window.play_pause_button.setToolTip("Play (Space)")
+    window.play_pause_button.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+    controls_layout.addWidget(window.play_pause_button)
+
+    window.stop_button = QtWidgets.QPushButton(controls)
+    window.stop_button.setIcon(_icon("square", text_color))
+    window.stop_button.setToolTip("Stop")
+    window.stop_button.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+    controls_layout.addWidget(window.stop_button)
 
     layout.addWidget(controls)
 
     parent.addWidget(area)
+
+
+def _build_player_idle_overlay(parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
+    """Empty-state shown over the video widget when no video is selected,
+    matching the visual pattern of the WebPanel `.empty` component."""
+    overlay = QtWidgets.QWidget(parent)
+    overlay.setStyleSheet("background-color: #000;")
+    layout = QtWidgets.QVBoxLayout(overlay)
+    layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    layout.setSpacing(8)
+
+    icon_label = QtWidgets.QLabel(overlay)
+    icon_label.setPixmap(_icon("video", "#64748b").pixmap(48, 48))
+    icon_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(icon_label)
+
+    title = QtWidgets.QLabel("No video loaded", overlay)
+    title.setStyleSheet("color: #e6e8eb; font-weight: 600; font-size: 14px;")
+    title.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(title)
+
+    body = QtWidgets.QLabel("Select a video from the sidebar to play it", overlay)
+    body.setStyleSheet("color: #64748b; font-size: 12.5px;")
+    body.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(body)
+
+    return overlay
 
 
 def _build_data_tabs(

@@ -18,7 +18,7 @@ from dashcam_investigator.exceptions import (
     ProjectLoadError,
     ProjectSaveError,
 )
-from dashcam_investigator.gui.main_window import setup_ui
+from dashcam_investigator.gui.main_window import _icon, setup_ui
 from dashcam_investigator.gui.new_project_class import NewProjectDialog
 from dashcam_investigator.gui.theme import ThemeManager
 from dashcam_investigator.gui.web.bridge import Bridge
@@ -65,8 +65,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _wire_media_player(self) -> None:
         self.mediaPlayer = QMediaPlayer(self)
         self.mediaPlayer.setVideoOutput(self.video_player)
-        self.play_button.clicked.connect(self.play_video)
-        self.pause_button.clicked.connect(self.pause_video)
+        self.play_pause_button.toggled.connect(self._on_play_pause_toggled)
         self.stop_button.clicked.connect(self.stop_video)
         self.mediaPlayer.durationChanged.connect(self.change_duration)
         self.mediaPlayer.positionChanged.connect(self.change_position)
@@ -136,17 +135,20 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.critical(self, "Processing error", message)
 
     # --- Video player controls ----------------------------------------
-    def play_video(self):
-        self.mediaPlayer.play()
-        duration = self.mediaPlayer.duration()
-        sec, min = convert_to_seconds(int(duration))
-        self.total_duration.setText(f"{min}:{sec}")
-
-    def pause_video(self):
-        self.mediaPlayer.pause()
+    def _on_play_pause_toggled(self, checked: bool) -> None:
+        icon_color = "#0f172a"
+        if checked:
+            self.mediaPlayer.play()
+            self.play_pause_button.setIcon(_icon("pause", icon_color))
+            self.play_pause_button.setToolTip("Pause (Space)")
+        else:
+            self.mediaPlayer.pause()
+            self.play_pause_button.setIcon(_icon("play", icon_color))
+            self.play_pause_button.setToolTip("Play (Space)")
 
     def stop_video(self):
         self.mediaPlayer.stop()
+        self.play_pause_button.setChecked(False)
 
     def change_position(self, position):
         self.horizontal_slider.setValue(position)
@@ -280,9 +282,12 @@ class MainWindow(QtWidgets.QMainWindow):
         video_path = Path(self.current_video.file_path)
 
         self.mediaPlayer.stop()
+        self.play_pause_button.setChecked(False)
+        self.player_stack.setCurrentWidget(self.video_player)
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
-        self.video_title.setText(f"Currently playing : {str(video_path.resolve())}")
+        self.video_title.setText(video_path.name)
+        self.video_title.setToolTip(str(video_path.resolve()))
 
         self._render_output_panels(self.current_video)
 

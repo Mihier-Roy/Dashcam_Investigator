@@ -54,6 +54,13 @@ def test_sidebar_js_handles_path_separators() -> None:
     assert r"replace(/\\/g, " in js
 
 
+def test_sidebar_js_has_arrow_key_navigation() -> None:
+    js = (renderer.static_path() / "js" / "pages" / "sidebar.js").read_text()
+    assert "selectByName" in js
+    assert "ArrowDown" in js
+    assert "ArrowUp" in js
+
+
 def test_app_css_defines_sidebar_layout() -> None:
     css = (renderer.static_path() / "css" / "app.css").read_text()
     for cls in (

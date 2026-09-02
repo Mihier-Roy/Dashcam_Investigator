@@ -35,7 +35,7 @@ function videoRowHtml(video) {
         ? `<div class="meta mono truncate" title="${escapeHtml(video.sha256_hash)}">${escapeHtml(video.sha256_hash.slice(0, 16))}…</div>`
         : "";
     return `
-        <div class="list-row${sel}" data-name="${escapeHtml(video.name)}">
+        <div class="list-row${sel}" data-name="${escapeHtml(video.name)}" tabindex="0">
             ${SVG_VIDEO}
             <div class="fill">
                 <div class="title truncate" title="${escapeHtml(video.name)}">${escapeHtml(video.name)}</div>
@@ -188,6 +188,12 @@ window.apiReady.then((api) => {
         filterInput.select();
     });
 
+    const selectByName = (name) => {
+        state.selected = name;
+        api.selectVideo(name);
+        render();
+    };
+
     body.addEventListener("click", (e) => {
         const folder = e.target.closest(".tree-folder");
         if (folder) {
@@ -198,12 +204,22 @@ window.apiReady.then((api) => {
             return;
         }
         const row = e.target.closest(".list-row");
-        if (row) {
-            const name = row.dataset.name;
-            state.selected = name;
-            api.selectVideo(name);
-            render();
-        }
+        if (row) selectByName(row.dataset.name);
+    });
+
+    body.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+        const rows = Array.from(body.querySelectorAll(".list-row"));
+        if (rows.length === 0) return;
+        e.preventDefault();
+        const currentIndex = rows.findIndex((r) => r.dataset.name === state.selected);
+        const delta = e.key === "ArrowDown" ? 1 : -1;
+        const nextIndex = currentIndex === -1
+            ? 0
+            : (currentIndex + delta + rows.length) % rows.length;
+        const nextRow = rows[nextIndex];
+        selectByName(nextRow.dataset.name);
+        nextRow.focus();
     });
 
     filterInput.addEventListener("input", (e) => {

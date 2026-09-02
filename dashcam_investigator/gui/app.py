@@ -1,3 +1,4 @@
+import ctypes
 import json
 import logging
 import shutil
@@ -5,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import PySide6
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer
@@ -35,6 +37,31 @@ APP_NAME = "DashcamInvestigator"
 
 # Transport-icon tint per resolved theme; mirrors tokens.css --text.
 _TRANSPORT_TINT = {"light": "#0f172a", "dark": "#e6e8eb"}
+
+_AV_LOG_ERROR = 16  # libavutil/log.h
+
+
+def _quiet_ffmpeg_logging() -> None:
+    """Raise the bundled FFmpeg log level to ERROR.
+
+    Qt Multimedia's FFmpeg backend leaves libavutil at its default WARNING
+    level, which prints `[swscaler @ ...] deprecated pixel format used` to
+    stderr once per frame for JPEG-range (yuvj420p) footage -- common for
+    GoPro and many dashcams. Qt exposes no knob for this, so call
+    av_log_set_level on the libavutil PySide6 ships. Must run after
+    QMediaPlayer has loaded the FFmpeg plugin: libavutil can't be dlopen'd
+    on its own (unresolved OpenSSL symbols), but once Qt has it in-process
+    ctypes just reuses that handle.
+    """
+    lib_dir = Path(PySide6.__file__).parent / "Qt" / "lib"
+    candidates = sorted(lib_dir.glob("libavutil.so.*"))
+    if not candidates:
+        logger.debug("No bundled libavutil found; leaving FFmpeg log level as-is")
+        return
+    try:
+        ctypes.CDLL(str(candidates[0])).av_log_set_level(_AV_LOG_ERROR)
+    except (OSError, AttributeError) as exc:
+        logger.debug("Could not set FFmpeg log level: %s", exc)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -67,6 +94,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _wire_media_player(self) -> None:
         self.mediaPlayer = QMediaPlayer(self)
+        _quiet_ffmpeg_logging()
         self.mediaPlayer.setVideoOutput(self.video_player)
         self._transport_icons: dict[tuple[str, str], QtGui.QIcon] = {}
         self.play_pause_button.toggled.connect(self._on_play_pause_toggled)

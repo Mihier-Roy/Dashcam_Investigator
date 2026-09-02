@@ -125,8 +125,18 @@ function renderTree() {
 }
 
 function render() {
+    // Every render() rebuilds body.innerHTML, detaching whichever row was
+    // focused (clicked or arrowed) and dropping focus to <body>, outside
+    // #sidebar-body's keydown listener -- arrow keys would go dead. Re-land
+    // focus on the selected row whenever the sidebar list owned it before.
+    // Lives here (not in the callers) because the async `video` echo from
+    // the bridge re-renders too and would otherwise undo a caller-side fix.
+    const hadFocus = body.contains(document.activeElement);
     if (state.mode === "list") renderList();
     else renderTree();
+    if (hadFocus && state.selected !== null) {
+        body.querySelector(`.list-row[data-name="${CSS.escape(state.selected)}"]`)?.focus();
+    }
 }
 
 function updateHeader() {
@@ -217,12 +227,7 @@ window.apiReady.then((api) => {
         const nextIndex = currentIndex === -1
             ? 0
             : (currentIndex + delta + rows.length) % rows.length;
-        const nextName = rows[nextIndex].dataset.name;
-        selectByName(nextName);
-        // render() just rebuilt the DOM (body.innerHTML = ...), so the old
-        // `rows[nextIndex]` element is now detached -- re-query for the
-        // freshly-rendered node with this name instead of reusing it.
-        body.querySelector(`.list-row[data-name="${CSS.escape(nextName)}"]`)?.focus();
+        selectByName(rows[nextIndex].dataset.name);
     });
 
     filterInput.addEventListener("input", (e) => {

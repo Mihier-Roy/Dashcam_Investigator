@@ -1,7 +1,5 @@
 """Tests for the New Project dialog."""
 
-from pathlib import Path
-
 from PySide6 import QtWidgets
 
 from dashcam_investigator.gui.new_project_class import NewProjectDialog

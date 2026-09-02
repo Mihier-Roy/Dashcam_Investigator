@@ -203,7 +203,9 @@ def _build_player_area(
     window.horizontal_slider = QtWidgets.QSlider(
         QtCore.Qt.Orientation.Horizontal, controls
     )
-    window.horizontal_slider.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+    # NoFocus: the range is in ms, so arrow keys would nudge 1 ms without
+    # seeking; MainWindow.keyPressEvent handles ±5 s seeking instead.
+    window.horizontal_slider.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
     controls_layout.addWidget(window.horizontal_slider, 1)
 
     window.total_duration = QtWidgets.QLabel("0:00", controls)
@@ -211,17 +213,15 @@ def _build_player_area(
     window.total_duration.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     controls_layout.addWidget(window.total_duration)
 
-    text_color = "#0f172a"  # matches tokens.css --text (light); native icons
-    # don't re-tint on theme change, same limitation noted in Task 4.
+    # Icons are set by MainWindow._refresh_transport_icons once the theme
+    # resolves, so the tint colour lives in exactly one place (app.py).
     window.play_pause_button = QtWidgets.QPushButton(controls)
     window.play_pause_button.setCheckable(True)
-    window.play_pause_button.setIcon(_icon("play", text_color))
     window.play_pause_button.setToolTip("Play (Space)")
     window.play_pause_button.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
     controls_layout.addWidget(window.play_pause_button)
 
     window.stop_button = QtWidgets.QPushButton(controls)
-    window.stop_button.setIcon(_icon("square", text_color))
     window.stop_button.setToolTip("Stop")
     window.stop_button.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
     controls_layout.addWidget(window.stop_button)

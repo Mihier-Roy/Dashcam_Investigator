@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 ORG_NAME = "DashcamInvestigator"
 APP_NAME = "DashcamInvestigator"
 
+# Transport-icon tint per resolved theme; mirrors tokens.css --text.
+_TRANSPORT_TINT = {"light": "#0f172a", "dark": "#e6e8eb"}
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
@@ -65,11 +68,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def _wire_media_player(self) -> None:
         self.mediaPlayer = QMediaPlayer(self)
         self.mediaPlayer.setVideoOutput(self.video_player)
+        self._transport_icons: dict[tuple[str, str], QtGui.QIcon] = {}
         self.play_pause_button.toggled.connect(self._on_play_pause_toggled)
         self.stop_button.clicked.connect(self.stop_video)
+        self.mediaPlayer.playbackStateChanged.connect(self._on_playback_state_changed)
         self.mediaPlayer.durationChanged.connect(self.change_duration)
         self.mediaPlayer.positionChanged.connect(self.change_position)
         self.horizontal_slider.sliderMoved.connect(self.video_position)
+        self.theme_manager.resolved_changed.connect(self._refresh_transport_icons)
 
     # --- QSettings persistence ----------------------------------------
     def _restore_settings(self) -> None:
@@ -157,19 +163,34 @@ class MainWindow(QtWidgets.QMainWindow):
         super().keyPressEvent(event)
 
     def _on_play_pause_toggled(self, checked: bool) -> None:
-        icon_color = "#0f172a"
         if checked:
             self.mediaPlayer.play()
-            self.play_pause_button.setIcon(_icon("pause", icon_color))
-            self.play_pause_button.setToolTip("Pause (Space)")
         else:
             self.mediaPlayer.pause()
-            self.play_pause_button.setIcon(_icon("play", icon_color))
-            self.play_pause_button.setToolTip("Play (Space)")
+
+    def _on_playback_state_changed(self, state) -> None:
+        playing = state == QMediaPlayer.PlaybackState.PlayingState
+        self.play_pause_button.blockSignals(True)
+        self.play_pause_button.setChecked(playing)
+        self.play_pause_button.blockSignals(False)
+        self._refresh_transport_icons()
+
+    def _transport_icon(self, name: str) -> QtGui.QIcon:
+        theme = self.theme_manager.resolved()
+        key = (name, theme)
+        icon = self._transport_icons.get(key)
+        if icon is None:
+            icon = self._transport_icons[key] = _icon(name, _TRANSPORT_TINT[theme])
+        return icon
+
+    def _refresh_transport_icons(self, _resolved: str | None = None) -> None:
+        playing = self.play_pause_button.isChecked()
+        self.play_pause_button.setIcon(self._transport_icon("pause" if playing else "play"))
+        self.play_pause_button.setToolTip("Pause (Space)" if playing else "Play (Space)")
+        self.stop_button.setIcon(self._transport_icon("square"))
 
     def stop_video(self):
         self.mediaPlayer.stop()
-        self.play_pause_button.setChecked(False)
 
     def change_position(self, position):
         self.horizontal_slider.setValue(position)
@@ -178,6 +199,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_duration(self, duration):
         self.horizontal_slider.setRange(0, duration)
+        sec, min = convert_to_seconds(int(duration))
+        self.total_duration.setText(f"{min}:{sec}")
 
     def video_position(self, position):
         self.mediaPlayer.setPosition(position)
@@ -303,7 +326,6 @@ class MainWindow(QtWidgets.QMainWindow):
         video_path = Path(self.current_video.file_path)
 
         self.mediaPlayer.stop()
-        self.play_pause_button.setChecked(False)
         self.player_stack.setCurrentWidget(self.video_player)
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))
@@ -432,7 +454,8 @@ class MainWindow(QtWidgets.QMainWindow):
             "Keyboard shortcuts",
             "/          Focus the sidebar filter\n"
             "F          Flag / un-flag the current video\n"
-            "← / →      Previous / next video (sidebar focused)\n"
+            "← / →      Previous / next video (any panel)\n"
+            "↑ / ↓      Move selection in the sidebar list\n"
             "Space      Play / pause (player focused)\n"
             "← / →      Seek ±5s (player focused)\n"
             "Ctrl+S     Save notes\n"

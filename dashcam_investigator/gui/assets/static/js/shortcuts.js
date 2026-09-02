@@ -4,7 +4,7 @@
 //
 //   /          focus the sidebar filter (skipped when typing)
 //   f          toggle flag on the currently selected video
-//   ←/→        previous / next video
+//   ←/→        previous / next video (↑/↓ row navigation lives in sidebar.js)
 //   Ctrl+S     save the notes panel's current text
 //   ?          show the keyboard shortcuts overlay
 

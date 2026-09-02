@@ -70,11 +70,6 @@ QPushButton:focus, QTabBar::tab:focus {
     outline: 2px solid #2563eb;
     outline-offset: 1px;
 }
-QSlider::handle:horizontal:focus {
-    border-color: #1d4fd0;
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
 
 /* Inputs ------------------------------------------------------------ */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {

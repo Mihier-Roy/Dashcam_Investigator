@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from PySide6 import QtGui, QtWidgets
 
-from dashcam_investigator.gui.main_window import _icon
+from dashcam_investigator.gui.main_window import _build_player_area, _icon
 
 
 def _read(rel_path: str) -> str:
@@ -131,10 +131,7 @@ def test_icon_returns_empty_icon_for_missing_asset(caplog):
 
 
 def test_build_player_area_creates_expected_widgets():
-    from PySide6 import QtWidgets
-    from dashcam_investigator.gui.main_window import _build_player_area
-
-    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    _app()
     window = QtWidgets.QMainWindow()
     parent = QtWidgets.QSplitter()
     _build_player_area(window, parent)

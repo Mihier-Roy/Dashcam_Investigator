@@ -326,6 +326,9 @@ class MainWindow(QtWidgets.QMainWindow):
         video_path = Path(self.current_video.file_path)
 
         self.mediaPlayer.stop()
+        # stop() on an already-stopped player emits nothing, so a stale
+        # checked state (play pressed with no source) would otherwise drift.
+        self._on_playback_state_changed(self.mediaPlayer.playbackState())
         self.player_stack.setCurrentWidget(self.video_player)
         logger.debug(f"New item selected. Loading -> {str(video_path.resolve())}")
         self.mediaPlayer.setSource(QUrl.fromLocalFile(str(video_path.resolve())))

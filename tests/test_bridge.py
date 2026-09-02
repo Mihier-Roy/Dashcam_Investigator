@@ -12,14 +12,18 @@ import sys
 from typing import Any
 
 import pytest
-from PySide6.QtCore import QCoreApplication
+from PySide6 import QtWidgets
 
 from dashcam_investigator.gui.web.bridge import Bridge
 
 
 @pytest.fixture(scope="module")
-def qcoreapp() -> QCoreApplication:
-    app = QCoreApplication.instance() or QCoreApplication(sys.argv)
+def qcoreapp() -> QtWidgets.QApplication:
+    # A full QApplication (not a bare QCoreApplication) is required here:
+    # Qt allows only one QCoreApplication-derived singleton per process, and
+    # other test modules in the same pytest run construct real QWidgets,
+    # which abort if the process-wide singleton isn't a QApplication.
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     return app
 
 
@@ -62,7 +66,7 @@ class FakeController:
 
 
 @pytest.fixture
-def controller_and_bridge(qcoreapp: QCoreApplication) -> tuple[FakeController, Bridge]:
+def controller_and_bridge(qcoreapp: QtWidgets.QApplication) -> tuple[FakeController, Bridge]:
     controller = FakeController()
     bridge = Bridge(controller)
     return controller, bridge

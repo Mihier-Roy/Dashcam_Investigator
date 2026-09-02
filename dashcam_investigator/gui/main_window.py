@@ -3,8 +3,8 @@ Hand-written MainWindow layout. Replaces the Qt Designer–generated
 QtMainWindow.py — no fixed pixel-coordinate widgets anywhere.
 
 setup_ui(window, bridge) attaches every widget the controller in app.py
-expects (self.stack_widget, self.video_player, self.play_button, …) so
-the rest of the code didn't need to change shape.
+expects (self.stack_widget, self.video_player, self.play_pause_button, …)
+so the rest of the code didn't need to change shape.
 
 Layout:
 

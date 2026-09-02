@@ -100,3 +100,4 @@ tests/fixtures/sample_videos/
 
 # Cython debug symbols
 cython_debug/
+.worktrees/
